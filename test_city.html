@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code City 3D - </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        #info-panel h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #4ECDC4;
+        }
+        #info-panel .stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        #info-panel .stat:last-child {
+            border-bottom: none;
+        }
+        #info-panel .stat-label {
+            color: #aaa;
+        }
+        #info-panel .stat-value {
+            font-weight: bold;
+            color: #fff;
+        }
+        #building-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 300px;
+            max-width: 450px;
+            display: none;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        #building-info h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #3776AB;
+            word-break: break-all;
+        }
+        #building-info .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+        #building-info .metric-label {
+            color: #888;
+        }
+        #building-info .metric-value {
+            font-weight: bold;
+        }
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #controls label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        #controls select, #controls input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #222;
+            color: #fff;
+            cursor: pointer;
+        }
+        #legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #legend h4 {
+            color: #fff;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        #legend .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #ccc;
+        }
+        #legend .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 30px 50px;
+            border-radius: 12px;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">🏗️ Loading Code City...</div>
+    <canvas id="canvas"></canvas>
+
+    <div id="info-panel">
+        <h2>📊 Project Statistics</h2>
+        <div class="stat">
+            <span class="stat-label">Repository:</span>
+            <span class="stat-value" id="stat-repo"></span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Total Files:</span>
+            <span class="stat-value" id="stat-files">19</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Lines of Code:</span>
+            <span class="stat-value" id="stat-lines">3,818</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Functions:</span>
+            <span class="stat-value" id="stat-functions">121</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Classes:</span>
+            <span class="stat-value" id="stat-classes">11</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Complexity:</span>
+            <span class="stat-value" id="stat-complexity">578</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Size:</span>
+            <span class="stat-value" id="stat-bytes">135.9 KB</span>
+        </div>
+    </div>
+
+    <div id="building-info">
+        <h3 id="bi-filename">filename.py</h3>
+        <div class="metric">
+            <span class="metric-label">District:</span>
+            <span class="metric-value" id="bi-district">root</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Lines:</span>
+            <span class="metric-value" id="bi-lines">0</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Functions:</span>
+            <span class="metric-value" id="bi-functions">0</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Classes:</span>
+            <span class="metric-value" id="bi-classes">0</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Complexity:</span>
+            <span class="metric-value" id="bi-complexity">0</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Imports:</span>
+            <span class="metric-value" id="bi-imports">0</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Size:</span>
+            <span class="metric-value" id="bi-bytes">0 KB</span>
+        </div>
+    </div>
+
+    <div id="controls">
+        <label for="height-metric">Height Metric:</label>
+        <select id="height-metric">
+            <option value="weight">Weight (composite)</option>
+            <option value="lines">Lines of Code</option>
+            <option value="functions">Functions</option>
+            <option value="classes">Classes</option>
+            <option value="complexity">Complexity</option>
+        </select>
+
+        <label for="color-metric">Color By:</label>
+        <select id="color-metric">
+            <option value="language">Language</option>
+            <option value="district">District</option>
+            <option value="complexity">Complexity</option>
+        </select>
+
+        <label for="show-connections">Show Connections:</label>
+        <input type="checkbox" id="show-connections" checked>
+
+        <label for="min-height">Min Building Height:</label>
+        <input type="range" id="min-height" min="5" max="100" value="10">
+    </div>
+
+    <div id="legend">
+        <h4>🎨 Legend</h4>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #3776AB;"></div>
+            <span>Python</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #F7DF1E;"></div>
+            <span>JavaScript</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #3178C6;"></div>
+            <span>TypeScript</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #FF6B6B;"></div>
+            <span>Tests</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #4ECDC4;"></div>
+            <span>Config</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // City data from Python
+        const cityData = {"buildings": [{"id": 0, "file": "toolkit.py", "filename": "toolkit.py", "district": "root", "position": {"x": 0, "y": 0, "z": 0}, "size": {"width": 22.703587816391646, "height": 200, "depth": 15.135725210927765}, "color": "#3776AB", "metrics": {"lines": 685, "functions": 29, "classes": 1, "complexity": 189, "imports": 18, "bytes": 27243}}, {"id": 1, "file": "visualizer.py", "filename": "visualizer.py", "district": "root", "position": {"x": 27.703587816391646, "y": 0, "z": 0}, "size": {"width": 21.781567794269556, "height": 200, "depth": 14.521045196179704}, "color": "#3776AB", "metrics": {"lines": 858, "functions": 11, "classes": 1, "complexity": 88, "imports": 16, "bytes": 32102}}, {"id": 2, "file": "server.py", "filename": "server.py", "district": "root", "position": {"x": 54.4851556106612, "y": 0, "z": 0}, "size": {"width": 20.505553758441906, "height": 186.0, "depth": 13.670369172294603}, "color": "#3776AB", "metrics": {"lines": 345, "functions": 29, "classes": 0, "complexity": 59, "imports": 22, "bytes": 13727}}, {"id": 3, "file": "repomap.py", "filename": "repomap.py", "district": "root", "position": {"x": 79.99070936910312, "y": 0, "z": 0}, "size": {"width": 19.989398087972408, "height": 156.6, "depth": 13.326265391981606}, "color": "#3776AB", "metrics": {"lines": 263, "functions": 9, "classes": 1, "complexity": 83, "imports": 12, "bytes": 9945}}, {"id": 4, "file": "README.md", "filename": "README.md", "district": "root", "position": {"x": 104.98010745707552, "y": 0, "z": 0}, "size": {"width": 19.750227666476295, "height": 144.6, "depth": 13.16681844431753}, "color": "#95A5A6", "metrics": {"lines": 723, "functions": 0, "classes": 0, "complexity": 0, "imports": 0, "bytes": 25180}}, {"id": 5, "file": "flipchart.py", "filename": "flipchart.py", "district": "root", "position": {"x": 0, "y": 0, "z": 23.166818444317528}, "size": {"width": 19.430917088669048, "height": 130.0, "depth": 12.953944725779365}, "color": "#3776AB", "metrics": {"lines": 250, "functions": 17, "classes": 1, "complexity": 43, "imports": 8, "bytes": 10274}}, {"id": 6, "file": "indexer.py", "filename": "indexer.py", "district": "root", "position": {"x": 24.430917088669048, "y": 0, "z": 23.166818444317528}, "size": {"width": 17.36988051269176, "height": 65.4, "depth": 11.579920341794507}, "color": "#3776AB", "metrics": {"lines": 107, "functions": 5, "classes": 1, "complexity": 31, "imports": 12, "bytes": 3955}}, {"id": 7, "file": "test_all.py", "filename": "test_all.py", "district": "root", "position": {"x": 46.80079760136081, "y": 0, "z": 23.166818444317528}, "size": {"width": 15.74107221648146, "height": 38.0, "depth": 10.494048144320972}, "color": "#FF6B6B", "metrics": {"lines": 105, "functions": 0, "classes": 0, "complexity": 17, "imports": 12, "bytes": 3976}}, {"id": 8, "file": "test_mcp.py", "filename": "test_mcp.py", "district": "root", "position": {"x": 67.54186981784227, "y": 0, "z": 23.166818444317528}, "size": {"width": 15.677240021139605, "height": 37.2, "depth": 10.451493347426403}, "color": "#FF6B6B", "metrics": {"lines": 86, "functions": 0, "classes": 0, "complexity": 20, "imports": 6, "bytes": 2707}}, {"id": 9, "file": "graphs.py", "filename": "graphs.py", "district": "root", "position": {"x": 88.21910983898186, "y": 0, "z": 23.166818444317528}, "size": {"width": 15.24421309495339, "height": 32.2, "depth": 10.162808729968926}, "color": "#3776AB", "metrics": {"lines": 36, "functions": 6, "classes": 1, "complexity": 10, "imports": 0, "bytes": 1261}}, {"id": 10, "file": "vector_index.py", "filename": "vector_index.py", "district": "root", "position": {"x": 0, "y": 0, "z": 43.32962717428646}, "size": {"width": 15.24421309495339, "height": 32.2, "depth": 10.162808729968926}, "color": "#3776AB", "metrics": {"lines": 46, "functions": 4, "classes": 1, "complexity": 12, "imports": 5, "bytes": 1314}}, {"id": 11, "file": "city_server.py", "filename": "city_server.py", "district": "root", "position": {"x": 20.244213094953388, "y": 0, "z": 43.32962717428646}, "size": {"width": 15.22552144570148, "height": 32.0, "depth": 10.150347630467653}, "color": "#3776AB", "metrics": {"lines": 70, "functions": 3, "classes": 1, "complexity": 9, "imports": 16, "bytes": 2872}}, {"id": 12, "file": "watcher.py", "filename": "watcher.py", "district": "root", "position": {"x": 40.46973454065487, "y": 0, "z": 43.32962717428646}, "size": {"width": 14.04639368137266, "height": 21.6, "depth": 9.36426245424844}, "color": "#3776AB", "metrics": {"lines": 23, "functions": 3, "classes": 1, "complexity": 8, "imports": 6, "bytes": 645}}, {"id": 13, "file": "parser_router.py", "filename": "parser_router.py", "district": "root", "position": {"x": 59.51612822202753, "y": 0, "z": 43.32962717428646}, "size": {"width": 13.499429010990795, "height": 18.0, "depth": 8.99961934066053}, "color": "#3776AB", "metrics": {"lines": 30, "functions": 2, "classes": 1, "complexity": 5, "imports": 4, "bytes": 640}}, {"id": 14, "file": ".gitignore", "filename": ".gitignore", "district": "root", "position": {"x": 78.01555723301833, "y": 0, "z": 43.32962717428646}, "size": {"width": 13.220157741792761, "height": 16.4, "depth": 8.813438494528507}, "color": "#95A5A6", "metrics": {"lines": 82, "functions": 0, "classes": 0, "complexity": 0, "imports": 0, "bytes": 677}}, {"id": 15, "file": "pyproject.toml", "filename": "pyproject.toml", "district": "root", "position": {"x": 0, "y": 0, "z": 62.14306566881496}, "size": {"width": 13.070126480068776, "height": 15.6, "depth": 8.713417653379183}, "color": "#4ECDC4", "metrics": {"lines": 78, "functions": 0, "classes": 0, "complexity": 0, "imports": 0, "bytes": 1767}}, {"id": 16, "file": "embedder.py", "filename": "embedder.py", "district": "root", "position": {"x": 18.070126480068776, "y": 0, "z": 62.14306566881496}, "size": {"width": 11.419987469310959, "height": 10, "depth": 8}, "color": "#3776AB", "metrics": {"lines": 10, "functions": 2, "classes": 1, "complexity": 0, "imports": 2, "bytes": 340}}, {"id": 17, "file": "chunker.py", "filename": "chunker.py", "district": "root", "position": {"x": 34.49011394937973, "y": 0, "z": 62.14306566881496}, "size": {"width": 11.213008854850106, "height": 10, "depth": 8}, "color": "#3776AB", "metrics": {"lines": 12, "functions": 1, "classes": 0, "complexity": 4, "imports": 0, "bytes": 366}}, {"id": 18, "file": "requirements.txt", "filename": "requirements.txt", "district": "root", "position": {"x": 50.703122804229835, "y": 0, "z": 62.14306566881496}, "size": {"width": 8, "height": 10, "depth": 8}, "color": "#95A5A6", "metrics": {"lines": 9, "functions": 0, "classes": 0, "complexity": 0, "imports": 0, "bytes": 161}}], "connections": [], "districts": {"root": [{"file": ".gitignore", "filename": ".gitignore", "extension": "", "language": "gitignore", "lines": 82, "bytes": 677, "functions": 0, "classes": 0, "methods": 0, "imports": 0, "complexity": 0, "comments": 8, "blank_lines": 8, "weight": 82}, {"file": "chunker.py", "filename": "chunker.py", "extension": ".py", "language": "python", "lines": 12, "bytes": 366, "functions": 1, "classes": 0, "methods": 0, "imports": 0, "complexity": 4, "comments": 1, "blank_lines": 3, "weight": 42}, {"file": "city_server.py", "filename": "city_server.py", "extension": ".py", "language": "python", "lines": 70, "bytes": 2872, "functions": 3, "classes": 1, "methods": 0, "imports": 16, "complexity": 9, "comments": 2, "blank_lines": 15, "weight": 160}, {"file": "embedder.py", "filename": "embedder.py", "extension": ".py", "language": "python", "lines": 10, "bytes": 340, "functions": 2, "classes": 1, "methods": 0, "imports": 2, "complexity": 0, "comments": 1, "blank_lines": 3, "weight": 45}, {"file": "flipchart.py", "filename": "flipchart.py", "extension": ".py", "language": "python", "lines": 250, "bytes": 10274, "functions": 17, "classes": 1, "methods": 0, "imports": 8, "complexity": 43, "comments": 9, "blank_lines": 43, "weight": 650}, {"file": "graphs.py", "filename": "graphs.py", "extension": ".py", "language": "python", "lines": 36, "bytes": 1261, "functions": 6, "classes": 1, "methods": 0, "imports": 0, "complexity": 10, "comments": 1, "blank_lines": 8, "weight": 161}, {"file": "indexer.py", "filename": "indexer.py", "extension": ".py", "language": "python", "lines": 107, "bytes": 3955, "functions": 5, "classes": 1, "methods": 0, "imports": 12, "complexity": 31, "comments": 6, "blank_lines": 21, "weight": 327}, {"file": "parser_router.py", "filename": "parser_router.py", "extension": ".py", "language": "python", "lines": 30, "bytes": 640, "functions": 2, "classes": 1, "methods": 0, "imports": 4, "complexity": 5, "comments": 0, "blank_lines": 6, "weight": 90}, {"file": "pyproject.toml", "filename": "pyproject.toml", "extension": ".toml", "language": "toml", "lines": 78, "bytes": 1767, "functions": 0, "classes": 0, "methods": 0, "imports": 0, "complexity": 0, "comments": 0, "blank_lines": 10, "weight": 78}, {"file": "README.md", "filename": "README.md", "extension": ".md", "language": "markdown", "lines": 723, "bytes": 25180, "functions": 0, "classes": 0, "methods": 0, "imports": 0, "complexity": 0, "comments": 104, "blank_lines": 172, "weight": 723}, {"file": "repomap.py", "filename": "repomap.py", "extension": ".py", "language": "python", "lines": 263, "bytes": 9945, "functions": 9, "classes": 1, "methods": 0, "imports": 12, "complexity": 83, "comments": 22, "blank_lines": 55, "weight": 783}, {"file": "requirements.txt", "filename": "requirements.txt", "extension": ".txt", "language": "requirements", "lines": 9, "bytes": 161, "functions": 0, "classes": 0, "methods": 0, "imports": 0, "complexity": 0, "comments": 0, "blank_lines": 1, "weight": 9}, {"file": "server.py", "filename": "server.py", "extension": ".py", "language": "python", "lines": 345, "bytes": 13727, "functions": 29, "classes": 0, "methods": 0, "imports": 22, "complexity": 59, "comments": 12, "blank_lines": 69, "weight": 930}, {"file": "test_all.py", "filename": "test_all.py", "extension": ".py", "language": "python", "lines": 105, "bytes": 3976, "functions": 0, "classes": 0, "methods": 0, "imports": 12, "complexity": 17, "comments": 14, "blank_lines": 15, "weight": 190}, {"file": "test_mcp.py", "filename": "test_mcp.py", "extension": ".py", "language": "python", "lines": 86, "bytes": 2707, "functions": 0, "classes": 0, "methods": 0, "imports": 6, "complexity": 20, "comments": 8, "blank_lines": 11, "weight": 186}, {"file": "toolkit.py", "filename": "toolkit.py", "extension": ".py", "language": "python", "lines": 685, "bytes": 27243, "functions": 29, "classes": 1, "methods": 0, "imports": 18, "complexity": 189, "comments": 29, "blank_lines": 106, "weight": 1935}, {"file": "vector_index.py", "filename": "vector_index.py", "extension": ".py", "language": "python", "lines": 46, "bytes": 1314, "functions": 4, "classes": 1, "methods": 0, "imports": 5, "complexity": 12, "comments": 0, "blank_lines": 10, "weight": 161}, {"file": "visualizer.py", "filename": "visualizer.py", "extension": ".py", "language": "python", "lines": 858, "bytes": 32102, "functions": 11, "classes": 1, "methods": 0, "imports": 16, "complexity": 88, "comments": 69, "blank_lines": 104, "weight": 1423}, {"file": "watcher.py", "filename": "watcher.py", "extension": ".py", "language": "python", "lines": 23, "bytes": 645, "functions": 3, "classes": 1, "methods": 0, "imports": 6, "complexity": 8, "comments": 0, "blank_lines": 4, "weight": 108}]}, "metrics": {"files": 19, "lines": 3818, "functions": 121, "classes": 11, "complexity": 578, "bytes": 139152}, "repo": "."};
+
+        // Three.js setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        scene.fog = new THREE.Fog(0x1a1a2e, 500, 1500);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+        camera.position.set(200, 300, 400);
+
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.1;
+        controls.minDistance = 50;
+        controls.maxDistance = 1500;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(200, 500, 200);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        const hemisphereLight = new THREE.HemisphereLight(0x87ceeb, 0x545454, 0.4);
+        scene.add(hemisphereLight);
+
+        // Ground plane
+        const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2d3436,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Grid helper
+        const gridHelper = new THREE.GridHelper(2000, 50, 0x444444, 0x222222);
+        scene.add(gridHelper);
+
+        // Buildings
+        const buildings = [];
+        const buildingMeshes = [];
+
+        cityData.buildings.forEach((b, index) => {
+            const geometry = new THREE.BoxGeometry(b.size.width, b.size.height, b.size.depth);
+            const material = new THREE.MeshStandardMaterial({
+                color: b.color,
+                roughness: 0.3,
+                metalness: 0.5,
+                transparent: true,
+                opacity: 0.9
+            });
+            const building = new THREE.Mesh(geometry, material);
+            building.position.set(
+                b.position.x,
+                b.size.height / 2,
+                b.position.z
+            );
+            building.castShadow = true;
+            building.receiveShadow = true;
+            building.userData = { ...b, index };
+
+            scene.add(building);
+            buildings.push(building);
+            buildingMeshes.push(building);
+        });
+
+        // Connections
+        const connectionLines = [];
+        cityData.connections.forEach(conn => {
+            const source = buildings.find(b => b.userData.id === conn.source);
+            const target = buildings.find(b => b.userData.id === conn.target);
+            if (source && target) {
+                const points = [];
+                points.push(source.position);
+                points.push(target.position);
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({ color: 0x4ECDC4, transparent: true, opacity: 0.4 });
+                const line = new THREE.Line(geometry, material);
+                scene.add(line);
+                connectionLines.push(line);
+            }
+        });
+
+        // Raycaster for interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let hoveredBuilding = null;
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(buildingMeshes);
+
+            if (intersects.length > 0) {
+                const building = intersects[0].object;
+                if (hoveredBuilding !== building) {
+                    hoveredBuilding = building;
+                    document.body.style.cursor = 'pointer';
+
+                    // Highlight
+                    buildingMeshes.forEach(b => {
+                        b.material.emissive.setHex(0x000000);
+                    });
+                    building.material.emissive.setHex(0x333333);
+
+                    // Show info
+                    showBuildingInfo(building.userData);
+                }
+            } else {
+                if (hoveredBuilding) {
+                    hoveredBuilding.material.emissive.setHex(0x000000);
+                    hoveredBuilding = null;
+                    document.body.style.cursor = 'default';
+                    hideBuildingInfo();
+                }
+            }
+        }
+
+        function showBuildingInfo(data) {
+            const panel = document.getElementById('building-info');
+            panel.style.display = 'block';
+
+            document.getElementById('bi-filename').textContent = data.filename;
+            document.getElementById('bi-district').textContent = data.district;
+            document.getElementById('bi-lines').textContent = data.metrics.lines;
+            document.getElementById('bi-functions').textContent = data.metrics.functions;
+            document.getElementById('bi-classes').textContent = data.metrics.classes;
+            document.getElementById('bi-complexity').textContent = data.metrics.complexity;
+            document.getElementById('bi-imports').textContent = data.metrics.imports;
+            document.getElementById('bi-bytes').textContent = (data.metrics.bytes / 1024).toFixed(1) + ' KB';
+        }
+
+        function hideBuildingInfo() {
+            document.getElementById('building-info').style.display = 'none';
+        }
+
+        window.addEventListener('mousemove', onMouseMove);
+
+        // Controls
+        document.getElementById('height-metric').addEventListener('change', (e) => {
+            const metric = e.target.value;
+            buildings.forEach(b => {
+                const m = b.userData.metrics;
+                let value;
+                switch(metric) {
+                    case 'lines': value = m.lines; break;
+                    case 'functions': value = m.functions * 10; break;
+                    case 'classes': value = m.classes * 15; break;
+                    case 'complexity': value = m.complexity * 5; break;
+                    default: value = b.userData.metrics.weight || m.lines;
+                }
+                const newHeight = Math.max(10, Math.min(200, value / 5));
+                b.scale.y = newHeight / b.userData.size.height;
+                b.position.y = (newHeight - b.userData.size.height) / 2;
+            });
+        });
+
+        document.getElementById('show-connections').addEventListener('change', (e) => {
+            connectionLines.forEach(line => {
+                line.visible = e.target.checked;
+            });
+        });
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Hide loading
+        document.getElementById('loading').classList.add('hidden');
+
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+*.cover
+*.lcov
+.mypy_cache/
+.ruff_cache/
+
+# Виртуальные окружения
+venv/
+env/
+.venv/
+.env/
+.conda/
+conda-env/
+__pycache__
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# MCP
+*.db
+*.faiss
+*.bin
+.cache/
+
+# Code City (генерируется автоматически)
+code_city.html
+
+# Logs
+*.log
+logs/
+
+# Temp
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+@eaDir/
+
+# Тесты
+test_results/
+*.prof
+.prof
