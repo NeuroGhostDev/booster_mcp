@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "codeatlas-mcp"
+name = "Booster-mcp"
 version = "2.6.0"
 description = "MCP server for semantic code analysis, repository mapping, and large codebase navigation"
 readme = "README.md"
@@ -50,12 +50,12 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/NeuroGhostDev/codeatlas-mcp"
-Repository = "https://github.com/NeuroGhostDev/codeatlas-mcp.git"
-Issues = "https://github.com/NeuroGhostDev/codeatlas-mcp/issues"
+Homepage = "https://github.com/NeuroGhostDev/Booster-mcp"
+Repository = "https://github.com/NeuroGhostDev/Booster-mcp.git"
+Issues = "https://github.com/NeuroGhostDev/Booster-mcp/issues"
 
 [project.scripts]
-codeatlas-mcp = "server:main"
+Booster-mcp = "server:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
