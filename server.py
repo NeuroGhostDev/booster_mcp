@@ -6,10 +6,12 @@ from fastmcp import FastMCP
 from indexer import RepoIndexer
 from watcher import start_watch
 from repomap import RepoMap
-from flipchart import Flipchart
+from flipchart import setup_flipchart_tools
 from skill_installer import auto_install_bundled_skills, install_bundled_skills, list_bundled_skills
-from toolkit import CodeToolkit
+from toolkit import setup_toolkit_tools
 from visualizer import CodeCityVisualizer
+from context_provider import setup_context_provider
+from context7_bridge import setup_context7_bridge
 import city_server
 
 # Начальные репозитории из env (может быть пустым)
@@ -22,14 +24,26 @@ if not initial_repos:
 
 
 def on_index_callback(repo_path: str):
-    """Генерирует Code City после индексации репозитория."""
+    """Генерирует Code City и Repo Map после индексации репозитория."""
     try:
+        base_dir = Path(repo_path) / ".agents" / "booster"
+        base_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 1. Code City
         viz = CodeCityVisualizer(indexer)
-        city_output = str(Path(repo_path) / "code_city.html")
+        city_output = str(base_dir / "code_city.html")
         viz.generate_visualization(repo_path, city_output)
+        
+        # 2. Repo Map
+        rm = RepoMap(root=repo_path)
+        map_content = rm.get_repo_map()
+        if map_content:
+            map_output = base_dir / "repo_map.md"
+            with open(map_output, "w", encoding="utf-8") as f:
+                f.write(map_content)
+                
     except Exception as e:
-        print(f"⚠️  Не удалось сгенерировать Code City для {repo_path}: {e}")
-
+        print(f"⚠️  Ошибка автогенерации артефактов для {repo_path}: {e}")
 
 # Инициализация без автоматической индексации (агент сам добавит репозитории)
 indexer = RepoIndexer(initial_repos, on_index_complete=on_index_callback)
@@ -57,11 +71,11 @@ _web_thread.start()
 
 mcp = FastMCP("Booster")
 
-# Инициализация flipchart
-flipchart = Flipchart(indexer)
-
-# Инициализация toolkit
-toolkit = CodeToolkit(indexer, indexer.repos)
+# Регистрация инструментов
+setup_flipchart_tools(mcp, indexer)
+setup_toolkit_tools(mcp, indexer, indexer.repos)
+setup_context_provider(mcp, indexer, repo_maps)
+setup_context7_bridge(mcp, indexer)
 
 # Инициализация visualizer
 visualizer = CodeCityVisualizer(indexer)
@@ -76,30 +90,18 @@ def semantic_search(query: str):
 @mcp.tool()
 def find_symbol(name: str):
     """Ищет функцию или класс по имени."""
-    return {
-        "success": True,
-        "html_path": str(Path(output_file).resolve()),
-        "message": f"Открой {result['html_path']} в браузере для просмотра 3D города",
-        "stats": {
-            "files": result['buildings'],
-            "connections": result['connections'],
-            "districts": result['districts'],
-            "total_lines": result['metrics']['lines'],
-            "total_functions": result['metrics']['functions'],
-            "total_classes": result['metrics']['classes'],
-            "total_complexity": result['metrics']['complexity'],
-            "total_size_kb": round(result['metrics']['bytes'] / 1024, 1),
-        }
-    }
+    matches = []
+    for filepath, file_symbols in indexer.symbols.items():
+        for sym in file_symbols:
+            if sym.get("name") == name:
+                matches.append(sym)
+    
+    if not matches:
+        return {"error": f"Символ '{name}' не найден"}
+    
+    return {"symbols": matches}
 
 
-def main():
-    """Точка входа для запуска MCP сервера как пакета или скрипта."""
-    mcp.run()
-
-
-if __name__ == "__main__":
-    main()
 
 
 @mcp.tool()
@@ -130,13 +132,11 @@ def install_agent_skills(overwrite: bool = True):
 @mcp.tool()
 def add_repo(repo_path: str):
     """Добавляет репозиторий для индексации и индексирует его."""
-    repo_path = Path(repo_path).expanduser().resolve()
-    if not repo_path.exists():
-        return {"error": f"Путь не существует: {repo_path}"}
-    if not repo_path.is_dir():
-        return {"error": f"Это не директория: {repo_path}"}
+    r_path = Path(repo_path).expanduser().resolve()
+    if not r_path.exists() or not r_path.is_dir():
+        return {"error": f"Путь {repo_path} не существует или не является директорией"}
 
-    repo_str = str(repo_path)
+    repo_str = str(r_path)
     if repo_str in indexer.repos:
         return {"warning": f"Репозиторий уже добавлен: {repo_str}", "repos": indexer.repos}
 
@@ -147,11 +147,13 @@ def add_repo(repo_path: str):
     if len(indexer.repos) == 1:
         start_watch(indexer, indexer.repos)
 
+    base_dir = r_path / ".agents" / "booster"
     result = {
         "success": f"Добавлен репозиторий: {repo_str}",
         "repos": indexer.repos,
         "files_indexed": len(indexer.symbols),
-        "code_city": f"{repo_str}\\code_city.html",
+        "code_city": str(base_dir / "code_city.html"),
+        "repo_map": str(base_dir / "repo_map.md"),
     }
 
     return result
@@ -160,8 +162,8 @@ def add_repo(repo_path: str):
 @mcp.tool()
 def remove_repo(repo_path: str):
     """Удаляет репозиторий из списка индексации (данные сохраняются в индексе)."""
-    repo_path = Path(repo_path).expanduser().resolve()
-    repo_str = str(repo_path)
+    r_path = Path(repo_path).expanduser().resolve()
+    repo_str = str(r_path)
 
     if repo_str not in indexer.repos:
         return {"error": f"Репозиторий не найден в списке: {repo_str}", "repos": indexer.repos}
@@ -173,15 +175,14 @@ def remove_repo(repo_path: str):
 @mcp.tool()
 def reindex_repo(repo_path: str):
     """Переиндексирует указанный репозиторий (полная очистка и новая индексация)."""
-    repo_path = Path(repo_path).expanduser().resolve()
-    repo_str = str(repo_path)
+    r_path = Path(repo_path).expanduser().resolve()
+    repo_str = str(r_path)
 
     if repo_str not in indexer.repos:
         return {"error": f"Репозиторий не в списке индексации: {repo_str}"}
 
     # Очистка данных для файлов этого репозитория
-    files_to_remove = [f for f in indexer.symbols.keys() if Path(
-        f).resolve().parts[:len(repo_path.parts)] == repo_path.parts]
+    files_to_remove = [f for f in indexer.symbols.keys() if Path(f).resolve().is_relative_to(r_path)]
     for file in files_to_remove:
         indexer.vector.remove_file(file)
         indexer.graphs.clear_file(file)
@@ -196,10 +197,14 @@ def reindex_repo(repo_path: str):
             continue
         indexer.index_file(file)
 
+    on_index_callback(repo_str)
+
+    base_dir = r_path / ".agents" / "booster"
     return {
         "success": f"Переиндексирован: {repo_str}",
         "files_in_repo": len([f for f in indexer.symbols if Path(f).resolve().is_relative_to(repo_path)]),
-        "code_city": f"{repo_str}\\code_city.html",
+        "code_city": str(base_dir / "code_city.html"),
+        "repo_map": str(base_dir / "repo_map.md"),
     }
 
 
@@ -214,7 +219,7 @@ def list_repos():
 
 
 @mcp.tool()
-def get_repo_map(repo_path: str = None):
+def get_repo_map(repo_path: str | None = None):
     """
     Генерирует сжатую карту репозитория в стиле Aider RepoMap.
     Показывает структуру проекта, функции и классы (~4K токенов на 100K+ строк).
@@ -229,161 +234,39 @@ def get_repo_map(repo_path: str = None):
         return {"error": "Нет добавленных репозиториев. Используйте add_repo()"}
 
     if repo_path is None:
-        repo_path = indexer.repos[0]
+        r_path = indexer.repos[0]
+    else:
+        r_path = str(Path(repo_path).expanduser().resolve())
 
-    repo_path = Path(repo_path).expanduser().resolve()
-    repo_str = str(repo_path)
+    if r_path not in indexer.repos:
+        return {"error": f"Репозиторий не найден: {r_path}"}
 
-    if repo_str not in indexer.repos:
-        return {"error": f"Репозиторий не найден: {repo_str}"}
+    map_output = Path(r_path) / ".agents" / "booster" / "repo_map.md"
+    if map_output.exists():
+        with open(map_output, "r", encoding="utf-8") as f:
+            return {"repo_map": f.read()}
 
-    # Создаём или берём из кэша RepoMap
-    if repo_str not in repo_maps:
-        repo_maps[repo_str] = RepoMap(root=repo_str)
+    # Fallback to generating if it doesn't exist
+    if r_path not in repo_maps:
+        repo_maps[r_path] = RepoMap(root=r_path)
 
-    repo_map = repo_maps[repo_str]
+    repo_map = repo_maps[r_path]
     map_content = repo_map.get_repo_map()
 
     if not map_content:
         return {"warning": "Не удалось сгенерировать карту репозитория (пустой или нет поддерживаемых языков)"}
 
+    map_output.parent.mkdir(parents=True, exist_ok=True)
+    with open(map_output, "w", encoding="utf-8") as f:
+        f.write(map_content)
+
     return {"repo_map": map_content}
 
 
-# === Flipchart инструменты для дебага ===
-
-@mcp.tool()
-def flipchart_quick_debug(symbol: str, max_depth: int = 3):
-    """
-    Быстрый дебаг символа: генерирует Mermaid call graph + семантический контекст.
-    Идеально для анализа сложных систем.
-    """
-    return flipchart.quick_debug(symbol, max_depth)
 
 
 @mcp.tool()
-def flipchart_create_session(session_id: str, symbols: list[str]):
-    """
-    Создаёт сессию дебага для отслеживания группы символов.
-    Автоматически генерирует начальные диаграммы.
-    """
-    return flipchart.create_session(session_id, symbols)
-
-
-@mcp.tool()
-def flipchart_add_note(session_id: str, label: str, content: str,
-                       symbols: Optional[list[str]] = None):
-    """
-    Добавляет заметку-инсайт на флипчарт сессии.
-    Можно привязать к конкретным символам.
-    """
-    return flipchart.add_note(session_id, label, content, symbols)
-
-
-@mcp.tool()
-def flipchart_get_board(session_id: str):
-    """
-    Возвращает полный флипчарт сессии: все диаграммы и заметки.
-    """
-    return flipchart.get_board(session_id)
-
-
-@mcp.tool()
-def flipchart_call_graph(symbol: str, max_depth: int = 5):
-    """
-    Генерирует Mermaid-диаграмму вызовов для символа.
-    """
-    return {"mermaid": flipchart.generate_call_graph_mermaid(symbol, max_depth)}
-
-
-@mcp.tool()
-def flipchart_sequence_diagram(symbol: str, depth: int = 5):
-    """
-    Генерирует Sequence-диаграмму выполнения от символа.
-    """
-    return {"mermaid": flipchart.generate_sequence_diagram(symbol, depth)}
-
-
-# === Toolkit инструменты ===
-
-@mcp.tool()
-def code_grep(pattern: str, file_pattern: str = "*",
-              ignore_case: bool = True, max_results: int = 100):
-    """Регулярный поиск по всем файлам проектов"""
-    return toolkit.code_grep(pattern, file_pattern, ignore_case, max_results)
-
-
-@mcp.tool()
-def read_with_context(file: str, line: int, context: int = 20):
-    """Читает файл с ±N строк вокруг указанной линии"""
-    return toolkit.read_with_context(file, line, context)
-
-
-@mcp.tool()
-def read_file(file: str, start: int = 0, end: int = 100):
-    """Читает диапазон строк из файла (0-indexed)"""
-    return toolkit.read_file(file, start, end)
-
-
-@mcp.tool()
-def git_diff(path: str, commit: str = "HEAD", staged: bool = False):
-    """Показывает изменения в файле/репозитории"""
-    return toolkit.git_diff(path, commit, staged)
-
-
-@mcp.tool()
-def git_log(path: str, limit: int = 10):
-    """История коммитов для файла/репозитория"""
-    return toolkit.git_log(path, limit)
-
-
-@mcp.tool()
-def run_command(cmd: str, cwd: str = None, timeout: int = 30000):
-    """Выполняет команду в shell. timeout в миллисекундах"""
-    return toolkit.run_command(cmd, cwd, timeout)
-
-
-@mcp.tool()
-def analyze_error(error_text: str, symbols: Optional[list[str]] = None):
-    """Ищет в коде потенциальные причины ошибки по тексту stacktrace"""
-    return toolkit.analyze_error(error_text, symbols)
-
-
-@mcp.tool()
-def list_configs(repo: str = None):
-    """Находит все конфигурационные файлы в репозитории"""
-    return toolkit.list_configs(repo)
-
-
-@mcp.tool()
-def project_memory(action: str, key: str, value: str = None, repo: str = None):
-    """
-    Управление долгосрочной памятью проекта.
-    action: get, set, delete, list, clear
-    """
-    return toolkit.project_memory(action, key, value, repo)
-
-
-@mcp.tool()
-def compare_symbols(symbol: str, file1: str, file2: str):
-    """Сравнивает реализацию символа в двух файлах через diff"""
-    return toolkit.compare_symbols(symbol, file1, file2)
-
-
-@mcp.tool()
-def find_duplicates(min_lines: int = 5, max_results: int = 50):
-    """Ищет дублирующиеся блоки кода (copy-paste)"""
-    return toolkit.find_duplicates(min_lines, max_results)
-
-
-@mcp.tool()
-def external_deps(symbol: str = None, file: str = None):
-    """Находит внешние зависимости: HTTP, БД, Redis, Kafka, файлы, subprocess"""
-    return toolkit.external_deps(symbol, file)
-
-
-@mcp.tool()
-def get_code_city(repo_path: str = None, output_file: str = 'code_city.html'):
+def get_code_city(repo_path: str | None = None, output_file: str = "code_city.html"):
     """
     Генерирует 3D визуализацию проекта в виде "города".
 
@@ -401,24 +284,34 @@ def get_code_city(repo_path: str = None, output_file: str = 'code_city.html'):
         return {"error": "Нет добавленных репозиториев. Используйте add_repo()"}
 
     if repo_path is None:
-        repo_path = indexer.repos[0]
+        r_path = indexer.repos[0]
+    else:
+        r_path = str(Path(repo_path).expanduser().resolve())
 
-    repo_path = Path(repo_path).expanduser().resolve()
-    repo_str = str(repo_path)
+    if r_path not in indexer.repos:
+        return {"error": f"Репозиторий не найден: {r_path}"}
 
-    if repo_str not in indexer.repos:
-        return {"error": f"Репозиторий не найден: {repo_str}"}
+    html_path = Path(r_path) / ".agents" / "booster" / "code_city.html"
+    
+    if html_path.exists():
+        return {
+            "success": True,
+            "html_path": str(html_path),
+            "message": f"Открой {str(html_path)} в браузере для просмотра 3D города",
+            "stats": "Из кэша"
+        }
 
-    # Переинициализируем визуализатор с актуальным indexer
+    # Fallback to generating if it doesn't exist
     viz = CodeCityVisualizer(indexer)
-    result = viz.generate_visualization(repo_str, output_file)
+    html_path.parent.mkdir(parents=True, exist_ok=True)
+    result = viz.generate_visualization(r_path, str(html_path))
 
     if isinstance(result, dict) and result.get('error'):
         return result
 
     return {
         "success": True,
-        "html_path": str(Path(output_file).resolve()),
+        "html_path": str(html_path),
         "message": f"Открой {result['html_path']} в браузере для просмотра 3D города",
         "stats": {
             "files": result['buildings'],
@@ -433,5 +326,10 @@ def get_code_city(repo_path: str = None, output_file: str = 'code_city.html'):
     }
 
 
-if __name__ == "__main__":
+def main():
+    """Точка входа для запуска MCP сервера как пакета или скрипта."""
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()

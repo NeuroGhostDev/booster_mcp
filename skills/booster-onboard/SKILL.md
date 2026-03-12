@@ -14,23 +14,23 @@ description: |
 ## Алгоритм
 
 1. Добавь репозиторий через add_repo.
-2. Сними масштаб через repo_stats.
-3. Получи структурную карту через get_repo_map.
-4. Для больших проектов построй визуальную карту через get_code_city.
-5. Найди точки входа через semantic_search и find_symbol.
-6. Сохрани выводы в project_memory.
+2. 🚀 **СРАЗУ ЖЕ** вызови `inject_context()` чтобы получить карту проекта (RepoMap) и список конвенций.
+3. Вызови `fetch_stack_docs()`, чтобы понять какие библиотеки использует проект и подгрузить их доки (через mcp context7).
+4. Сними масштаб через repo_stats().
+5. Для больших проектов построй визуальную карту через get_code_city.
+6. Найди точки входа через semantic_search и find_symbol.
+7. Сохрани выводы в project_memory.
 
 ## Базовая последовательность
 
 ```text
 add_repo("<repo>")
+inject_context()
+fetch_stack_docs()
 repo_stats()
-get_repo_map("<repo>")
-get_code_city("<repo>")
+get_code_city()
 semantic_search("application entry point")
-semantic_search("router handler controller")
-find_symbol("main")
-list_configs("<repo>")
+list_configs()
 project_memory("set", "architecture_overview", "...", repo="<repo>")
 ```
 

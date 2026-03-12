@@ -19,24 +19,26 @@ class CodeToolkit:
     def __init__(self, indexer, repos: list[str]):
         self.indexer = indexer
         self.repos = repos
-        self.memory_file = Path.home() / ".booster_memory.json"
-        self._load_memory()
 
-    def _load_memory(self):
-        """Загружает долгосрочную память из файла"""
-        if self.memory_file.exists():
+    def _get_repo_memory_file(self, repo: str) -> Path:
+        p = Path(repo).expanduser().resolve() / ".agents" / "booster" / "memory.json"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        return p
+
+    def _load_repo_memory(self, repo: str) -> dict:
+        p = self._get_repo_memory_file(repo)
+        if p.exists():
             try:
-                with open(self.memory_file, "r", encoding="utf-8") as f:
-                    self.memory = json.load(f)
+                with open(p, "r", encoding="utf-8") as f:
+                    return json.load(f)
             except:
-                self.memory = {}
-        else:
-            self.memory = {}
+                pass
+        return {}
 
-    def _save_memory(self):
-        """Сохраняет память на диск"""
-        with open(self.memory_file, "w", encoding="utf-8") as f:
-            json.dump(self.memory, f, indent=2, ensure_ascii=False)
+    def _save_repo_memory(self, repo: str, data: dict):
+        p = self._get_repo_memory_file(repo)
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
     # === 1. Grep-поиск ===
 
@@ -383,13 +385,10 @@ class CodeToolkit:
         if not repo and self.repos:
             repo = self.repos[0]
 
-        repo_key = hashlib.md5(repo.encode()).hexdigest()[
-            :8] if repo else "global"
+        if not repo:
+            return {"error": "Не указан репозиторий"}
 
-        if repo_key not in self.memory:
-            self.memory[repo_key] = {}
-
-        repo_memory = self.memory[repo_key]
+        repo_memory = self._load_repo_memory(repo)
 
         if action == "get":
             return {
@@ -404,12 +403,12 @@ class CodeToolkit:
                 "value": value,
                 "updated": str(Path.home())
             }
-            self._save_memory()
+            self._save_repo_memory(repo, repo_memory)
             return {"key": key, "value": value, "repo": repo}
         elif action == "delete":
             if key in repo_memory:
                 del repo_memory[key]
-                self._save_memory()
+                self._save_repo_memory(repo, repo_memory)
             return {"deleted": key, "repo": repo}
         elif action == "list":
             return {
@@ -418,8 +417,7 @@ class CodeToolkit:
                 "count": len(repo_memory)
             }
         elif action == "clear":
-            self.memory[repo_key] = {}
-            self._save_memory()
+            self._save_repo_memory(repo, {})
             return {"cleared": repo}
         else:
             return {"error": f"Неизвестное действие: {action}"}
@@ -524,8 +522,10 @@ class CodeToolkit:
 
     # === 10. Внешние зависимости ===
 
-    def external_deps(self, symbol: str = None,
-                      file: str = None) -> dict:
+    from typing import Optional
+
+    def external_deps(self, symbol: Optional[str] = None,
+                      file: Optional[str] = None) -> dict:
         """Находит внешние API, БД, очереди, которые использует код"""
         external_patterns = {
             "http_calls": [

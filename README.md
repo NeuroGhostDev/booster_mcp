@@ -6,9 +6,18 @@
 
 Booster MCP is an MCP server for semantic code analysis, repository mapping, and navigation across large codebases. It is built for AI agents and developers who need fast project onboarding, symbol discovery, structural visualization, and practical debugging tools.
 
+![Code City 3D Visualization - Your repository as a virtual city](assets/code_city.png)
+
+## 📖 Documentation & Guides
+
+- **[COOKBOOK.md](COOKBOOK.md)** — Detailed recipes, practical use-cases, and prompt examples for working with the server.
+- **[MARKETPLACE.md](MARKETPLACE.md)** — Instructions for publishing to MCP catalogs (Smithery, Glama).
+
 ## Features
 
 - Semantic code search powered by vector embeddings
+- Context Injection via MCP resources (`repo://map`, `repo://stack`, `repo://conventions`)
+- Context7 integration via `fetch_stack_docs` for up-to-date dependency documentation
 - Symbol lookup for functions, classes, and methods
 - Repository map generation for compact project context
 - Call graph and import graph exploration
@@ -26,6 +35,7 @@ Booster MCP ships with built-in skills for working with large codebases. On star
 Included skills:
 
 - `booster-onboard`
+- `booster-context-inject`
 - `booster-bug-hunt`
 - `booster-feature-add`
 - `booster-deep-dive`
@@ -51,7 +61,27 @@ Default install location:
 
 ## Installation
 
-### Windows
+### One-Click Installers (Recommended)
+
+The fastest way to install Booster MCP and automatically set up all bundled Agent Skills.
+
+**macOS / Linux / Debian / Ubuntu / iOS (Termux/a-shell):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NeuroGhostDev/Booster-mcp/main/install.sh -o install.sh
+bash install.sh
+```
+
+**Windows (PowerShell):**
+
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NeuroGhostDev/Booster-mcp/main/install.ps1" -OutFile "install.ps1"
+.\install.ps1
+```
+
+### Manual Installation
+
+#### Windows
 
 ```powershell
 git clone https://github.com/NeuroGhostDev/Booster-mcp.git
@@ -184,6 +214,44 @@ Add Booster MCP to your MCP client configuration.
 }
 ```
 
+Before strat using Booster MCP, make sure to add that block of system instructions to your MCP client configuration.
+
+## Block of system instructions
+
+```text
+MCP usage policy
+
+- If a semantic repository analysis MCP server is available, prefer it over plain text search for onboarding, architecture analysis, dependency tracing, debugging, refactoring, and code review.
+- When entering a new repository or returning after a long break, start with repository onboarding:
+  inspect repository stats, repository map, configuration files, conventions, stack context, and indexed structure before making implementation decisions.
+- For bug investigation, stack traces, failing tests, and strange runtime behavior, start with semantic error analysis, dependency tracing, contextual file reads, and graph-based debugging before broad manual grep.
+- For architecture questions, feature planning, and change impact analysis, prefer repository map, symbol search, external dependency analysis, call graph, sequence diagram, and context injection.
+- Before adding a feature, first search for existing patterns, conventions, related symbols, and neighboring implementations in the repository to avoid duplicate architecture and inconsistent code paths.
+- Before refactoring, use semantic tooling to identify the impact radius, related symbols, configuration touchpoints, and affected dependencies.
+- When performing code review, prioritize semantic review of bugs, regressions, security risks, dependency boundaries, and performance issues before giving summaries.
+- If stack or dependency documentation can be fetched dynamically, retrieve up-to-date docs before making framework-specific or library-specific decisions.
+- Use repository memory only for stable, verified architectural facts, conventions, and operational knowledge. Do not store assumptions as facts.
+- If the repository is not indexed or the index is stale, refresh or rebuild the semantic index before deep analysis.
+
+Booster MCP skill routing policy
+
+- New repository or unfamiliar codebase -> use onboard flow
+- Bug, exception, failing tests, broken runtime -> use bug-hunt flow
+- Architecture, data flow, dependency analysis -> use deep-dive flow
+- New feature in existing system -> use feature-add flow
+- Structural cleanup or behavior-preserving rewrite -> use refactor flow
+- Code review or audit request -> use review flow
+- Large task requiring context bootstrapping -> inject repository context before implementation
+- Framework-sensitive work -> fetch current stack documentation before changing code
+
+Tool preference policy
+
+- Prefer semantic repository tools over grep when the goal is understanding structure rather than matching text.
+- Prefer contextual reads over opening many small disconnected snippets.
+- Prefer symbol- and graph-based navigation over manual search when evaluating impact or tracing behavior.
+- Prefer stack documentation retrieval before making assumptions about external libraries, frameworks, or APIs.
+```
+
 Use absolute paths for both the Python interpreter and `server.py`.
 
 ## What Happens on Startup
@@ -212,6 +280,11 @@ Restart your MCP client after updating its configuration.
 
 - `semantic_search(query: str)`
 - `find_symbol(name: str)`
+
+### Context Injection (v3.0)
+
+- `inject_context(include_map: bool = True, include_stack: bool = True, include_conventions: bool = False)`
+- `fetch_stack_docs()`
 
 ### Flipchart Debugging
 
@@ -259,7 +332,7 @@ add_repo("C:\\my-project")
 get_code_city()
 ```
 
-The output file is usually written as `code_city.html` in the selected repository or to the path passed via `output_file`.
+The output file is automatically generated and cached as `.agents/booster/code_city.html` within the selected repository. Repo Map and Project Memory are also cached in the `.agents/booster` directory.
 
 ## Web UI
 
