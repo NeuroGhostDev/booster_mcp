@@ -94,13 +94,46 @@ class RepoIndexer:
             })
 
     def full_index(self):
+        import os
+        MAX_DEPTH = 15
+        
         for repo in self.repos:
-            for file in Path(repo).rglob("*"):
-                if not file.is_file():
+            repo_path = Path(repo).expanduser().resolve()
+            
+            # Чтение игноров из .ignore
+            current_ignores = set(IGNORED_DIRS)
+            ignore_file = repo_path / ".ignore"
+            if ignore_file.exists():
+                try:
+                    with open(ignore_file, "r", encoding="utf-8") as f:
+                        for line in f:
+                            cleaned = line.strip()
+                            if cleaned and not cleaned.startswith("#"):
+                                current_ignores.add(cleaned.strip('/')) # Убираем слэши для os.walk
+                except Exception:
+                    pass
+
+            for root, dirs, files in os.walk(repo_path):
+                # Исключаем директории на лету (os.walk не зайдет в удаленные из dirs)
+                dirs[:] = [d for d in dirs if d not in current_ignores and not d.startswith('.')]
+                
+                # Проверка глубины вложенности
+                try:
+                    rel_path = Path(root).relative_to(repo_path)
+                    depth = len(rel_path.parts)
+                    if depth >= MAX_DEPTH:
+                        dirs[:] = []
+                        continue
+                except ValueError:
                     continue
-                if any(part in IGNORED_DIRS for part in file.parts):
-                    continue
-                self.index_file(file)
+                    
+                for file_name in files:
+                    # Игнорируем файлы, которые начинаются с точки или в current_ignores (например __pycache__ файлы)
+                    if file_name.startswith('.') or file_name in current_ignores:
+                        continue
+                        
+                    file_path = Path(root) / file_name
+                    self.index_file(file_path)
 
             # Вызываем callback после индексации каждого репозитория
             if self.on_index_complete:

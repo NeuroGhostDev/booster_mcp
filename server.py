@@ -141,6 +141,34 @@ def add_repo(repo_path: str):
         return {"warning": f"Репозиторий уже добавлен: {repo_str}", "repos": indexer.repos}
 
     indexer.repos.append(repo_str)
+
+    # Создание/обновление .ignore файла для отсечения мусора (node_modules, venv и т.д.)
+    ignore_path = r_path / ".ignore"
+    default_ignores = {
+        "node_modules", "venv", ".venv", "env", ".env", 
+        "__pycache__", ".idea", ".vscode", "dist", "build", 
+        "target", ".next", ".nuxt", "out", "coverage", ".git", ".tox"
+    }
+    
+    existing_ignores = set()
+    if ignore_path.exists():
+        try:
+            with open(ignore_path, "r", encoding="utf-8") as f:
+                existing_ignores = set(line.strip() for line in f if line.strip())
+        except Exception:
+            pass
+
+    new_ignores = default_ignores - existing_ignores
+    if new_ignores:
+        try:
+            with open(ignore_path, "a", encoding="utf-8") as f:
+                if existing_ignores:
+                    f.write("\n")
+                for item in sorted(new_ignores):
+                    f.write(f"{item}\n")
+        except Exception as e:
+            print(f"Не удалось обновить .ignore: {e}")
+
     indexer.full_index()
 
     # Запуск watchdog при первом добавлении репозитория

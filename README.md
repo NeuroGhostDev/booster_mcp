@@ -365,6 +365,8 @@ Main endpoints:
 
 ## Ignore Files
 
+Booster MCP automatically generates or updates a `.ignore` file at the root of a repository when it is added via `add_repo`. This file is pre-populated with common heavy or generated directories to ignore (e.g., `node_modules`, `venv`, `build`, `.next`, `target`) to significantly optimize semantic indexing performance, limit directory traversal depth (`MAX_DEPTH`), and keep the AI context clean.
+
 Global ignores can be defined in `~/.ignore`:
 
 ```text
