@@ -1,131 +1,161 @@
 # Booster MCP Cookbook
 
-Добро пожаловать в **Booster MCP Cookbook**! Здесь собраны лучшие практики, рецепты и примеры того, как ИИ-агенты и разработчики могут максимально эффективно использовать возможности Booster MCP v3.0.
+Welcome to the **Booster MCP Cookbook**! This guide contains best practices, recipes, and examples of how AI agents and developers can maximize the capabilities of Booster MCP v3.0.
 
-Booster MCP превращает агента в полноценного "сеньора", который может быстро вникать в архитектуру, находить нужный контекст, использовать 3D-визуализации и интегрировать актуальную документацию библиотек (Context7).
-
----
-
-## 📖 Рецепт 1: Мгновенный онбординг в новом проекте
-
-Когда агент впервые сталкивается с большим проектом, ему не нужно читать сотни файлов. Ему нужно получить "карту территории" и увидеть "город".
-
-**Шаг 1. Добавление репозитория в индекс**
-```text
-У агента: Вызови инструмент `add_repo` с абсолютным путем к проекту.
-Пример вызова: add_repo(repo_path="C:\\projects\\my_large_app")
-```
-*Что произойдет:* Booster проиндексирует код, построит графы вызовов и импортов, а также автоматически сгенерирует артефакты `.agents/booster/code_city.html` и `.agents/booster/repo_map.md`.
-
-**Шаг 2. Запрос карты репозитория**
-```text
-У агента: Вызови `get_repo_map(repo_path="C:\\projects\\my_large_app")`
-```
-Агент получит сжатое Markdown-дерево проекта с важнейшими классами и функциями (аналог Aider RepoMap). Это экономит контекстное окно и дает мгновенное понимание структуры.
-
-**Шаг 3. Визуализация в 3D (для пользователя)**
-```text
-У агента: Сообщи пользователю открыть сгенерированный файл `code_city.html` в браузере.
-```
-Пользователь увидит 3D-город, где высота зданий — это размер файлов, а цвет — язык программирования. Это помогает визуально найти "горячие" и сложные зоны.
+Booster MCP transforms your AI agent into a "Senior Engineer" capable of quickly understanding architecture, finding deep context, building 3D visualizations, and integrating up-to-date library documentation (Context7).
 
 ---
 
-## 🔍 Рецепт 2: Умный поиск и анализ зависимостей
+## 📖 Recipe 1: Instant Onboarding in a New Project
 
-Забудьте про слепой `grep`. Используйте семантический поиск и анализ AST.
+When an agent first encounters a large project, it doesn't need to read hundreds of files blindly. It needs a "map of the territory" and a view of the "city."
 
-**Сценарий:** Нужно найти, где в проекте происходит аутентификация пользователя.
+**Step 1. Add Repository to the Index**
 ```text
-У агента: Вызови `semantic_search(query="user authentication logic JWT")`
+Agent Prompt: Call the `add_repo` tool with the absolute path to the project.
+Example: add_repo(repo_path="C:\\projects\\my_large_app")
 ```
-Booster найдет релевантные куски кода по *смыслу*, даже если слова "JWT" нет в коде (например, найдет имплементацию токенов).
+*What happens:* Booster indexes the code, builds call and import graphs, and automatically generates artifacts: `.agents/booster/code_city.html` and `.agents/booster/repo_map.md`. It also auto-generates a `.ignore` file to skip noisy directories like `node_modules` and `venv`.
 
-**Сценарий:** Найдена функция `verify_token`. Нужно посмотреть, кто ее вызывает и что вызывает она.
+**Step 2. Request the Repository Map**
 ```text
-У агента: Вызови `flipchart_call_graph(symbol="verify_token", max_depth=3)`
+Agent Prompt: Call `get_repo_map(repo_path="C:\\projects\\my_large_app")`
 ```
-Booster вернет Mermaid-диаграмму вызовов. Агент сможет ее отрендерить, и разработчик сразу поймет флоу авторизации.
+The agent receives a condensed Markdown tree of the project highlighting crucial classes and functions (similar to Aider's RepoMap). This saves context window space and provides instant structural understanding.
+
+**Step 3. Visualize in 3D (for the User)**
+```text
+Agent Prompt: Tell the user to open the generated `code_city.html` file in their browser.
+```
+The user will see a 3D city where building height equals file complexity, and color represents the programming language. This helps visually identify "hot" and complex zones in the codebase.
 
 ---
 
-## 🧠 Рецепт 3: Инжектирование контекста (Context Injection)
+## 🔍 Recipe 2: Smart Search & Dependency Analysis
 
-В версии 3.0 Booster внедряет концепцию **активного контекста**. Агенты могут собирать знания о проекте, чтобы при перезапусках не забывать суть.
+Forget blind `grep`. Use semantic search and AST analysis.
 
-**Работа с памятью проекта (`project_memory`):**
-Когда агент принимает важное архитектурное решение (например, "В этом проекте мы используем Pydantic v2 и внедрение зависимостей через dependency-injector"), он должен это записать:
+**Scenario:** You need to find where user authentication occurs in the project.
 ```text
-У агента: Вызови `project_memory(action="set", key="architecture_rules", value="Use Pydantic v2 and DI container. No singletons.")`
+Agent Prompt: Call `semantic_search(query="user authentication logic JWT")`
 ```
-При следующем запуске скилл `booster-onboard` автоматически подтянет эти правила и добавит их в системный промпт агента.
+Booster will find relevant code snippets by *meaning*, even if the exact string "JWT" is missing from the code.
+
+**Scenario:** The function `verify_token` was found. You need to see who calls it and what it calls.
+```text
+Agent Prompt: Call `flipchart_call_graph(symbol="verify_token", max_depth=3)`
+```
+Booster returns a Mermaid call graph diagram. The agent renders it, and the developer instantly understands the authorization flow.
 
 ---
 
-## 📚 Рецепт 4: Работа с Context7 (Свежие доки извне)
+## 🧠 Recipe 3: Context Injection
 
-Частая проблема агентов: они галлюцинируют параметры функций для новых версий библиотек.
-Booster MCP решает это мостом к Context7.
+In version 3.0, Booster introduces the concept of **Active Context**. Agents can gather project knowledge so they don't forget the core ideas upon restarting.
 
-**Сценарий:** В проекте используется `FastAPI`, и агент не уверен, как правильно настроить `Lifespan` события в последних версиях.
-
-**Решение:**
+**Working with Project Memory (`project_memory`):**
+When an agent makes an important architectural decision (e.g., "In this project, we use Pydantic v2 and dependency injection"), it should record it:
 ```text
-У агента: Вызови `mcp_context7_resolve-library-id(query="fastapi lifespan events", libraryName="fastapi")`
+Agent Prompt: Call `project_memory(action="set", key="architecture_rules", value="Use Pydantic v2 and DI container. No singletons.")`
 ```
-Агент получает актуальную документацию из облака Context7 и генерирует правильный, рабочий код с первого раза.
-
-Более того, Booster MCP предоставляет инструмент `fetch_stack_docs`, который анализирует `requirements.txt` / `package.json` и автоматически скачивает документацию по ключевым зависимостям стека в `stack_docs.md`.
+On the next run, the `booster-onboard` skill automatically pulls these rules and injects them into the agent's system prompt.
 
 ---
 
-## 📊 Рецепт 5: Дебаггинг сессии с Flipchart
+## 📚 Recipe 4: Working with Context7 (Fresh External Docs)
 
-Flipchart — это виртуальная маркерная доска агента.
+A common agent problem: hallucinating function parameters for new library versions. 
+Booster MCP solves this with the Context7 bridge.
 
-1. **Создание сессии дебага:**
+**Scenario:** The project uses `FastAPI`, and the agent isn't sure how to configure `Lifespan` events in the latest versions.
+
+**Solution:**
+```text
+Agent Prompt: Call `mcp_context7_resolve-library-id(query="fastapi lifespan events", libraryName="fastapi")`
+```
+The agent fetches up-to-date documentation from the Context7 cloud and generates correct, working code on the first try.
+
+Additionally, Booster MCP provides the `fetch_stack_docs` tool, which analyzes `requirements.txt` / `package.json` and automatically downloads documentation for key stack dependencies into `stack_docs.md`.
+
+---
+
+## 📊 Recipe 5: Debugging Sessions with Flipchart
+
+Flipchart is the virtual whiteboard for your agent.
+
+1. **Create a Debug Session:**
    ```text
-   Вызов: flipchart_create_session(session_id="bug_142", symbols=["process_payment", "validate_card"])
+   Call: flipchart_create_session(session_id="bug_142", symbols=["process_payment", "validate_card"])
    ```
-2. **Добавление инсайтов:**
+2. **Add Insights:**
    ```text
-   Вызов: flipchart_add_note(session_id="bug_142", label="Insight", content="validate_card падает, если срок действия равен текущему месяцу", symbols=["validate_card"])
+   Call: flipchart_add_note(session_id="bug_142", label="Insight", content="validate_card fails if the expiration is the current month", symbols=["validate_card"])
    ```
-3. **Генерация Sequence-диаграммы:**
+3. **Generate a Sequence Diagram:**
    ```text
-   Вызов: flipchart_sequence_diagram(symbol="process_payment")
+   Call: flipchart_sequence_diagram(symbol="process_payment")
    ```
-4. **Рендер доски:**
-   Агент отрисовывает все это в markdown. В итоге получается идеальный артефакт (например, `walkthrough.md`) для пользователя, показывающий ход рассуждений и визуальные схемы бага.
+4. **Render the Board:**
+   The agent renders all of this in markdown. The result is a perfect artifact (e.g., `walkthrough.md`) for the user, showing the reasoning process and visual bug schemas.
 
 ---
 
-## 🛠 Рецепт 6: Разработка кастомных скиллов (Agent Skills)
+## 🛡️ Recipe 6: Auto-Configuring `.ignore` for Massive Repositories (NEW)
 
-Вы можете создавать свои скиллы в `.agents/skills/[skill-name]/SKILL.md`.
+Large monorepos can choke standard indexing tools. Booster MCP v3.0 introduces a Smart Parser.
 
-**Пример идеального промпта для скилла `booster-architecture-reviewer`**:
+**Scenario:** You have a Next.js + Python backend monorepo with massive `node_modules` and `venv` folders.
+```text
+Agent Prompt: Call `add_repo(repo_path="C:\\projects\\massive_monorepo")`
+```
+*What happens:* Booster automatically detects that this is a new repository and generates a `.ignore` file at the root. It populates it with standard heavy directories (`node_modules`, `venv`, `build`, `target`, `.next`).
+It also strictly enforces a traversal depth limit (`MAX_DEPTH = 15`) and utilizes `os.walk` to aggressively prune ignored branches early. 
+
+**Result:** The indexing completes in seconds instead of minutes, and the resulting `repo_map.md` remains clean and highly relevant.
+
+---
+
+## 🎨 Recipe 7: Immersive 3D Rendering with Code City (NEW)
+
+Booster MCP v3.0 brings a Neon/Cyberpunk aesthetic to your repository visualization.
+
+**Scenario:** You want to show the user a visual representation of their code complexity.
+```text
+Agent Prompt: After running `add_repo`, tell the user: "I have generated a 3D visualization of your repository. Please open `.agents/booster/code_city.html` in your browser."
+```
+*What the user sees:*
+- **Neon Post-Processing:** Files and directories glow with an `UnrealBloomPass` effect against a deep cosmic background `#050510`.
+- **Glassmorphism UI:** Floating, semi-transparent menus and legends with backdrop blur overlays.
+- **Dynamic Metrics:** Users can dynamically switch the height of the buildings between lines of code (LOC), complexity, and class/function count right from the UI panel.
+
+---
+
+## 🛠 Recipe 8: Developing Custom Agent Skills
+
+You can create your own skills in `.agents/skills/[skill-name]/SKILL.md`.
+
+**Example of an ideal prompt for the `booster-architecture-reviewer` skill**:
 ```markdown
 ---
 name: booster-architecture-reviewer
-description: Аудит архитектуры проекта с использованием Booster MCP
+description: Project architecture audit using Booster MCP
 ---
 
-# Инструкции
+# Instructions
 
-1. Запроси у пользователя путь к проекту и вызови `add_repo`.
-2. Получи структуру через `get_repo_map`.
-3. Обойди ключевые модули и вызови `get_code_city`. Скажи пользователю посмотреть 3D город, чтобы оценить зацепление (coupling).
-4. Найди дубликаты кода: вызови `find_duplicates`.
-5. По результатам сформируй отчет `architecture_audit.md`.
+1. Ask the user for the project path and call `add_repo`.
+2. Get the structure via `get_repo_map`.
+3. Traverse the key modules and call `get_code_city`. Tell the user to view the 3D city to evaluate coupling.
+4. Find code duplicates: call `find_duplicates`.
+5. Based on the results, generate an `architecture_audit.md` report.
 ```
-При запуске `booster_mcp` эти скиллы автоматически прольются в директорию агента.
+When `booster_mcp` starts, these skills are automatically synced into the agent's local directory.
 
 ---
 
-## 🎓 Резюме: Правило "Хорошего тона" агента
+## 🎓 Summary: Agent Etiquette Rules
 
-1. **Никогда не читай файлы проекта вслепую (через утилиты вроде `find` + `cat`).** Сначала запроси `get_repo_map()`.
-2. **Используй память.** Узнал паттерн? Сохрани в `project_memory`.
-3. **Будь визионером.** Генерируй Mermaid-схемы через Flipchart инструменты — пользователи любят визуализацию.
-4. **Не гадай с библиотеками.** Видишь новую либу в `requirements.txt`? Используй `fetch_stack_docs` или напрямую Context7 API.
+1. **Never read project files blindly (via `find` + `cat` tools).** Always request `get_repo_map()` first.
+2. **Use memory.** Discovered a pattern? Save it to `project_memory`.
+3. **Be a visionary.** Generate Mermaid diagrams via Flipchart tools—users love visualization.
+4. **Don't guess with libraries.** See a new library in `requirements.txt`? Use `fetch_stack_docs` or the Context7 API directly.
