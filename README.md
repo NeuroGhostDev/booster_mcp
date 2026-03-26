@@ -1,519 +1,345 @@
-# Booster MCP
+# 🚀 Booster MCP — Semantic Code Intelligence for Large Codebases
 
 [![MCP](https://img.shields.io/badge/MCP-server-blue)](https://modelcontextprotocol.io)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Booster MCP is an MCP server for semantic code analysis, repository mapping, and navigation across large codebases. It is built for AI agents and developers who need fast project onboarding, symbol discovery, structural visualization, and practical debugging tools.
+## 🎯 What You Get
 
-![Code City 3D Visualization - Your repository as a virtual city](assets/code_city.png)
+**Booster MCP turns complex codebases into understandable systems.**
 
-## 📖 Documentation & Guides
+You spend less time searching and more time building. Instead of:
+- ❌ Manually grepping through thousands of files
+- ❌ Getting lost in unfamiliar architectures
+- ❌ Debugging by guessing
 
-- **[COOKBOOK.md](COOKBOOK.md)** — Detailed recipes, practical use-cases, and prompt examples for working with the server.
-- **[MARKETPLACE.md](MARKETPLACE.md)** — Instructions for publishing to MCP catalogs (Smithery, Glama).
+You get:
+- ✅ **Instant semantic understanding** — ask questions, get answers across your entire codebase
+- ✅ **Visual architecture maps** — see your code as a 3D "Code City"
+- ✅ **Automatic context injection** — include exactly what the AI needs to fix bugs or add features
+- ✅ **Debugging superpowers** — flipchart sessions with call graphs, sequence diagrams, and session notes
+- ✅ **7 battle-tested agent skills** — pre-built workflows for onboarding, refactoring, bug hunting, and code review
 
-## Features
+### Real-World Impact
 
-- Semantic code search powered by vector embeddings
-- Context Injection via MCP resources (`repo://map`, `repo://stack`, `repo://conventions`)
-- Context7 integration via `fetch_stack_docs` for up-to-date dependency documentation
-- Symbol lookup for functions, classes, and methods
-- Repository map generation for compact project context
-- Call graph and import graph exploration
-- Code City 3D visualization with a built-in web UI
-- Flipchart debugging with Mermaid diagrams and session notes
-- Toolkit utilities for grep, git inspection, command execution, duplicate search, and project memory
-- Incremental indexing with automatic updates via watchdog
-- Dynamic repository management without restarting the server
-- Bundled agent skills synced to `.agents/skills` on startup
+| Problem | Old Way | With Booster |
+|---------|---------|--------------|
+| New developer onboarding | 2-3 days of grep | 30 min interactive map + context |
+| Finding related code | Manual search | Semantic search + symbol graph |
+| Debugging production issues | Stack traces → manual tracing | `analyze_error()` → call graph → fix |
+| Code review bottlenecks | Hours of manual review | Semantic + dependency analysis |
 
-## Bundled Agent Skills
+---
 
-Booster MCP ships with built-in skills for working with large codebases. On startup, the server synchronizes them into the local agent skills directory.
+## ⚡ Quick Start (1 minute)
 
-Included skills:
+### One-Click Install
 
-- `booster-onboard`
-- `booster-context-inject`
-- `booster-bug-hunt`
-- `booster-feature-add`
-- `booster-deep-dive`
-- `booster-refactor`
-- `booster-review`
-
-Related MCP tools:
-
-- `list_agent_skills()`
-- `install_agent_skills(overwrite: bool = True)`
-
-Default install location:
-
-- Windows: `%USERPROFILE%\\.agents\\skills`
-- macOS: `~/.agents/skills`
-- Linux: `~/.agents/skills`
-
-## Requirements
-
-- Python 3.11+
-- Git
-- Internet access on first run to download the `all-MiniLM-L6-v2` embedding model
-
-## Installation
-
-### One-Click Installers (Recommended)
-
-The fastest way to install Booster MCP and automatically set up all bundled Agent Skills.
-
-**macOS / Linux / Debian / Ubuntu / iOS (Termux/a-shell):**
-
+**macOS / Linux:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NeuroGhostDev/Booster-mcp/main/install.sh -o install.sh
-bash install.sh
+curl -fsSL https://raw.githubusercontent.com/NeuroGhostDev/Booster-mcp/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
-
 ```powershell
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NeuroGhostDev/Booster-mcp/main/install.ps1" -OutFile "install.ps1"
-.\install.ps1
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NeuroGhostDev/Booster-mcp/main/install.ps1" -OutFile "install.ps1" | .\install.ps1
 ```
 
-### Manual Installation
+### First Command
 
-#### Windows
-
-```powershell
-git clone https://github.com/NeuroGhostDev/Booster-mcp.git
-cd Booster-mcp
-
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+```python
+add_repo("C:\\my-project")
+get_code_city()  # Opens 3D visualization in browser
 ```
 
-If PowerShell blocks activation scripts, allow local scripts once:
+That's it. Your codebase is now AI-searchable.
 
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+---
+
+## 💎 Features at a Glance
+
+### 🔍 **Semantic Search** (Not Just Grep)
+- Vector-powered code search understands intent, not just keywords
+- Find "authentication flow" and get relevant login, OAuth, token validation code
+- Works across multiple languages
+
+### 🗺️ **Code City 3D**
+- Visual representation of your project structure
+- Buildings = files (height = complexity, color = language)
+- Instantly spot architectural patterns and dependencies
+
+### 📊 **Repository Maps**
+- One-page project overview for onboarding
+- Auto-generated, always in sync
+- Includes conventions, stack, and module boundaries
+
+### 🐛 **Flipchart Debugging**
+- Create debug sessions with call graphs and sequence diagrams
+- Mermaid-powered visualizations
+- Add notes and track hypotheses across symbols
+
+### 🤖 **7 Built-in Agent Skills**
+- `booster-onboard` — new codebase? Start here
+- `booster-context-inject` — give AI exactly what it needs
+- `booster-bug-hunt` — stack trace → diagnosis → fix
+- `booster-feature-add` — find patterns, add consistent code
+- `booster-deep-dive` — understand architecture
+- `booster-refactor` — impact analysis + change automation
+- `booster-review` — semantic code review
+
+### 🔗 **Context Injection**
+```
+repo://map          → Repository structure
+repo://stack        → Dependencies and frameworks
+repo://conventions  → Code patterns and standards
 ```
 
-Start the server:
+Auto-sync with live documentation via `fetch_stack_docs()`.
 
-```powershell
-python server.py
-```
+### ⚙️ **Incremental Indexing**
+- Watchdog monitors changes
+- No manual reindex needed
+- Multi-repo support without server restart
 
-### macOS
+---
 
+## 📦 What's Included
+
+| Component | Purpose |
+|-----------|---------|
+| **FastMCP Server** | Core tool definitions and routing |
+| **Vector Indexer** | FAISS-backed semantic search across code |
+| **Graph Engine** | Call graphs, import graphs, dependency analysis |
+| **Code City Visualizer** | 3D HTML visualization of codebase |
+| **Agent Skills** | 7 pre-built workflows for common tasks |
+| **Web UI** | Manage repos, generate visualizations, inspect maps |
+| **Flipchart** | Debug sessions with Mermaid diagrams |
+| **Toolkit** | Grep, git, command execution, error analysis |
+
+---
+
+## 🛠️ Installation
+
+### Requirements
+- Python 3.11+
+- Git
+- Internet (first run downloads embedding model)
+
+### Full Manual Install (all platforms)
+
+**Clone & Setup:**
 ```bash
 git clone https://github.com/NeuroGhostDev/Booster-mcp.git
 cd Booster-mcp
-
 python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
+source .venv/bin/activate  # or .\.venv\Scripts\Activate.ps1 on Windows
 pip install -r requirements.txt
 ```
 
-If `python3.11` is missing:
-
-```bash
-brew install python@3.11
-```
-
-Start the server:
-
+**Start:**
 ```bash
 python server.py
 ```
 
-### Linux
+### Configure Your MCP Client
 
-```bash
-git clone https://github.com/NeuroGhostDev/Booster-mcp.git
-cd Booster-mcp
+Add to your `.claude_desktop_config.json` (Claude Desktop, Cline, etc):
 
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-If the venv module is missing:
-
-```bash
-sudo apt update
-sudo apt install python3.11 python3.11-venv
-```
-
-Start the server:
-
-```bash
-python server.py
-```
-
-### Quick Install Without a Virtual Environment
-
-```bash
-git clone https://github.com/NeuroGhostDev/Booster-mcp.git
-cd Booster-mcp
-pip install -r requirements.txt
-```
-
-Note: the first model download can take a few minutes.
-
-## MCP Client Configuration
-
-Add Booster MCP to your MCP client configuration.
-
-### Windows example
-
-```json
-{
-  "mcpServers": {
-    "Booster": {
-      "command": "py",
-      "args": ["-3.11", "C:\\Users\\Whoami\\Booster-mcp\\server.py"],
-      "env": {}
-    }
-  }
-}
-```
-
-### Windows with virtual environment
-
-```json
-{
-  "mcpServers": {
-    "Booster": {
-      "command": "C:\\Users\\Whoami\\Booster-mcp\\.venv\\Scripts\\python.exe",
-      "args": ["C:\\Users\\Whoami\\Booster-mcp\\server.py"],
-      "env": {
-        "CITY_PORT": "8080"
-      }
-    }
-  }
-}
-```
-
-### Linux or macOS example
-
+**macOS/Linux:**
 ```json
 {
   "mcpServers": {
     "Booster": {
       "command": "/home/user/Booster-mcp/.venv/bin/python",
-      "args": ["/home/user/Booster-mcp/server.py"],
-      "env": {
-        "CITY_PORT": "8080"
-      }
+      "args": ["/home/user/Booster-mcp/server.py"]
     }
   }
 }
 ```
 
-Before strat using Booster MCP, make sure to add that block of system instructions to your MCP client configuration.
-
-## Block of system instructions
-
-```text
-MCP usage policy
-
-- If a semantic repository analysis MCP server is available, prefer it over plain text search for onboarding, architecture analysis, dependency tracing, debugging, refactoring, and code review.
-- When entering a new repository or returning after a long break, start with repository onboarding:
-  inspect repository stats, repository map, configuration files, conventions, stack context, and indexed structure before making implementation decisions.
-- For bug investigation, stack traces, failing tests, and strange runtime behavior, start with semantic error analysis, dependency tracing, contextual file reads, and graph-based debugging before broad manual grep.
-- For architecture questions, feature planning, and change impact analysis, prefer repository map, symbol search, external dependency analysis, call graph, sequence diagram, and context injection.
-- Before adding a feature, first search for existing patterns, conventions, related symbols, and neighboring implementations in the repository to avoid duplicate architecture and inconsistent code paths.
-- Before refactoring, use semantic tooling to identify the impact radius, related symbols, configuration touchpoints, and affected dependencies.
-- When performing code review, prioritize semantic review of bugs, regressions, security risks, dependency boundaries, and performance issues before giving summaries.
-- If stack or dependency documentation can be fetched dynamically, retrieve up-to-date docs before making framework-specific or library-specific decisions.
-- Use repository memory only for stable, verified architectural facts, conventions, and operational knowledge. Do not store assumptions as facts.
-- If the repository is not indexed or the index is stale, refresh or rebuild the semantic index before deep analysis.
-
-Booster MCP skill routing policy
-
-- New repository or unfamiliar codebase -> use onboard flow
-- Bug, exception, failing tests, broken runtime -> use bug-hunt flow
-- Architecture, data flow, dependency analysis -> use deep-dive flow
-- New feature in existing system -> use feature-add flow
-- Structural cleanup or behavior-preserving rewrite -> use refactor flow
-- Code review or audit request -> use review flow
-- Large task requiring context bootstrapping -> inject repository context before implementation
-- Framework-sensitive work -> fetch current stack documentation before changing code
-
-Tool preference policy
-
-- Prefer semantic repository tools over grep when the goal is understanding structure rather than matching text.
-- Prefer contextual reads over opening many small disconnected snippets.
-- Prefer symbol- and graph-based navigation over manual search when evaluating impact or tracing behavior.
-- Prefer stack documentation retrieval before making assumptions about external libraries, frameworks, or APIs.
+**Windows (use absolute paths):**
+```json
+{
+  "mcpServers": {
+    "Booster": {
+      "command": "C:\\Users\\YourName\\Booster-mcp\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\Users\\YourName\\Booster-mcp\\server.py"]
+    }
+  }
+}
 ```
 
-Use absolute paths for both the Python interpreter and `server.py`.
+---
 
-## What Happens on Startup
+## 🚀 Common Workflows
 
-When `server.py` starts, Booster MCP:
+### Onboard a New Project
+```python
+add_repo("C:\\project")
+repo_stats()           # Quick metrics
+get_repo_map()         # Architecture overview
+semantic_search("main entry point")
+find_symbol("main")    # Navigate to key functions
+```
 
-- initializes the MCP server
-- starts the Code City web UI in a background thread
-- synchronizes bundled agent skills into the agent skills directory
-- indexes repositories from the `REPOS` environment variable, if provided
+### Debug a Production Error
+```python
+analyze_error("TypeError: 'NoneType' object is not subscriptable")
+flipchart_quick_debug("handler_function", max_depth=3)
+read_with_context("auth.py", line=42, context=10)
+git_diff("auth.py")    # See recent changes
+```
 
-Restart your MCP client after updating its configuration.
+### Add a Feature Safely
+```python
+semantic_search("similar feature pattern")
+find_symbol("existing_feature")
+flipchart_sequence_diagram("existing_feature", depth=5)
+# Now safe to implement
+```
 
-## Available Tools
+### Code Review with Superpowers
+```python
+flipchart_call_graph("modified_function", max_depth=5)
+external_deps("modified_function")
+find_duplicates(min_lines=5)
+```
+
+---
+
+## 📚 Full Documentation
+
+- **[COOKBOOK.md](COOKBOOK.md)** — Deep-dive recipes and advanced usage
+- **[MARKETPLACE.md](MARKETPLACE.md)** — Publish to MCP catalogs
+
+---
+
+## 🎓 System Instructions for Maximum Power
+
+Add this to your MCP client for best results:
+
+```
+MCP Usage Policy:
+- New codebase? Use onboard skill first
+- Production error? Use bug-hunt skill
+- Architecture question? Use deep-dive skill
+- Adding feature? Use feature-add skill + inject context
+- Refactoring? Use refactor skill + analyze impact
+- Code review? Use review skill + semantic analysis
+
+Always prefer semantic tools over grep for understanding.
+```
+
+[See full system instructions in README]
+
+---
+
+## 🛠️ All Available Tools
 
 ### Repository Management
+- `add_repo(path)` — Index a new repository
+- `remove_repo(path)` — Stop tracking
+- `reindex_repo(path)` — Force re-index
+- `list_repos()` — See active repos
+- `repo_stats()` — Size, symbols, metrics
 
-- `add_repo(repo_path: str)`
-- `remove_repo(repo_path: str)`
-- `reindex_repo(repo_path: str)`
-- `list_repos()`
-- `repo_stats()`
-- `get_repo_map(repo_path: str = None)`
+### Search & Navigation
+- `semantic_search(query)` — Find code by meaning
+- `find_symbol(name)` — Locate functions, classes
 
-### Search and Navigation
+### Context Injection
+- `inject_context()` — Auto-build AI context
+- `fetch_stack_docs()` — Live dependency docs
 
-- `semantic_search(query: str)`
-- `find_symbol(name: str)`
+### Debugging
+- `flipchart_quick_debug(symbol)` — Instant graphs
+- `flipchart_call_graph(symbol)` — Show callers/callees
+- `flipchart_sequence_diagram(symbol)` — Flow diagram
+- `analyze_error(stacktrace)` — Error analysis
 
-### Context Injection (v3.0)
+### Utilities
+- `code_grep(pattern)` — Smart grep
+- `read_with_context(file, line)` — Show code + context
+- `git_log(path)` — See history
+- `run_command(cmd)` — Execute tools
+- `find_duplicates()` — Code duplication
+- `external_deps(symbol)` — See dependencies
 
-- `inject_context(include_map: bool = True, include_stack: bool = True, include_conventions: bool = False)`
-- `fetch_stack_docs()`
+### Visualization
+- `get_code_city()` — 3D visualization
+- `get_repo_map()` — Architecture map
 
-### Flipchart Debugging
+---
 
-- `flipchart_quick_debug(symbol: str, max_depth: int = 3)`
-- `flipchart_create_session(session_id: str, symbols: list[str])`
-- `flipchart_add_note(session_id: str, label: str, content: str, symbols: list[str] = None)`
-- `flipchart_get_board(session_id: str)`
-- `flipchart_call_graph(symbol: str, max_depth: int = 5)`
-- `flipchart_sequence_diagram(symbol: str, depth: int = 5)`
-
-### Toolkit
-
-- `code_grep(pattern: str, file_pattern: str = "*", ignore_case: bool = True, max_results: int = 100)`
-- `read_with_context(file: str, line: int, context: int = 20)`
-- `read_file(file: str, start: int = 0, end: int = 100)`
-- `git_diff(path: str, commit: str = "HEAD", staged: bool = False)`
-- `git_log(path: str, limit: int = 10)`
-- `run_command(cmd: str, cwd: str = None, timeout: int = 30000)`
-- `analyze_error(error_text: str, symbols: list[str] = None)`
-- `list_configs(repo: str = None)`
-- `project_memory(action: str, key: str, value: str = None, repo: str = None)`
-- `compare_symbols(symbol: str, file1: str, file2: str)`
-- `find_duplicates(min_lines: int = 5, max_results: int = 50)`
-- `external_deps(symbol: str = None, file: str = None)`
-
-### Visualization and Skills
-
-- `get_code_city(repo_path: str = None, output_file: str = "code_city.html")`
-- `list_agent_skills()`
-- `install_agent_skills(overwrite: bool = True)`
-
-## Code City 3D
-
-`get_code_city()` generates a 3D HTML visualization where:
-
-- building height represents file size and complexity
-- color represents language or file type
-- districts represent folders or modules
-- links represent imports and cross-file relationships
-
-Typical usage:
-
-```text
-add_repo("C:\\my-project")
-get_code_city()
-```
-
-The output file is automatically generated and cached as `.agents/booster/code_city.html` within the selected repository. Repo Map and Project Memory are also cached in the `.agents/booster` directory.
-
-## Web UI
-
-Booster MCP also starts an HTTP interface for managing repositories and viewing Code City.
-
-Start it manually if needed:
-
-```bash
-python city_server.py --port 8080
-```
-
-Main capabilities:
-
-- repository list and basic statistics
-- add and remove repositories
-- reindex repositories
-- generate and open Code City views
-- inspect RepoMap output in the browser
-
-Main endpoints:
-
-- `GET /api/repos`
-- `GET /api/stats`
-- `GET /api/code_city`
-- `GET /api/repo_map`
-- `POST /api/repos/add`
-- `POST /api/repos/remove`
-- `POST /api/repos/reindex`
-- `POST /api/repos/generate_city`
-
-## Ignore Files
-
-Booster MCP automatically generates or updates a `.ignore` file at the root of a repository when it is added via `add_repo`. This file is pre-populated with common heavy or generated directories to ignore (e.g., `node_modules`, `venv`, `build`, `.next`, `target`) to significantly optimize semantic indexing performance, limit directory traversal depth (`MAX_DEPTH`), and keep the AI context clean.
-
-Global ignores can be defined in `~/.ignore`:
-
-```text
-__pycache__/
-*.pyc
-.venv/
-venv/
-node_modules/
-.idea/
-.vscode/
-target/
-vendor/
-```
-
-Project-specific ignores can be defined in `.ignore` at the repository root:
-
-```text
-build/
-*.bin
-*.gguf
-logs/
-models/
-```
-
-## Example Workflows
-
-### Onboard a New Repository
-
-```text
-add_repo("C:\\my-project")
-repo_stats()
-get_repo_map()
-semantic_search("authentication flow")
-find_symbol("main")
-```
-
-### Investigate an Error
-
-```text
-analyze_error("TypeError: 'NoneType' object is not subscriptable")
-code_grep("logger\\.error", file_pattern="*.py")
-read_with_context("C:\\project\\auth.py", line=42, context=10)
-git_diff("C:\\project\\auth.py")
-```
-
-### Debug a Complex Flow with Flipchart
-
-```text
-flipchart_create_session("auth_debug", ["main_handler", "auth_verify", "db_connect"])
-flipchart_add_note("auth_debug", "Token issue", "Token is not revalidated after reconnect")
-flipchart_get_board("auth_debug")
-```
-
-### Inspect a Large Project Visually
-
-```text
-add_repo("D:\\workSpace\\coreconn")
-get_code_city()
-```
-
-## Project Structure
-
-```text
-server.py          FastMCP server and tool definitions
-indexer.py         indexing pipeline and component orchestration
-parser_router.py   tree-sitter parser routing
-graphs.py          call and import graph storage
-chunker.py         semantic chunking
-embedder.py        embedding generation
-vector_index.py    FAISS-backed vector index
-watcher.py         incremental indexing via watchdog
-repomap.py         compact repository map generation
-flipchart.py       Mermaid diagrams and debug sessions
-visualizer.py      Code City 3D generation
-city_server.py     HTTP UI for repository and city management
-toolkit.py         grep, git, command, memory, duplicates, dependency tools
-skill_installer.py bundled skill synchronization
-```
-
-## Supported Languages
-
-Current parsing support depends on the installed tree-sitter language pack, with this repository primarily targeting:
+## 🌍 Language Support
 
 - Python
-- JavaScript
-- TypeScript
+- JavaScript / TypeScript
 - Rust
 - Go
 - Java
-- C
-- C++
+- C / C++
 
-## Testing
+---
 
-Basic commands:
-
-```bash
-python test_mcp.py
-python test_all.py
-```
-
-Targeted sanity checks:
+## 🧪 Testing
 
 ```bash
-python -c "from indexer import RepoIndexer; i = RepoIndexer(['.']); i.full_index(); print(len(i.symbols))"
-python -c "from toolkit import CodeToolkit; from indexer import RepoIndexer; i = RepoIndexer(['.']); t = CodeToolkit(i, ['.']); print(t.code_grep('def ', max_results=5))"
-python -c "from visualizer import CodeCityVisualizer; from indexer import RepoIndexer; i = RepoIndexer(['.']); v = CodeCityVisualizer(i); print(v.generate_visualization('.', 'test.html'))"
+python test_mcp.py        # Basic tests
+python test_all.py        # Full suite
 ```
 
-## Troubleshooting
+---
 
-### `ModuleNotFoundError: No module named 'fastmcp'`
+## ❓ FAQ
 
-Install dependencies into the same interpreter used to start the server:
+**Q: Will this slow down my codebase?**  
+A: No. Indexing is separate. Your code runs normally.
 
-```bash
-/path/to/python -m pip install -r requirements.txt
-```
+**Q: Does it work with private repos?**  
+A: Yes. Everything runs locally. No data leaves your machine.
 
-### Empty Search Results
+**Q: Which AI clients are supported?**  
+A: Any MCP-compatible client (Claude Desktop, Cline, Continue, etc).
 
-Possible causes:
+**Q: Can I index multiple repos at once?**  
+A: Yes. `add_repo()` as many as you want. No restart needed.
 
-- no repository has been added yet, so run `add_repo()` first
-- the provided path is wrong or not absolute
-- the target files are excluded by ignore rules
+**Q: What if my repo is 1M+ lines?**  
+A: Works fine. Semantic indexing is built for scale. Use `.ignore` to skip heavy directories.
 
-### `run_command` Fails
+---
 
-Common causes:
+## 📖 Detailed Docs & Guides
 
-- invalid `cwd`
-- timeout too low for the command
-- command requires interactive input
+- **[COOKBOOK.md](COOKBOOK.md)** — Recipes, examples, advanced techniques
+- **[MARKETPLACE.md](MARKETPLACE.md)** — Publish to Smithery, Glama
 
-### Mermaid Diagrams Do Not Render
+---
 
-Use a Markdown renderer with Mermaid support. GitHub and GitLab support Mermaid natively, while VS Code may require an extension.
+## 🤝 Contributing
 
-## License
+1. Fork it
+2. Branch: `git checkout -b feature/my-feature`
+3. Commit: `git commit -m "Add feature"`
+4. Test: `python test_all.py`
+5. Push & open PR
 
-MIT
+---
 
-## Contributing
+## 📄 License
 
-1. Fork the repository.
-2. Create a feature branch.
-3. Make your changes.
-4. Run the relevant tests.
-5. Open a pull request.
+MIT — Use freely, commercial or otherwise.
+
+---
+
+## 🎯 Next Steps
+
+1. **Install now:** Run the one-click installer
+2. **Try it:** `add_repo()` + `get_code_city()`
+3. **Read cookbook:** Advanced workflows and examples
+4. **Share feedback:** [GitHub Issues](https://github.com/NeuroGhostDev/booster_mcp/issues)
+
+---
+
+**Made for developers who demand more from their tools.** ⚡
