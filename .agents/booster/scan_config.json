@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "profile": "balanced",
+  "include_dependencies": false,
+  "limits": {
+    "max_depth": 12,
+    "max_files": 800,
+    "max_file_bytes": 1048576,
+    "max_total_bytes": 33554432,
+    "max_directories": 5000
+  }
+}

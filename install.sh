@@ -71,8 +71,33 @@ fi
 echo "🧠 Установка скиллов агента..."
 "$VENV_PYTHON" -c "from skill_installer import install_bundled_skills; install_bundled_skills()"
 
+echo "🔧 Установка команды booster..."
+"$VENV_PYTHON" -m cli control launcher
+
+USER_BIN="$HOME/.local/bin"
+if [[ ":$PATH:" != *":$USER_BIN:"* ]]; then
+    PROFILE=""
+    PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
+    case "${SHELL:-}" in
+        */zsh) PROFILE="$HOME/.zshrc" ;;
+        */bash) PROFILE="$HOME/.bashrc" ;;
+        *) PROFILE="$HOME/.profile" ;;
+    esac
+
+    if ! grep -Fq "# Added by Booster Control" "$PROFILE" 2>/dev/null; then
+        {
+            echo ""
+            echo "# Added by Booster Control"
+            echo "$PATH_LINE"
+        } >> "$PROFILE"
+        echo "Добавлен $USER_BIN в PATH через $PROFILE."
+    fi
+    export PATH="$USER_BIN:$PATH"
+fi
+
 echo ""
 echo "✅ Установка завершена успешно!"
+echo "Управление подключениями: booster control"
 echo ""
 echo "🔥 Для запуска MCP сервера интегрируйте его с вашим клиентом."
 echo ""

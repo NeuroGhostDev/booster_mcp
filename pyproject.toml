@@ -63,6 +63,7 @@ py-modules = [
     "chunker",
     "city_server",
     "cli",
+    "control",
     "context7_bridge",
     "context_provider",
     "embedder",

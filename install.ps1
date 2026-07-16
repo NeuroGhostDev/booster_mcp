@@ -78,9 +78,45 @@ if (-not (Test-Path $VenvPython)) {
 # Установка скиллов
 Write-Host "🧠 Установка встроенных скиллов..." -ForegroundColor Cyan
 & $VenvPython -c "from skill_installer import install_bundled_skills; install_bundled_skills()"
+if ($LASTEXITCODE -ne 0) {
+    throw "Не удалось установить встроенные скиллы Booster."
+}
+
+# Глобальная команда для последующих терминалов без ручной активации .venv.
+Write-Host "🔧 Установка команды booster..." -ForegroundColor Cyan
+& $VenvPython -m cli control launcher
+if ($LASTEXITCODE -ne 0) {
+    throw "Не удалось установить launcher команды booster."
+}
+
+$BoosterBin = Join-Path $HOME ".local\bin"
+$UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+$PathEntries = @($UserPath -split ";" | Where-Object { $_ })
+$HasBoosterBin = $PathEntries | Where-Object {
+    [string]::Equals(
+        $_.TrimEnd("\\"),
+        $BoosterBin.TrimEnd("\\"),
+        [System.StringComparison]::OrdinalIgnoreCase
+    )
+}
+if (-not $HasBoosterBin) {
+    $UpdatedUserPath = @($PathEntries + $BoosterBin) -join ";"
+    [Environment]::SetEnvironmentVariable("Path", $UpdatedUserPath, "User")
+    Write-Host "Добавлен $BoosterBin в пользовательский PATH." -ForegroundColor Cyan
+}
+if (-not (($env:Path -split ";") | Where-Object {
+            [string]::Equals(
+                $_.TrimEnd("\\"),
+                $BoosterBin.TrimEnd("\\"),
+                [System.StringComparison]::OrdinalIgnoreCase
+            )
+        })) {
+    $env:Path = "$BoosterBin;$env:Path"
+}
 
 Write-Host ""
 Write-Host "✅ Установка завершена успешно!" -ForegroundColor Green
+Write-Host "Управление подключениями: booster control" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "🔥 Для запуска MCP сервера в конфигурации клиента добавьте:" -ForegroundColor Cyan
 Write-Host @"

@@ -153,11 +153,11 @@ policy and generates the initial map without requiring a live MCP connection.
 booster expand --profile balanced
 ```
 
-| Profile | Depth | Source files | Selected source size | Best for |
-| --- | ---: | ---: | ---: | --- |
-| `quick` | 6 | 250 | 8 MiB | Fast initial orientation |
-| `balanced` | 12 | 800 | 32 MiB | Most repositories |
-| `deep` | 20 | 3,000 | 128 MiB | Large monorepos |
+| Profile    | Depth | Source files | Selected source size | Best for                 |
+| ---------- | ----: | -----------: | -------------------: | ------------------------ |
+| `quick`    |     6 |          250 |                8 MiB | Fast initial orientation |
+| `balanced` |    12 |          800 |               32 MiB | Most repositories        |
+| `deep`     |    20 |        3,000 |              128 MiB | Large monorepos          |
 
 The scanner prioritizes conventional source roots, ignores generated and
 dependency directories by default, and records every limit decision in
@@ -192,13 +192,13 @@ Bundled skills:
 
 ## Key MCP Tools
 
-| Area | Examples |
-| --- | --- |
-| Repository lifecycle | `add_repo`, `remove_repo`, `reindex_repo`, `list_repos`, `repo_stats` |
-| Search and navigation | `semantic_search`, `hybrid_search`, `find_symbol` |
-| Context and artifacts | `inject_context`, `get_repo_artifacts`, `get_repo_map`, `get_code_city` |
+| Area                    | Examples                                                                      |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| Repository lifecycle    | `add_repo`, `remove_repo`, `reindex_repo`, `list_repos`, `repo_stats`         |
+| Search and navigation   | `semantic_search`, `hybrid_search`, `find_symbol`                             |
+| Context and artifacts   | `inject_context`, `get_repo_artifacts`, `get_repo_map`, `get_code_city`       |
 | Reasoning and debugging | `flipchart_quick_debug`, `flipchart_call_graph`, `flipchart_sequence_diagram` |
-| Workflow support | `list_agent_skills`, `install_agent_skills`, `fetch_stack_docs` |
+| Workflow support        | `list_agent_skills`, `install_agent_skills`, `fetch_stack_docs`               |
 
 ## Troubleshooting
 

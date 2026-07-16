@@ -138,7 +138,83 @@ _What happens:_ Booster stores `.agents/booster/scan_config.json`, then creates 
 
 ---
 
-## 🎨 Recipe 7: Immersive 3D Rendering with Code City (NEW)
+## 🔌 Recipe 7: Connect and Control Booster After Installation (NEW)
+
+The Windows, Linux, and macOS installers create a `booster` launcher in the user's local bin directory. Open a new terminal, change into the repository you want to manage, and run:
+
+```text
+booster control
+```
+
+The interactive menu can connect a VS Code workspace, a VS Code user profile, or Claude Desktop. It can also inspect the selected runtime, change the persisted bounded scan policy, refresh artifacts, run a dependency doctor, disconnect one server entry, and update the launcher.
+
+Use a workspace entry when the server belongs to one repository. It writes `.vscode/mcp.json` and starts with that repository in `REPOS`:
+
+```text
+booster control connect --client vscode --scope workspace --project .
+booster expand --profile balanced
+```
+
+Use a user entry when Booster should be visible in every VS Code workspace. The global entry starts without `REPOS`; after it starts, the agent should call `add_repo` for the project currently being worked on:
+
+```text
+booster control connect --client vscode --scope user --project .
+```
+
+For scripts, CI, and support workflows, use non-interactive commands:
+
+```text
+# Inspect the exact Python, MCP config, scan policy, and generated artifacts.
+booster control status --client vscode --scope workspace --project .
+
+# Save a broader policy before reindexing a large repository.
+booster control scan --project . --profile deep --max-files 2000
+
+# Check that the installed environment contains FastMCP, FAISS, BM25, and embeddings.
+booster control doctor --project .
+
+# Remove only Booster's named entry from a client config.
+booster control disconnect --client vscode --scope workspace --project .
+```
+
+`connect` generates a stdio entry using the exact Python environment that installed Booster. This prevents accidental fallback to an unrelated system Python. Every changed client config is written atomically and its previous version is saved beside it with the `.booster.bak` suffix. Existing servers and client-specific settings are preserved.
+
+---
+
+## 🛑 Recipe 8: Debug a Stop-Criterion Narrative Regression (NEW)
+
+**Scenario:** A critical stop atom correctly sets an evaluation stage score to zero and preserves the visible stop label, but the report suddenly contains the same three generic narrative paragraphs for every dialog. Prompt changes have no effect.
+
+This is a control-flow problem, not a prompt-writing problem. The likely defect is a stop branch that bypasses the writer LLM or overwrites its `strengths`, `weaknesses`, and `recommendations` after generation.
+
+1. Connect the target repository through `booster control` or call `add_repo`.
+2. Inspect `get_repo_map` and `get_repo_artifacts` before opening many files.
+3. Search for the branch and its fallback text:
+
+   ```text
+   semantic_search(query="is_stage_stop narrative_context writer hardcoded report fallback")
+   hybrid_search(query="is_stage_stop strengths weaknesses recommendations", k=8)
+   ```
+
+4. Locate the report builder and writer invocation with `find_symbol`, then generate a sequence view:
+
+   ```text
+   flipchart_sequence_diagram(symbol="build_stage_report")
+   ```
+
+5. Keep the scoring rule intact, but ensure that the stop branch passes the original `stage.narrative_context` to the writer and does not replace its three narrative fields with fixed text.
+6. Add a regression test with a triggered stop atom. Verify all of the following:
+   - stage points remain zero;
+   - the stop label remains visible;
+   - atom-level zeroing remains intact;
+   - the writer receives the stop-aware narrative context;
+   - the generated narrative includes the trigger and a concrete corrective recommendation.
+
+**Result:** Critical errors still enforce the score rule, while the report remains specific, pedagogical, and grounded in the evaluated dialog.
+
+---
+
+## 🎨 Recipe 9: Immersive 3D Rendering with Code City (NEW)
 
 Booster MCP v3.0 brings a Neon/Cyberpunk aesthetic to your repository visualization.
 
@@ -156,7 +232,7 @@ _What the user sees:_
 
 ---
 
-## 🛠 Recipe 8: Developing Custom Agent Skills
+## 🛠 Recipe 10: Developing Custom Agent Skills
 
 You can create your own skills in `.agents/skills/[skill-name]/SKILL.md`.
 
