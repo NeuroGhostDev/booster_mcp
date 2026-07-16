@@ -2,13 +2,13 @@
 RepoMap - генерация сжатой карты репозитория в стиле Aider.
 Упрощённая версия для MCP сервера.
 """
-import os
-import fnmatch
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 from grep_ast import filename_to_lang
 from tree_sitter_language_pack import get_parser
+
+from repository_scanner import RepositoryScanner, ScanConfig
 
 # Загружаем игноры из .ignore пользователя
 
@@ -81,9 +81,10 @@ def load_local_ignore(root: Path):
 class RepoMap:
     """Генерация сжатой карты репозитория для контекста AI."""
 
-    def __init__(self, root=None, max_tokens=4096):
+    def __init__(self, root=None, max_tokens=4096, scan_config: ScanConfig | None = None):
         self.root = Path(root) if root else Path.cwd()
         self.max_tokens = max_tokens
+        self.scan_config = scan_config
 
         # Загружаем локальные игноры из репозитория
         local_dirs, local_files, local_patterns = load_local_ignore(self.root)
@@ -91,6 +92,7 @@ class RepoMap:
         self.all_ignored_files = IGNORED_FILES | local_files
         self.all_ignored_patterns = IGNORED_PATTERNS + local_patterns
         self._tags_cache = {}
+        self.last_scan_result = None
 
     def get_repo_map(self, files=None):
         """
@@ -120,34 +122,10 @@ class RepoMap:
         return tree
 
     def _collect_all_files(self):
-        """Собирает все файлы в репозитории, игнорируя указанные директории."""
-        files = []
-        for file in self.root.rglob("*"):
-            try:
-                if not file.is_file():
-                    continue
-            except (PermissionError, OSError):
-                continue
-
-            # Проверка игнорируемых директорий
-            if any(part in self.all_ignored_dirs for part in file.parts):
-                continue
-
-            # Проверка игнорируемых файлов
-            if file.name in self.all_ignored_files:
-                continue
-
-            # Проверка паттернов
-            skip = False
-            for pattern in self.all_ignored_patterns:
-                if fnmatch.fnmatch(file.name, pattern):
-                    skip = True
-                    break
-            if skip:
-                continue
-
-            files.append(str(file))
-        return files
+        """Собирает исходники в пределах сохранённого scan budget."""
+        self.last_scan_result = RepositoryScanner(
+            self.root, self.scan_config).scan()
+        return [str(path) for path in self.last_scan_result.files]
 
     def _get_tags(self, fname):
         """Извлекает теги (функции, классы) из файла."""
@@ -166,7 +144,6 @@ class RepoMap:
 
         try:
             code_bytes = fname.read_bytes()
-            code = code_bytes.decode("utf-8", errors="ignore")
         except Exception:
             return []
 
@@ -174,8 +151,11 @@ class RepoMap:
         root = tree.root_node
 
         tags = []
-        rel_fname = str(fname.relative_to(self.root)) if fname.is_relative_to(
-            self.root) else str(fname)
+        rel_fname = (
+            fname.relative_to(self.root).as_posix()
+            if fname.is_relative_to(self.root)
+            else str(fname)
+        )
 
         # Обход AST для поиска определений
         self._traverse_tree(root, code_bytes, rel_fname, tags)
@@ -199,7 +179,12 @@ class RepoMap:
             node_type = current_node.type
 
             # Ищем определения функций, классов, методов
-            if "definition" in node_type or node_type in ["function_definition", "class_definition", "class_declaration", "function_declaration"]:
+            if "definition" in node_type or node_type in [
+                "function_definition",
+                "class_definition",
+                "class_declaration",
+                "function_declaration",
+            ]:
                 name_node = self._find_name_node(current_node)
                 if name_node:
                     name = code_bytes[name_node.start_byte:name_node.end_byte].decode(

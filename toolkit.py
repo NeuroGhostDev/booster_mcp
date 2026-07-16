@@ -21,7 +21,8 @@ class CodeToolkit:
         self.repos = repos
 
     def _get_repo_memory_file(self, repo: str) -> Path:
-        p = Path(repo).expanduser().resolve() / ".agents" / "booster" / "memory.json"
+        p = Path(repo).expanduser().resolve() / \
+            ".agents" / "booster" / "memory.json"
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
 
@@ -288,12 +289,11 @@ class CodeToolkit:
             grep = self.code_grep(re.escape(kw), max_results=10)
             grep_results.extend(grep)
 
-        # Семантический поиск
+        # Hybrid-поиск сочетает текст stack trace с семантическим контекстом.
         semantic_results = []
         if self.indexer.embedder:
             try:
-                vec = self.indexer.embedder.embed(error_text[:500])
-                semantic_results = self.indexer.search(vec)
+                semantic_results = self.indexer.hybrid_search(error_text[:500])
             except:
                 pass
 

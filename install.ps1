@@ -16,9 +16,10 @@ if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-# Проверка Python
-if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
-    Write-Host "❌ Ошибка: Python не установлен. Скачайте и установите Python 3.11+." -ForegroundColor Red
+# Проверка uv или Python Launcher
+if (-not (Get-Command "uv" -ErrorAction SilentlyContinue) -and
+    -not (Get-Command "py" -ErrorAction SilentlyContinue)) {
+    Write-Host "❌ Ошибка: установите uv или Python 3.11-3.13 с Python Launcher." -ForegroundColor Red
     exit 1
 }
 
@@ -29,29 +30,54 @@ if (Test-Path $InstallDir) {
     Write-Host "🔄 Обновление существующей установки в $InstallDir..." -ForegroundColor Yellow
     Set-Location $InstallDir
     git pull
-} else {
+}
+else {
     Write-Host "📥 Клонирование репозитория в $InstallDir..." -ForegroundColor Yellow
     git clone https://github.com/NeuroGhostDev/Booster-mcp.git $InstallDir
     Set-Location $InstallDir
 }
 
-# Настройка виртуального окружения
+# Настройка виртуального окружения и зависимостей
 Write-Host "📦 Настройка виртуального окружения..." -ForegroundColor Cyan
-if (-not (Test-Path ".venv")) {
-    python -m venv .venv
-}
-
-# Активация и установка зависимостей
-Write-Host "⚙️ Установка зависимостей..." -ForegroundColor Cyan
-# Используем прямой вызов python из .venv чтобы обойти ограничения ExecutionPolicy
 $VenvPython = Join-Path ".venv" "Scripts" "python.exe"
 
-& $VenvPython -m pip install --upgrade pip
-& $VenvPython -m pip install -r requirements.txt
+if (Get-Command "uv" -ErrorAction SilentlyContinue) {
+    Write-Host "⚡ Синхронизация зависимостей через uv.lock..." -ForegroundColor Cyan
+    uv sync --no-dev
+}
+else {
+    $PythonSelector = $null
+    foreach ($Candidate in @("-3.12", "-3.13", "-3.11")) {
+        & py $Candidate -c "import sys; raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 14) else 1)" 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $PythonSelector = $Candidate
+            break
+        }
+    }
+
+    if (-not $PythonSelector) {
+        Write-Host "❌ Ошибка: не найден совместимый Python 3.11-3.13." -ForegroundColor Red
+        exit 1
+    }
+
+    if (Test-Path ".venv") {
+        Remove-Item ".venv" -Recurse -Force
+    }
+
+    Write-Host "⚙️ Установка зависимостей через pip..." -ForegroundColor Cyan
+    & py $PythonSelector -m venv .venv
+    & $VenvPython -m pip install --upgrade pip
+    & $VenvPython -m pip install .
+}
+
+if (-not (Test-Path $VenvPython)) {
+    Write-Host "❌ Ошибка: виртуальное окружение не было создано." -ForegroundColor Red
+    exit 1
+}
 
 # Установка скиллов
 Write-Host "🧠 Установка встроенных скиллов..." -ForegroundColor Cyan
-& $VenvPython skill_installer.py
+& $VenvPython -c "from skill_installer import install_bundled_skills; install_bundled_skills()"
 
 Write-Host ""
 Write-Host "✅ Установка завершена успешно!" -ForegroundColor Green

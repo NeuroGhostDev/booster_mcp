@@ -7,11 +7,9 @@ name = "Booster-mcp"
 version = "3.0.0"
 description = "MCP server for semantic code analysis, repository mapping, and large codebase navigation"
 readme = "README.md"
-license = {text = "MIT"}
-requires-python = ">=3.11"
-authors = [
-    {name = "NeuroGhostDev"}
-]
+license = { text = "MIT" }
+requires-python = ">=3.11,<3.14"
+authors = [{ name = "NeuroGhostDev" }]
 keywords = [
     "mcp",
     "code-analysis",
@@ -28,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
@@ -37,6 +36,7 @@ dependencies = [
     "faiss-cpu>=1.7.0",
     "sentence-transformers>=2.0.0",
     "numpy>=1.24.0",
+    "rank-bm25>=0.2.2",
     "grep-ast>=0.9.0",
     "tree-sitter-language-pack>=0.13.0",
 ]
@@ -56,10 +56,29 @@ Issues = "https://github.com/NeuroGhostDev/Booster-mcp/issues"
 
 [project.scripts]
 Booster-mcp = "server:main"
+booster = "cli:main"
 
-[tool.setuptools.packages.find]
-where = ["."]
-exclude = ["tests*", "test*"]
+[tool.setuptools]
+py-modules = [
+    "chunker",
+    "city_server",
+    "cli",
+    "context7_bridge",
+    "context_provider",
+    "embedder",
+    "flipchart",
+    "graphs",
+    "indexer",
+    "parser_router",
+    "repomap",
+    "repository_scanner",
+    "server",
+    "skill_installer",
+    "toolkit",
+    "vector_index",
+    "visualizer",
+    "watcher",
+]
 
 [tool.black]
 line-length = 100

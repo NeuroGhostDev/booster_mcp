@@ -1,0 +1,17 @@
+.env
+.git
+.idea
+.next
+.nuxt
+.tox
+.venv
+.vscode
+__pycache__
+build
+coverage
+dist
+env
+node_modules
+out
+target
+venv

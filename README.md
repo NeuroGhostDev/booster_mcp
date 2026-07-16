@@ -1,7 +1,7 @@
 # Booster MCP
 
 [![MCP](https://img.shields.io/badge/MCP-server-blue)](https://modelcontextprotocol.io)
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/Python-3.11--3.13-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Booster MCP is an MCP server for semantic code analysis, repository mapping, and navigation across large codebases. It is built for AI agents and developers who need fast project onboarding, symbol discovery, structural visualization, and practical debugging tools.
@@ -15,8 +15,8 @@ Booster MCP is an MCP server for semantic code analysis, repository mapping, and
 
 ## Features
 
-- Semantic code search powered by vector embeddings
-- Context Injection via MCP resources (`repo://map`, `repo://stack`, `repo://conventions`)
+- Dense semantic search plus BM25 hybrid retrieval for exact symbols, APIs, and natural-language queries
+- Context Injection via MCP resources (`repo://map`, `repo://stack`, `repo://conventions`, `repo://artifacts`)
 - Context7 integration via `fetch_stack_docs` for up-to-date dependency documentation
 - Symbol lookup for functions, classes, and methods
 - Repository map generation for compact project context
@@ -34,11 +34,15 @@ Booster MCP ships with built-in skills for working with large codebases. On star
 
 Included skills:
 
+- `booster-architecture-map`
 - `booster-onboard`
 - `booster-context-inject`
 - `booster-bug-hunt`
 - `booster-feature-add`
 - `booster-deep-dive`
+- `booster-flipchart`
+- `booster-mcp-workflow`
+- `booster-project-memory`
 - `booster-refactor`
 - `booster-review`
 
@@ -55,7 +59,7 @@ Default install location:
 
 ## Requirements
 
-- Python 3.11+
+- Python 3.11-3.13 (Python 3.12 is recommended)
 - Git
 - Internet access on first run to download the `all-MiniLM-L6-v2` embedding model
 
@@ -63,7 +67,7 @@ Default install location:
 
 ### One-Click Installers (Recommended)
 
-The fastest way to install Booster MCP and automatically set up all bundled Agent Skills.
+The installers prefer `uv` and the committed `uv.lock` for reproducible Python 3.12 environments. Without `uv`, they fall back to Python 3.11-3.13 and pip.
 
 **macOS / Linux / Debian / Ubuntu / iOS (Termux/a-shell):**
 
@@ -79,7 +83,17 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NeuroGhostDev/Booster-
 .\install.ps1
 ```
 
-### Manual Installation
+### Recommended: uv
+
+[`uv`](https://docs.astral.sh/uv/) creates a reproducible environment from the committed `uv.lock` file and selects the project Python version automatically.
+
+```bash
+git clone https://github.com/NeuroGhostDev/Booster-mcp.git
+cd Booster-mcp
+uv sync --no-dev
+```
+
+### Manual Installation with pip
 
 #### Windows
 
@@ -87,10 +101,10 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NeuroGhostDev/Booster-
 git clone https://github.com/NeuroGhostDev/Booster-mcp.git
 cd Booster-mcp
 
-py -3.11 -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+pip install .
 ```
 
 If PowerShell blocks activation scripts, allow local scripts once:
@@ -111,16 +125,16 @@ python server.py
 git clone https://github.com/NeuroGhostDev/Booster-mcp.git
 cd Booster-mcp
 
-python3.11 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+pip install .
 ```
 
-If `python3.11` is missing:
+If `python3.12` is missing:
 
 ```bash
-brew install python@3.11
+brew install python@3.12
 ```
 
 Start the server:
@@ -135,17 +149,17 @@ python server.py
 git clone https://github.com/NeuroGhostDev/Booster-mcp.git
 cd Booster-mcp
 
-python3.11 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+pip install .
 ```
 
 If the venv module is missing:
 
 ```bash
 sudo apt update
-sudo apt install python3.11 python3.11-venv
+sudo apt install python3.12 python3.12-venv
 ```
 
 Start the server:
@@ -159,10 +173,54 @@ python server.py
 ```bash
 git clone https://github.com/NeuroGhostDev/Booster-mcp.git
 cd Booster-mcp
-pip install -r requirements.txt
+pip install .
 ```
 
 Note: the first model download can take a few minutes.
+
+## CLI Repository Initialization
+
+Use the CLI before connecting a large project to an MCP client. It creates the initial repository map without starting the MCP server or loading the embedding model.
+
+```powershell
+cd C:\projects\my-large-repository
+booster expand
+```
+
+The command creates these generated artifacts:
+
+- `.agents/booster/repo_map.md` - compact structural map for agent context
+- `.agents/booster/scan_report.json` - selected files, skipped categories, and reached budgets
+- `.agents/booster/scan_config.json` - persisted scan policy reused by `add_repo()` and `reindex_repo()`
+
+`booster expand` uses a deterministic, priority-aware breadth-first scan. It visits conventional source roots such as `src`, `app`, `services`, and `packages` first, prunes generated and dependency directories early, skips unsupported or oversized files, and stops at explicit budgets.
+
+| Profile    | Depth | Source files | Selected source size | Use case                                     |
+| ---------- | ----: | -----------: | -------------------: | -------------------------------------------- |
+| `quick`    |     6 |          250 |                8 MiB | Fast initial orientation                     |
+| `balanced` |    12 |          800 |               32 MiB | Default for most repositories                |
+| `deep`     |    20 |        3,000 |              128 MiB | Large monorepos when more coverage is needed |
+
+```powershell
+# Persist a deeper policy for this repository.
+booster expand --profile deep
+
+# Use one-off explicit limits.
+booster expand --max-depth 10 --max-files 600 --max-total-size-mb 24
+
+# Include dependency trees only when they are relevant to the task.
+booster expand --include-dependencies
+```
+
+Add local exclusions to `.boosterignore` when a generated or legacy area is not relevant. It supports directory names, file names, and simple glob patterns:
+
+```text
+generated/
+legacy/**
+*.min.js
+```
+
+`booster expance` is accepted as a compatibility alias for `booster expand`.
 
 ## MCP Client Configuration
 
@@ -175,7 +233,7 @@ Add Booster MCP to your MCP client configuration.
   "mcpServers": {
     "Booster": {
       "command": "py",
-      "args": ["-3.11", "C:\\Users\\Whoami\\Booster-mcp\\server.py"],
+      "args": ["-3.12", "C:\\Users\\Whoami\\Booster-mcp\\server.py"],
       "env": {}
     }
   }
@@ -279,11 +337,13 @@ Restart your MCP client after updating its configuration.
 ### Search and Navigation
 
 - `semantic_search(query: str)`
+- `hybrid_search(query: str, k: int = 5)` - fuses dense cosine similarity and BM25 with reciprocal-rank fusion
 - `find_symbol(name: str)`
 
 ### Context Injection (v3.0)
 
 - `inject_context(include_map: bool = True, include_stack: bool = True, include_conventions: bool = False)`
+- `get_repo_artifacts(repo_path: str = None)`
 - `fetch_stack_docs()`
 
 ### Flipchart Debugging
@@ -483,7 +543,7 @@ python -c "from visualizer import CodeCityVisualizer; from indexer import RepoIn
 Install dependencies into the same interpreter used to start the server:
 
 ```bash
-/path/to/python -m pip install -r requirements.txt
+/path/to/python -m pip install .
 ```
 
 ### Empty Search Results

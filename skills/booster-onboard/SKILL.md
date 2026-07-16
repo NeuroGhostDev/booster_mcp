@@ -13,18 +13,21 @@ description: |
 
 ## Алгоритм
 
-1. Добавь репозиторий через add_repo.
-2. 🚀 **СРАЗУ ЖЕ** вызови `inject_context()` чтобы получить карту проекта (RepoMap) и список конвенций.
-3. Вызови `fetch_stack_docs()`, чтобы понять какие библиотеки использует проект и подгрузить их доки (через mcp context7).
-4. Сними масштаб через repo_stats().
-5. Для больших проектов построй визуальную карту через get_code_city.
-6. Найди точки входа через semantic_search и find_symbol.
-7. Сохрани выводы в project_memory.
+1. Для нового или большого локального репозитория запусти `booster expand --profile balanced` из его корня. До индексации прочитай `.agents/booster/scan_report.json` и при необходимости расширь scope через `--profile deep`.
+2. Добавь репозиторий через add_repo. Сохранённый `scan_config.json` задаёт тот же scope для MCP-индексатора.
+3. Проверь `get_repo_artifacts()` и только затем вызови `inject_context()` чтобы получить карту проекта (RepoMap) и список конвенций.
+4. Вызови `fetch_stack_docs()`, чтобы понять какие библиотеки использует проект и подгрузить их доки (через mcp context7).
+5. Сними масштаб через repo_stats().
+6. Для больших проектов построй визуальную карту через get_code_city.
+7. Найди точки входа через semantic_search и find_symbol.
+8. Сохрани выводы в project_memory.
 
 ## Базовая последовательность
 
 ```text
+booster expand --profile balanced
 add_repo("<repo>")
+get_repo_artifacts()
 inject_context()
 fetch_stack_docs()
 repo_stats()

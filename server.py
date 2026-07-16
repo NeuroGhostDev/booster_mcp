@@ -1,18 +1,20 @@
 import os
 import threading
 from pathlib import Path
-from typing import Optional
+
 from fastmcp import FastMCP
-from indexer import RepoIndexer
-from watcher import start_watch
-from repomap import RepoMap
+
+import city_server
+from context7_bridge import setup_context7_bridge
+from context_provider import setup_context_provider
 from flipchart import setup_flipchart_tools
+from indexer import RepoIndexer
+from repomap import RepoMap
+from repository_scanner import RepositoryScanner
 from skill_installer import auto_install_bundled_skills, install_bundled_skills, list_bundled_skills
 from toolkit import setup_toolkit_tools
 from visualizer import CodeCityVisualizer
-from context_provider import setup_context_provider
-from context7_bridge import setup_context7_bridge
-import city_server
+from watcher import start_watch
 
 # Начальные репозитории из env (может быть пустым)
 initial_repos = [r.strip()
@@ -28,12 +30,12 @@ def on_index_callback(repo_path: str):
     try:
         base_dir = Path(repo_path) / ".agents" / "booster"
         base_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 1. Code City
         viz = CodeCityVisualizer(indexer)
         city_output = str(base_dir / "code_city.html")
         viz.generate_visualization(repo_path, city_output)
-        
+
         # 2. Repo Map
         rm = RepoMap(root=repo_path)
         map_content = rm.get_repo_map()
@@ -41,9 +43,10 @@ def on_index_callback(repo_path: str):
             map_output = base_dir / "repo_map.md"
             with open(map_output, "w", encoding="utf-8") as f:
                 f.write(map_content)
-                
+
     except Exception as e:
         print(f"⚠️  Ошибка автогенерации артефактов для {repo_path}: {e}")
+
 
 # Инициализация без автоматической индексации (агент сам добавит репозитории)
 indexer = RepoIndexer(initial_repos, on_index_complete=on_index_callback)
@@ -88,6 +91,12 @@ def semantic_search(query: str):
 
 
 @mcp.tool()
+def hybrid_search(query: str, k: int = 5):
+    """Объединяет semantic-поиск и BM25 для точных символов, API и естественного языка."""
+    return indexer.hybrid_search(query, k=k)
+
+
+@mcp.tool()
 def find_symbol(name: str):
     """Ищет функцию или класс по имени."""
     matches = []
@@ -95,13 +104,11 @@ def find_symbol(name: str):
         for sym in file_symbols:
             if sym.get("name") == name:
                 matches.append(sym)
-    
+
     if not matches:
         return {"error": f"Символ '{name}' не найден"}
-    
+
     return {"symbols": matches}
-
-
 
 
 @mcp.tool()
@@ -145,16 +152,17 @@ def add_repo(repo_path: str):
     # Создание/обновление .ignore файла для отсечения мусора (node_modules, venv и т.д.)
     ignore_path = r_path / ".ignore"
     default_ignores = {
-        "node_modules", "venv", ".venv", "env", ".env", 
-        "__pycache__", ".idea", ".vscode", "dist", "build", 
+        "node_modules", "venv", ".venv", "env", ".env",
+        "__pycache__", ".idea", ".vscode", "dist", "build",
         "target", ".next", ".nuxt", "out", "coverage", ".git", ".tox"
     }
-    
+
     existing_ignores = set()
     if ignore_path.exists():
         try:
             with open(ignore_path, "r", encoding="utf-8") as f:
-                existing_ignores = set(line.strip() for line in f if line.strip())
+                existing_ignores = set(line.strip()
+                                       for line in f if line.strip())
         except Exception:
             pass
 
@@ -170,6 +178,7 @@ def add_repo(repo_path: str):
             print(f"Не удалось обновить .ignore: {e}")
 
     indexer.full_index()
+    repo_maps[repo_str] = RepoMap(root=repo_str)
 
     # Запуск watchdog при первом добавлении репозитория
     if len(indexer.repos) == 1:
@@ -210,27 +219,29 @@ def reindex_repo(repo_path: str):
         return {"error": f"Репозиторий не в списке индексации: {repo_str}"}
 
     # Очистка данных для файлов этого репозитория
-    files_to_remove = [f for f in indexer.symbols.keys() if Path(f).resolve().is_relative_to(r_path)]
+    files_to_remove = [f for f in indexer.symbols.keys() if Path(
+        f).resolve().is_relative_to(r_path)]
     for file in files_to_remove:
         indexer.vector.remove_file(file)
         indexer.graphs.clear_file(file)
         del indexer.symbols[file]
 
-    # Переиндексация
-    from indexer import IGNORED_DIRS
-    for file in Path(repo_path).rglob("*"):
-        if not file.is_file():
-            continue
-        if any(part in IGNORED_DIRS for part in file.parts):
-            continue
+    # Переиндексация в пределах тех же budgets, что у CLI и первоначального индекса.
+    scan_result = RepositoryScanner(r_path).scan()
+    for file in scan_result.files:
         indexer.index_file(file)
 
     on_index_callback(repo_str)
 
     base_dir = r_path / ".agents" / "booster"
+    files_in_repo = [
+        file_path
+        for file_path in indexer.symbols
+        if Path(file_path).resolve().is_relative_to(repo_path)
+    ]
     return {
         "success": f"Переиндексирован: {repo_str}",
-        "files_in_repo": len([f for f in indexer.symbols if Path(f).resolve().is_relative_to(repo_path)]),
+        "files_in_repo": len(files_in_repo),
         "code_city": str(base_dir / "code_city.html"),
         "repo_map": str(base_dir / "repo_map.md"),
     }
@@ -282,15 +293,18 @@ def get_repo_map(repo_path: str | None = None):
     map_content = repo_map.get_repo_map()
 
     if not map_content:
-        return {"warning": "Не удалось сгенерировать карту репозитория (пустой или нет поддерживаемых языков)"}
+        return {
+            "warning": (
+                "Не удалось сгенерировать карту репозитория "
+                "(пустой или нет поддерживаемых языков)"
+            )
+        }
 
     map_output.parent.mkdir(parents=True, exist_ok=True)
     with open(map_output, "w", encoding="utf-8") as f:
         f.write(map_content)
 
     return {"repo_map": map_content}
-
-
 
 
 @mcp.tool()
@@ -320,7 +334,7 @@ def get_code_city(repo_path: str | None = None, output_file: str = "code_city.ht
         return {"error": f"Репозиторий не найден: {r_path}"}
 
     html_path = Path(r_path) / ".agents" / "booster" / "code_city.html"
-    
+
     if html_path.exists():
         return {
             "success": True,

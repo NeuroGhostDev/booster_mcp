@@ -11,13 +11,13 @@ if ! command -v git &> /dev/null; then
     exit 1
 fi
 
-# Проверка наличия Python 3
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Ошибка: Python 3 не установлен."
+# Проверка наличия uv или Python 3
+if ! command -v uv &> /dev/null && ! command -v python3 &> /dev/null; then
+    echo "❌ Ошибка: установите uv или Python 3.11-3.13."
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        echo "💡 Для Ubuntu/Debian: sudo apt update && sudo apt install python3 python3-venv python3-pip"
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "💡 Для macOS: brew install python3"
+        echo "💡 Для Ubuntu/Debian: sudo apt update && sudo apt install python3.12 python3.12-venv"
+    elif [[ "$OSTYPE" == "darwin" ]]; then
+        echo "💡 Для macOS: brew install python@3.12"
     fi
     exit 1
 fi
@@ -35,28 +35,41 @@ else
     cd "$INSTALL_DIR"
 fi
 
-# Проверка на наличие модуля venv
-if ! python3 -c "import venv" &> /dev/null; then
-    echo "❌ Ошибка: Модуль python3-venv не установлен."
-    echo "💡 На Ubuntu/Debian выполните: sudo apt install python3.11-venv (или версию вашего Python)"
+echo "📦 Настройка виртуального окружения..."
+VENV_PYTHON=".venv/bin/python"
+
+if command -v uv &> /dev/null; then
+    echo "⚡ Синхронизация зависимостей через uv.lock..."
+    uv sync --no-dev
+else
+    PYTHON_BIN=""
+    for candidate in python3.12 python3.13 python3.11 python3; do
+        if command -v "$candidate" &> /dev/null && "$candidate" -c 'import sys; raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 14) else 1)'; then
+            PYTHON_BIN="$candidate"
+            break
+        fi
+    done
+
+    if [ -z "$PYTHON_BIN" ]; then
+        echo "❌ Ошибка: не найден совместимый Python 3.11-3.13."
+        exit 1
+    fi
+
+    rm -rf .venv
+    echo "⚙️ Установка зависимостей через pip..."
+    "$PYTHON_BIN" -m venv .venv
+    "$VENV_PYTHON" -m pip install --upgrade pip
+    "$VENV_PYTHON" -m pip install .
+fi
+
+if [ ! -x "$VENV_PYTHON" ]; then
+    echo "❌ Ошибка: виртуальное окружение не было создано."
     exit 1
 fi
 
-# Создание и активация виртуального окружения
-echo "📦 Настройка виртуального окружения..."
-python3 -m venv .venv
-
-# Активация
-source .venv/bin/activate
-
-# Установка зависимостей
-echo "⚙️ Установка зависимостей..."
-pip install --upgrade pip
-pip install -r requirements.txt
-
 # Установка встроенных скиллов 
 echo "🧠 Установка скиллов агента..."
-python skill_installer.py
+"$VENV_PYTHON" -c "from skill_installer import install_bundled_skills; install_bundled_skills()"
 
 echo ""
 echo "✅ Установка завершена успешно!"
