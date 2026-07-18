@@ -1,8 +1,8 @@
 # Booster MCP Cookbook
 
-Welcome to the **Booster MCP Cookbook**! This guide contains best practices, recipes, and examples of how AI agents and developers can maximize the capabilities of Booster MCP v3.0.
+Welcome to the **Booster MCP Cookbook**! This guide contains best practices, recipes, and examples of how AI agents and developers can maximize the capabilities of Booster MCP v3.1.
 
-Booster MCP transforms your AI agent into a "Senior Engineer" capable of quickly understanding architecture, finding deep context, building 3D visualizations, and integrating up-to-date library documentation (Context7).
+Booster MCP transforms your AI agent into a "Senior Engineer" capable of quickly understanding architecture, finding deep context, building 3D visualizations, integrating up-to-date library documentation (Context7), and running a Cognitive Runtime loop before and after code changes.
 
 ---
 
@@ -15,9 +15,10 @@ When an agent first encounters a large project, it doesn't need to read hundreds
 ```text
 Agent Prompt: Call the `add_repo` tool with the absolute path to the project.
 Example: add_repo(repo_path="C:\\projects\\my_large_app")
+Then call repo_stats() to check indexing progress.
 ```
 
-_What happens:_ Booster indexes the code, builds call and import graphs, and automatically generates artifacts: `.agents/booster/code_city.html` and `.agents/booster/repo_map.md`. It also auto-generates a `.ignore` file to skip noisy directories like `node_modules` and `venv`.
+_What happens:_ Booster registers the repository and starts indexing in the background so a long scan cannot block the MCP stdio request. When indexing completes, Booster has code symbols, call and import graphs, and generated artifacts: `.agents/booster/code_city.html` and `.agents/booster/repo_map.md`. It also auto-generates a `.ignore` file to skip noisy directories like `node_modules` and `venv`. Use `add_repo(..., wait=true)` only for an intentionally blocking run.
 
 **Step 2. Request the Repository Map**
 
@@ -67,9 +68,87 @@ Booster returns a Mermaid call graph diagram. The agent renders it, and the deve
 
 ---
 
-## 🧠 Recipe 3: Context Injection
+## 🧠 Recipe 3: Cognitive Runtime Preflight Before a Code Change
 
-In version 3.0, Booster introduces the concept of **Active Context**. Agents can gather project knowledge so they don't forget the core ideas upon restarting.
+Use this recipe when the agent is about to edit shared code, refactor a symbol,
+or fix a bug in a non-trivial path.
+
+**Problem:** A normal coding agent often jumps from a user request to a patch.
+That skips the things a human engineer checks first: blast radius, git history,
+project rules, diagnostics, and tests.
+
+**Goal:** Make the agent inspect the system before it writes code.
+
+```text
+Agent Prompt:
+Call `preflight_analysis` before editing.
+
+preflight_analysis(
+   task="Refactor AuthService token validation",
+   target="AuthService",
+   paths=["src/auth/service.py"],
+   repo="C:\\projects\\my_app"
+)
+```
+
+_What happens:_ Booster gathers project memory, runs impact analysis, checks
+the affected files for diagnostics, and returns a recommended engineering
+order.
+
+For deeper context, ask the agent to call the lower-level tools explicitly:
+
+```text
+project_memory_recall(query="auth token validation", repo="C:\\projects\\my_app")
+impact_analysis(target="AuthService", repo="C:\\projects\\my_app", max_depth=3)
+git_intelligence(symbol="AuthService", repo="C:\\projects\\my_app", limit=8)
+collect_diagnostics(paths=["src/auth/service.py"], repo="C:\\projects\\my_app")
+```
+
+**Result:** The agent can explain:
+
+- which symbols and files are affected;
+- which calls are internal and which are unresolved external calls;
+- which tests are likely relevant;
+- what git history says about the target;
+- what project facts should constrain the patch;
+- what diagnostics already fail before the change.
+
+---
+
+## ✅ Recipe 4: Validate and Repair After a Patch
+
+Use this recipe after the agent has modified files.
+
+```text
+run_validation_checks(
+   paths=["src/auth/service.py"],
+   commands=["pytest tests/auth -q"],
+   repo="C:\\projects\\my_app"
+)
+```
+
+_What happens:_ Booster collects diagnostics and runs the focused validation
+command. Diagnostics are fail-closed: if Ruff, Pyright, TypeScript, Rust,
+Bandit, Semgrep, or another configured tool crashes or times out, Booster
+reports an error finding instead of pretending validation passed.
+
+**Repair loop for the agent:**
+
+```text
+1. Read the first diagnostic or failing command.
+2. Repair the same touched slice.
+3. Run `run_validation_checks` again.
+4. Stop when validation passes or the failure disproves the current hypothesis.
+```
+
+**Result:** The agent behaves less like a patch generator and more like an
+engineer running a focused red/green loop.
+
+---
+
+## 🧠 Recipe 5: Context Injection
+
+Booster provides **Active Context** so agents can gather project knowledge and keep core ideas available across restarts.
 
 **Working with Project Memory (`project_memory`):**
 When an agent makes an important architectural decision (e.g., "In this project, we use Pydantic v2 and dependency injection"), it should record it:
@@ -82,7 +161,7 @@ On the next run, the `booster-onboard` skill automatically pulls these rules and
 
 ---
 
-## 📚 Recipe 4: Working with Context7 (Fresh External Docs)
+## 📚 Recipe 6: Working with Context7 (Fresh External Docs)
 
 A common agent problem: hallucinating function parameters for new library versions.
 Booster MCP solves this with the Context7 bridge.
@@ -101,7 +180,7 @@ Additionally, Booster MCP provides the `fetch_stack_docs` tool, which analyzes `
 
 ---
 
-## 📊 Recipe 5: Debugging Sessions with Flipchart
+## 📊 Recipe 7: Debugging Sessions with Flipchart
 
 Flipchart is the virtual whiteboard for your agent.
 
@@ -122,7 +201,7 @@ Flipchart is the virtual whiteboard for your agent.
 
 ---
 
-## 🛡️ Recipe 6: Bounded Scanning for Massive Repositories (NEW)
+## 🛡️ Recipe 8: Bounded Scanning for Massive Repositories (NEW)
 
 Large monorepos can overwhelm unbounded indexing. Start with the Booster CLI to create a reusable scan policy before connecting the project to an MCP client.
 
@@ -132,13 +211,13 @@ Large monorepos can overwhelm unbounded indexing. Start with the Booster CLI to 
 Terminal: cd C:\projects\massive_monorepo && booster expand --profile balanced
 ```
 
-_What happens:_ Booster stores `.agents/booster/scan_config.json`, then creates `repo_map.md` and `scan_report.json`. The shared scanner prioritizes source roots, prunes generated and dependency directories early, and applies limits for depth, directories, file count, individual file size, and total selected bytes. `add_repo()` and `reindex_repo()` reuse the same policy.
+_What happens:_ Booster stores `.agents/booster/scan_config.json`, then creates `repo_map.md` and `scan_report.json`. The shared scanner prioritizes source roots, prunes generated and dependency directories early, and applies limits for depth, directories, file count, individual file size, and total selected bytes. `add_repo()` starts background indexing with the same policy, and `reindex_repo()` reuses that policy for explicit rebuilds.
 
 **Result:** The first map is available quickly, the selected scope is explainable from `scan_report.json`, and agents can request `--profile deep` only when the task genuinely needs broader coverage.
 
 ---
 
-## 🔌 Recipe 7: Connect and Control Booster After Installation (NEW)
+## 🔌 Recipe 9: Connect and Control Booster After Installation (NEW)
 
 The Windows, Linux, and macOS installers create a `booster` launcher in the user's local bin directory. Open a new terminal, change into the repository you want to manage, and run:
 
@@ -181,7 +260,7 @@ booster control disconnect --client vscode --scope workspace --project .
 
 ---
 
-## 🛑 Recipe 8: Debug a Stop-Criterion Narrative Regression (NEW)
+## 🛑 Recipe 10: Debug a Stop-Criterion Narrative Regression (NEW)
 
 **Scenario:** A critical stop atom correctly sets an evaluation stage score to zero and preserves the visible stop label, but the report suddenly contains the same three generic narrative paragraphs for every dialog. Prompt changes have no effect.
 
@@ -214,9 +293,9 @@ This is a control-flow problem, not a prompt-writing problem. The likely defect 
 
 ---
 
-## 🎨 Recipe 9: Immersive 3D Rendering with Code City (NEW)
+## 🎨 Recipe 11: Immersive 3D Rendering with Code City (NEW)
 
-Booster MCP v3.0 brings a Neon/Cyberpunk aesthetic to your repository visualization.
+Booster MCP includes a Neon/Cyberpunk aesthetic for repository visualization.
 
 **Scenario:** You want to show the user a visual representation of their code complexity.
 
@@ -232,7 +311,7 @@ _What the user sees:_
 
 ---
 
-## 🛠 Recipe 10: Developing Custom Agent Skills
+## 🛠 Recipe 12: Developing Custom Agent Skills
 
 You can create your own skills in `.agents/skills/[skill-name]/SKILL.md`.
 

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Booster-mcp"
-version = "3.0.0"
-description = "MCP server for semantic code analysis, repository mapping, and large codebase navigation"
+version = "3.1.0"
+description = "Cognitive Runtime for AI coding agents: repo maps, code graphs, git intelligence, diagnostics, memory, and validation loops"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11,<3.14"
@@ -14,6 +14,10 @@ keywords = [
     "mcp",
     "code-analysis",
     "semantic-search",
+    "coding-agents",
+    "code-intelligence",
+    "diagnostics",
+    "validation-loop",
     "ai",
     "llm",
     "tree-sitter",
@@ -63,6 +67,7 @@ py-modules = [
     "chunker",
     "city_server",
     "cli",
+    "cognitive_runtime",
     "control",
     "context7_bridge",
     "context_provider",

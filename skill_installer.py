@@ -2,7 +2,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
-
+from typing import Any
 
 BUNDLED_SKILLS_DIR = Path(__file__).resolve().parent / "skills"
 DEFAULT_TARGET_DIR = Path.home() / ".agents" / "skills"
@@ -24,7 +24,7 @@ def install_bundled_skills(
     target_dir: str | Path | None = None,
     *,
     overwrite: bool = True,
-) -> dict:
+) -> dict[str, Any]:
     """Копирует встроенные скилы в директорию агента.
 
     По умолчанию синхронизирует содержимое в ~/.agents/skills.
@@ -77,7 +77,7 @@ def install_bundled_skills(
         else:
             skipped.append(skill_name)
 
-    manifest = {
+    manifest: dict[str, Any] = {
         "installed": installed,
         "updated": updated,
         "skipped": skipped,
@@ -91,7 +91,7 @@ def install_bundled_skills(
     return manifest
 
 
-def auto_install_bundled_skills() -> dict:
+def auto_install_bundled_skills() -> dict[str, Any]:
     """Пытается установить встроенные скилы и не роняет сервер при сбое."""
     try:
         result = install_bundled_skills()

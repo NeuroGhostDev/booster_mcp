@@ -2,15 +2,17 @@
 Toolkit MCP — расширенные инструменты для работы со сложными проектами
 Grep, чтение с контекстом, git diff, запуск команд, анализ ошибок, конфиги, память, дубликаты
 """
-import re
-import os
-import json
-import subprocess
+# ruff: noqa: E501
+# pyright: reportUnknownParameterType=false, reportMissingParameterType=false, reportMissingTypeArgument=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 import hashlib
-from pathlib import Path
-from typing import Optional
+import json
+import os
+import re
+import subprocess
 from collections import defaultdict
 from difflib import unified_diff
+from pathlib import Path
+from typing import Any, Optional
 
 
 class CodeToolkit:
@@ -32,7 +34,7 @@ class CodeToolkit:
             try:
                 with open(p, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except:
+            except Exception:
                 pass
         return {}
 
@@ -112,8 +114,8 @@ class CodeToolkit:
                 "context_start": start + 1,
                 "context_end": end,
                 "lines": [
-                    {"num": i + start + 1, "content": l}
-                    for i, l in enumerate(context_lines)
+                    {"num": i + start + 1, "content": line}
+                    for i, line in enumerate(context_lines)
                 ],
                 "total_lines": len(lines)
             }
@@ -138,8 +140,8 @@ class CodeToolkit:
                 "end": min(end, len(lines)),
                 "total_lines": len(lines),
                 "lines": [
-                    {"num": i + start, "content": l}
-                    for i, l in enumerate(selected)
+                    {"num": i + start, "content": line}
+                    for i, line in enumerate(selected)
                 ]
             }
         except Exception as e:
@@ -171,10 +173,10 @@ class CodeToolkit:
 
             if path_obj.is_file():
                 rel_path = path_obj.relative_to(git_root)
-                cmd.append("--", str(rel_path))
+                cmd.extend(["--", str(rel_path)])
             elif path_obj.is_dir():
                 rel_path = path_obj.relative_to(git_root)
-                cmd.append("--", str(rel_path))
+                cmd.extend(["--", str(rel_path)])
 
             result = subprocess.run(
                 cmd, capture_output=True, text=True, timeout=30)
@@ -208,7 +210,7 @@ class CodeToolkit:
             cmd = ["git", "-C", str(git_root), "log", f"-{limit}", "--oneline"]
             if path_obj.exists():
                 rel_path = path_obj.relative_to(git_root)
-                cmd.append("--", str(rel_path))
+                cmd.extend(["--", str(rel_path)])
 
             result = subprocess.run(
                 cmd, capture_output=True, text=True, timeout=30)
@@ -228,7 +230,7 @@ class CodeToolkit:
 
     # === 4. Запуск команд ===
 
-    def run_command(self, cmd: str, cwd: str = None,
+    def run_command(self, cmd: str, cwd: str | None = None,
                     timeout: int = 30000, shell: bool = True) -> dict:
         """Выполняет команду в песочнице"""
         work_dir = Path(cwd) if cwd else Path(
@@ -294,7 +296,7 @@ class CodeToolkit:
         if self.indexer.embedder:
             try:
                 semantic_results = self.indexer.hybrid_search(error_text[:500])
-            except:
+            except Exception:
                 pass
 
         return {
@@ -307,7 +309,7 @@ class CodeToolkit:
 
     # === 6. Поиск конфигов ===
 
-    def list_configs(self, repo: str = None) -> dict:
+    def list_configs(self, repo: str | None = None) -> dict:
         """Находит все конфиги в репозитории"""
         if not repo and self.repos:
             repo = self.repos[0]
@@ -380,7 +382,7 @@ class CodeToolkit:
     # === 7. Долгосрочная память ===
 
     def project_memory(self, action: str, key: str,
-                       value: str = None, repo: str = None) -> dict:
+                       value: str | None = None, repo: str | None = None) -> dict:
         """Сохраняет/читает инсайты о проекте между сессиями"""
         if not repo and self.repos:
             repo = self.repos[0]
@@ -478,7 +480,7 @@ class CodeToolkit:
         # Хэш для каждого блока N строк
         block_hashes = defaultdict(list)
 
-        for file_path, syms in self.indexer.symbols.items():
+        for file_path, _syms in self.indexer.symbols.items():
             try:
                 content = Path(file_path).read_text(
                     encoding="utf-8", errors="ignore")
@@ -487,8 +489,9 @@ class CodeToolkit:
                 for i in range(len(lines) - min_lines + 1):
                     block = "\n".join(lines[i:i + min_lines])
                     # Нормализация: убираем лишние пробелы
-                    normalized = "\n".join(l.strip()
-                                           for l in block.split("\n") if l.strip())
+                    normalized = "\n".join(
+                        line.strip() for line in block.split("\n") if line.strip()
+                    )
 
                     if len(normalized) < 50:  # Пропускаем слишком короткие
                         continue
@@ -499,7 +502,7 @@ class CodeToolkit:
                         "start_line": i,
                         "content": block[:200]
                     })
-            except:
+            except Exception:
                 continue
 
         # Находим дубликаты
@@ -607,7 +610,7 @@ class CodeToolkit:
                                 "pattern": pattern,
                                 "matches": len(matches)
                             })
-            except:
+            except Exception:
                 continue
 
         # Фильтруем пустые категории
@@ -620,7 +623,7 @@ class CodeToolkit:
         }
 
 
-def setup_toolkit_tools(mcp, indexer, repos: list[str]):
+def setup_toolkit_tools(mcp: Any, indexer: Any, repos: list[str]) -> "CodeToolkit":
     """Регистрирует инструменты toolkit в MCP сервере"""
     toolkit = CodeToolkit(indexer, repos)
 
@@ -651,7 +654,7 @@ def setup_toolkit_tools(mcp, indexer, repos: list[str]):
         return toolkit.git_log(path, limit)
 
     @mcp.tool()
-    def run_command(cmd: str, cwd: str = None, timeout: int = 30000):
+    def run_command(cmd: str, cwd: str | None = None, timeout: int = 30000):
         """Выполняет команду в shell. timeout в миллисекундах"""
         return toolkit.run_command(cmd, cwd, timeout)
 
@@ -661,12 +664,17 @@ def setup_toolkit_tools(mcp, indexer, repos: list[str]):
         return toolkit.analyze_error(error_text, symbols)
 
     @mcp.tool()
-    def list_configs(repo: str = None):
+    def list_configs(repo: str | None = None):
         """Находит все конфигурационные файлы в репозитории"""
         return toolkit.list_configs(repo)
 
     @mcp.tool()
-    def project_memory(action: str, key: str, value: str = None, repo: str = None):
+    def project_memory(
+        action: str,
+        key: str,
+        value: str | None = None,
+        repo: str | None = None,
+    ):
         """
         Управление долгосрочной памятью проекта.
         action: get, set, delete, list, clear
@@ -684,7 +692,7 @@ def setup_toolkit_tools(mcp, indexer, repos: list[str]):
         return toolkit.find_duplicates(min_lines, max_results)
 
     @mcp.tool()
-    def external_deps(symbol: str = None, file: str = None):
+    def external_deps(symbol: str | None = None, file: str | None = None):
         """Находит внешние зависимости: HTTP, БД, Redis, Kafka, файлы, subprocess"""
         return toolkit.external_deps(symbol, file)
 

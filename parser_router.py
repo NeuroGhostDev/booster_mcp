@@ -1,4 +1,6 @@
 from pathlib import Path
+from typing import Any
+
 from tree_sitter_language_pack import get_parser
 
 EXT_MAP = {
@@ -12,11 +14,12 @@ EXT_MAP = {
     ".cpp": "cpp"
 }
 
-class ParserRouter:
-    def __init__(self):
-        self.parsers = {}
 
-    def get(self, path):
+class ParserRouter:
+    def __init__(self) -> None:
+        self.parsers: dict[str, Any] = {}
+
+    def get(self, path: str | Path) -> Any | None:
         path = Path(path) if isinstance(path, str) else path
         ext = path.suffix
         if ext not in EXT_MAP:

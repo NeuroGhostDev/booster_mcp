@@ -1,31 +1,34 @@
 from pathlib import Path
+from typing import Any, Callable
 
 from chunker import semantic_chunks
 from embedder import Embedder
 from graphs import Graphs
 from parser_router import ParserRouter
-from repository_scanner import RepositoryScanner
+from repository_scanner import RepositoryScanner, ScanResult
 from vector_index import VectorIndex
 
 
 class RepoIndexer:
-    def __init__(self, repos, on_index_complete=None):
-        self.repos = repos
-        self.router = ParserRouter()
-        self.graphs = Graphs()
-        self.embedder = Embedder()
-        self.vector = VectorIndex()
-        self.symbols = {}
+    def __init__(self, repos: list[str], on_index_complete: Callable[[str], None] | None = None):
+        self.repos: list[str] = repos
+        self.router: ParserRouter = ParserRouter()
+        self.graphs: Graphs = Graphs()
+        self.embedder: Embedder = Embedder()
+        self.vector: VectorIndex = VectorIndex()
+        self.symbols: dict[str, list[dict[str, Any]]] = {}
         # Callback после индексации репозитория
         self.on_index_complete = on_index_complete
 
-    def extract_data(self, tree, code_bytes, path_str):
+    def extract_data(self, tree: Any, code_bytes: bytes, path_str: str) -> list[dict[str, Any]]:
         root = tree.root_node
-        symbols = []
+        symbols: list[dict[str, Any]] = []
         MAX_DEPTH = 500
 
         # Итеративный обход через стек (защита от RecursionError)
-        stack = [(root, None, 0)]  # (node, current_scope, depth)
+        stack: list[tuple[Any, str | None, int]] = [
+            (root, None, 0)
+        ]  # (node, current_scope, depth)
 
         while stack:
             node, current_scope, depth = stack.pop()
@@ -69,7 +72,7 @@ class RepoIndexer:
 
         return symbols
 
-    def index_file(self, path):
+    def index_file(self, path: Path) -> None:
         parser = self.router.get(path)
         if not parser:
             return
@@ -90,7 +93,7 @@ class RepoIndexer:
         symbols = self.extract_data(tree, code_bytes, path_str)
         self.symbols[path_str] = symbols
 
-        chunks = semantic_chunks(symbols, code_str)
+        chunks: list[str] = semantic_chunks(symbols, code_str)
         for chunk in chunks:
             vec = self.embedder.embed(chunk)
             self.vector.add(vec, {
@@ -98,22 +101,28 @@ class RepoIndexer:
                 "chunk": chunk
             })
 
-    def full_index(self):
+    def full_index(self) -> None:
         for repo in self.repos:
-            repo_path = Path(repo).expanduser().resolve()
-            scan_result = RepositoryScanner(repo_path).scan()
-            for file_path in scan_result.files:
-                self.index_file(file_path)
+            self.index_repo(repo)
 
-            # Вызываем callback после индексации каждого репозитория
-            if self.on_index_complete:
-                self.on_index_complete(repo)
+    def index_repo(self, repo: str) -> ScanResult:
+        """Индексирует один репозиторий в пределах настроенных scan-budget."""
+        repo_path = Path(repo).expanduser().resolve()
+        scan_result = RepositoryScanner(repo_path).scan()
+        for file_path in scan_result.files:
+            self.index_file(file_path)
 
-    def search(self, query: str, k: int = 5):
+        # Вызываем callback после индексации репозитория.
+        if self.on_index_complete:
+            self.on_index_complete(str(repo_path))
+
+        return scan_result
+
+    def search(self, query: str, k: int = 5) -> list[dict[str, Any]]:
         vec = self.embedder.embed(query)
         return self.vector.search(vec, k=k)
 
-    def hybrid_search(self, query: str, k: int = 5):
+    def hybrid_search(self, query: str, k: int = 5) -> list[dict[str, Any]]:
         """Ищет код, комбинируя семантический и точный lexical-поиск."""
         vec = self.embedder.embed(query)
         return self.vector.hybrid_search(vec, query, k=k)

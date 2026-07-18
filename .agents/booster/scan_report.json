@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at_utc": "2026-07-16T10:37:14.850220+00:00",
+  "generated_at_utc": "2026-07-18T10:36:28.378677+00:00",
   "repository": "D:\\workSpace\\booster_mcp",
   "profile": "balanced",
   "limits": {
@@ -12,14 +12,15 @@
   },
   "include_dependencies": false,
   "summary": {
-    "directories_scanned": 16,
-    "files_inspected": 59,
-    "source_files_selected": 44,
-    "selected_bytes": 419645
+    "directories_scanned": 17,
+    "files_inspected": 66,
+    "source_files_selected": 50,
+    "selected_bytes": 425095
   },
   "skipped": {
     "ignored_directory": 9,
     "ignored_file": 3,
+    "max_file_bytes": 1,
     "unsupported_file": 12
   },
   "limits_reached": [],
@@ -27,9 +28,10 @@
     "chunker.py",
     "city_server.py",
     "cli.py",
-    "code_city.html",
+    "cognitive_runtime.py",
     "context7_bridge.py",
     "context_provider.py",
+    "control.py",
     "COOKBOOK.md",
     "embedder.py",
     "flipchart.py",
@@ -54,11 +56,16 @@
     "vector_index.py",
     "visualizer.py",
     "watcher.py",
+    "tests/test_cognitive_runtime.py",
     "tests/test_context_provider.py",
+    "tests/test_control.py",
     "tests/test_hybrid_search.py",
     "tests/test_repository_scanner.py",
+    "tests/test_runtime_hardening.py",
+    "tests/test_watcher.py",
     "skills/booster-architecture-map/SKILL.md",
     "skills/booster-bug-hunt/SKILL.md",
+    "skills/booster-cognitive-runtime/SKILL.md",
     "skills/booster-context-inject/SKILL.md",
     "skills/booster-deep-dive/SKILL.md",
     "skills/booster-feature-add/SKILL.md",

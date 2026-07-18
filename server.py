@@ -1,10 +1,14 @@
 import os
 import threading
+import traceback
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, cast
 
 from fastmcp import FastMCP
 
 import city_server
+from cognitive_runtime import setup_cognitive_runtime_tools
 from context7_bridge import setup_context7_bridge
 from context_provider import setup_context_provider
 from flipchart import setup_flipchart_tools
@@ -25,7 +29,7 @@ if not initial_repos:
 # Callback для генерации Code City после индексации
 
 
-def on_index_callback(repo_path: str):
+def on_index_callback(repo_path: str) -> None:
     """Генерирует Code City и Repo Map после индексации репозитория."""
     try:
         base_dir = Path(repo_path) / ".agents" / "booster"
@@ -38,7 +42,7 @@ def on_index_callback(repo_path: str):
 
         # 2. Repo Map
         rm = RepoMap(root=repo_path)
-        map_content = rm.get_repo_map()
+        map_content = str(cast(Any, rm).get_repo_map())
         if map_content:
             map_output = base_dir / "repo_map.md"
             with open(map_output, "w", encoding="utf-8") as f:
@@ -50,7 +54,10 @@ def on_index_callback(repo_path: str):
 
 # Инициализация без автоматической индексации (агент сам добавит репозитории)
 indexer = RepoIndexer(initial_repos, on_index_complete=on_index_callback)
-repo_maps = {}  # Кэш RepoMap для каждого репозитория
+repo_maps: dict[str, RepoMap] = {}  # Кэш RepoMap для каждого репозитория
+_index_lock = threading.RLock()
+_index_jobs: dict[str, dict[str, Any]] = {}
+_watch_started = False
 
 # Автоустановка встроенных скилов для агента.
 auto_install_bundled_skills()
@@ -58,6 +65,7 @@ auto_install_bundled_skills()
 if initial_repos:
     indexer.full_index()
     start_watch(indexer, indexer.repos)
+    _watch_started = True
     for repo in initial_repos:
         repo_maps[repo] = RepoMap(root=repo)
 
@@ -79,28 +87,87 @@ setup_flipchart_tools(mcp, indexer)
 setup_toolkit_tools(mcp, indexer, indexer.repos)
 setup_context_provider(mcp, indexer, repo_maps)
 setup_context7_bridge(mcp, indexer)
+setup_cognitive_runtime_tools(mcp, indexer, indexer.repos)
 
 # Инициализация visualizer
 visualizer = CodeCityVisualizer(indexer)
 
 
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _set_index_job(repo: str, **updates: Any) -> None:
+    current = _index_jobs.get(repo, {})
+    current.update(updates)
+    current["updated_at_utc"] = _utc_now()
+    _index_jobs[repo] = current
+
+
+def _ensure_watch_started() -> None:
+    global _watch_started
+    if _watch_started or not indexer.repos:
+        return
+    start_watch(indexer, indexer.repos)
+    _watch_started = True
+
+
+def _index_repo_job(repo: str) -> None:
+    try:
+        _set_index_job(repo, status="running",
+                       started_at_utc=_utc_now(), error=None)
+        with _index_lock:
+            scan_result = indexer.index_repo(repo)
+            repo_maps[repo] = RepoMap(root=repo)
+            _ensure_watch_started()
+        _set_index_job(
+            repo,
+            status="completed",
+            completed_at_utc=_utc_now(),
+            files_indexed=len(scan_result.files),
+            scan_report=str(scan_result.save_report()),
+        )
+    except Exception as exc:
+        _set_index_job(
+            repo,
+            status="failed",
+            completed_at_utc=_utc_now(),
+            error=str(exc),
+            traceback=traceback.format_exc(),
+        )
+
+
+def _start_index_repo_job(repo: str) -> None:
+    job = _index_jobs.get(repo, {})
+    if job.get("status") in {"queued", "running"}:
+        return
+    _set_index_job(repo, status="queued", queued_at_utc=_utc_now(), error=None)
+    thread = threading.Thread(
+        target=_index_repo_job,
+        args=(repo,),
+        daemon=True,
+        name=f"booster-index-{Path(repo).name or 'repo'}",
+    )
+    thread.start()
+
+
 @mcp.tool()
-def semantic_search(query: str):
+def semantic_search(query: str) -> list[dict[str, Any]]:
     """Ищет фрагменты кода по смыслу (векторный поиск)."""
     return indexer.search(query)
 
 
 @mcp.tool()
-def hybrid_search(query: str, k: int = 5):
+def hybrid_search(query: str, k: int = 5) -> list[dict[str, Any]]:
     """Объединяет semantic-поиск и BM25 для точных символов, API и естественного языка."""
     return indexer.hybrid_search(query, k=k)
 
 
 @mcp.tool()
-def find_symbol(name: str):
+def find_symbol(name: str) -> dict[str, Any]:
     """Ищет функцию или класс по имени."""
-    matches = []
-    for filepath, file_symbols in indexer.symbols.items():
+    matches: list[dict[str, Any]] = []
+    for file_symbols in indexer.symbols.values():
         for sym in file_symbols:
             if sym.get("name") == name:
                 matches.append(sym)
@@ -112,17 +179,18 @@ def find_symbol(name: str):
 
 
 @mcp.tool()
-def repo_stats():
+def repo_stats() -> dict[str, Any]:
     """Возвращает статистику проиндексированного репозитория."""
     return {
         "repos": indexer.repos,
         "files_indexed": len(indexer.symbols),
-        "vectors_in_faiss": indexer.vector.index.ntotal
+        "vectors_in_faiss": indexer.vector.index.ntotal,
+        "indexing": _index_jobs,
     }
 
 
 @mcp.tool()
-def list_agent_skills():
+def list_agent_skills() -> dict[str, Any]:
     """Возвращает список встроенных agent skills, поставляемых вместе с MCP."""
     return {
         "bundled_skills": list_bundled_skills(),
@@ -131,23 +199,33 @@ def list_agent_skills():
 
 
 @mcp.tool()
-def install_agent_skills(overwrite: bool = True):
+def install_agent_skills(overwrite: bool = True) -> dict[str, Any]:
     """Синхронизирует встроенные agent skills в ~/.agents/skills."""
     return install_bundled_skills(overwrite=overwrite)
 
 
 @mcp.tool()
-def add_repo(repo_path: str):
-    """Добавляет репозиторий для индексации и индексирует его."""
+def add_repo(repo_path: str, wait: bool = False) -> dict[str, Any]:
+    """Добавляет репозиторий и запускает индексирование.
+
+    По умолчанию индексирование идёт в фоне, чтобы long-running scan/embedding
+    не удерживал MCP stdio request и не падал при отмене со стороны клиента.
+    """
     r_path = Path(repo_path).expanduser().resolve()
     if not r_path.exists() or not r_path.is_dir():
         return {"error": f"Путь {repo_path} не существует или не является директорией"}
 
     repo_str = str(r_path)
     if repo_str in indexer.repos:
-        return {"warning": f"Репозиторий уже добавлен: {repo_str}", "repos": indexer.repos}
+        return {
+            "warning": f"Репозиторий уже добавлен: {repo_str}",
+            "repos": indexer.repos,
+            "indexing": _index_jobs.get(repo_str, {"status": "unknown"}),
+        }
 
-    indexer.repos.append(repo_str)
+    with _index_lock:
+        if repo_str not in indexer.repos:
+            indexer.repos.append(repo_str)
 
     # Создание/обновление .ignore файла для отсечения мусора (node_modules, venv и т.д.)
     ignore_path = r_path / ".ignore"
@@ -157,7 +235,7 @@ def add_repo(repo_path: str):
         "target", ".next", ".nuxt", "out", "coverage", ".git", ".tox"
     }
 
-    existing_ignores = set()
+    existing_ignores: set[str] = set()
     if ignore_path.exists():
         try:
             with open(ignore_path, "r", encoding="utf-8") as f:
@@ -177,18 +255,17 @@ def add_repo(repo_path: str):
         except Exception as e:
             print(f"Не удалось обновить .ignore: {e}")
 
-    indexer.full_index()
-    repo_maps[repo_str] = RepoMap(root=repo_str)
-
-    # Запуск watchdog при первом добавлении репозитория
-    if len(indexer.repos) == 1:
-        start_watch(indexer, indexer.repos)
+    if wait:
+        _index_repo_job(repo_str)
+    else:
+        _start_index_repo_job(repo_str)
 
     base_dir = r_path / ".agents" / "booster"
-    result = {
-        "success": f"Добавлен репозиторий: {repo_str}",
+    result: dict[str, Any] = {
+        "success": f"Репозиторий добавлен: {repo_str}",
         "repos": indexer.repos,
         "files_indexed": len(indexer.symbols),
+        "indexing": _index_jobs.get(repo_str, {"status": "unknown"}),
         "code_city": str(base_dir / "code_city.html"),
         "repo_map": str(base_dir / "repo_map.md"),
     }
@@ -197,7 +274,7 @@ def add_repo(repo_path: str):
 
 
 @mcp.tool()
-def remove_repo(repo_path: str):
+def remove_repo(repo_path: str) -> dict[str, Any]:
     """Удаляет репозиторий из списка индексации (данные сохраняются в индексе)."""
     r_path = Path(repo_path).expanduser().resolve()
     repo_str = str(r_path)
@@ -210,7 +287,7 @@ def remove_repo(repo_path: str):
 
 
 @mcp.tool()
-def reindex_repo(repo_path: str):
+def reindex_repo(repo_path: str) -> dict[str, Any]:
     """Переиндексирует указанный репозиторий (полная очистка и новая индексация)."""
     r_path = Path(repo_path).expanduser().resolve()
     repo_str = str(r_path)
@@ -248,7 +325,7 @@ def reindex_repo(repo_path: str):
 
 
 @mcp.tool()
-def list_repos():
+def list_repos() -> dict[str, Any]:
     """Возвращает список всех репозиториев под управлением MCP."""
     return {
         "repos": indexer.repos,
@@ -258,7 +335,7 @@ def list_repos():
 
 
 @mcp.tool()
-def get_repo_map(repo_path: str | None = None):
+def get_repo_map(repo_path: str | None = None) -> dict[str, Any]:
     """
     Генерирует сжатую карту репозитория в стиле Aider RepoMap.
     Показывает структуру проекта, функции и классы (~4K токенов на 100K+ строк).
@@ -290,7 +367,7 @@ def get_repo_map(repo_path: str | None = None):
         repo_maps[r_path] = RepoMap(root=r_path)
 
     repo_map = repo_maps[r_path]
-    map_content = repo_map.get_repo_map()
+    map_content = str(cast(Any, repo_map).get_repo_map())
 
     if not map_content:
         return {
@@ -308,7 +385,10 @@ def get_repo_map(repo_path: str | None = None):
 
 
 @mcp.tool()
-def get_code_city(repo_path: str | None = None, output_file: str = "code_city.html"):
+def get_code_city(
+    repo_path: str | None = None,
+    output_file: str = "code_city.html",
+) -> dict[str, Any]:
     """
     Генерирует 3D визуализацию проекта в виде "города".
 
@@ -346,10 +426,13 @@ def get_code_city(repo_path: str | None = None, output_file: str = "code_city.ht
     # Fallback to generating if it doesn't exist
     viz = CodeCityVisualizer(indexer)
     html_path.parent.mkdir(parents=True, exist_ok=True)
-    result = viz.generate_visualization(r_path, str(html_path))
+    result = cast(dict[str, Any], viz.generate_visualization(
+        r_path, str(html_path)))
 
-    if isinstance(result, dict) and result.get('error'):
+    if result.get('error'):
         return result
+
+    metrics = cast(dict[str, Any], result.get("metrics", {}))
 
     return {
         "success": True,
@@ -359,11 +442,11 @@ def get_code_city(repo_path: str | None = None, output_file: str = "code_city.ht
             "files": result['buildings'],
             "connections": result['connections'],
             "districts": result['districts'],
-            "total_lines": result['metrics']['lines'],
-            "total_functions": result['metrics']['functions'],
-            "total_classes": result['metrics']['classes'],
-            "total_complexity": result['metrics']['complexity'],
-            "total_size_kb": round(result['metrics']['bytes'] / 1024, 1),
+            "total_lines": metrics['lines'],
+            "total_functions": metrics['functions'],
+            "total_classes": metrics['classes'],
+            "total_complexity": metrics['complexity'],
+            "total_size_kb": round(metrics['bytes'] / 1024, 1),
         }
     }
 

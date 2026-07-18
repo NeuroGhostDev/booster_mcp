@@ -1,7 +1,82 @@
 # Booster MCP Marketplace and Distribution Guide
 
-Booster MCP is compatible with MCP clients and popular catalogs such as
-Smithery, Glama, VS Code, and Claude Desktop.
+Booster MCP is a Cognitive Runtime for coding agents. It builds a local world
+model of a repository: repo map, hybrid search, AST impact graph, git history,
+project memory, diagnostics, and validation loops.
+
+Use this document when publishing Booster to MCP catalogs such as Smithery,
+Glama, VS Code, Claude Desktop, and community lists.
+
+## Product Positioning
+
+### One-line pitch
+
+Booster gives AI coding agents the perception layer they miss: architecture,
+history, diagnostics, memory, and validation before they edit code.
+
+### Short catalog description
+
+Booster MCP turns a repository into a live software world model for coding
+agents. It combines bounded scanning, repo maps, semantic and lexical search,
+Tree-sitter call/import graphs, git history/blame, long-term project memory,
+fail-closed diagnostics, and validation loops. Use it when you want Cursor,
+Claude Code, VS Code agents, or other MCP clients to understand a codebase
+before generating patches.
+
+### Longer catalog description
+
+Most coding agents can generate code, but they often edit with weak context:
+they grep a few files, miss architecture, ignore existing diagnostics, forget
+project rules, and stop before validation. Booster MCP adds the missing runtime
+between the agent and the repository. It builds compact repo maps, tracks
+symbols and call/import relationships, recalls project facts, checks git
+history, collects compiler/linter/security diagnostics, and guides the agent
+through Plan -> Implement -> Validate -> Repair.
+
+### Tagline options
+
+- Cognitive Runtime for coding agents.
+- A live world model of your software system.
+- IDE perception, git memory, and validation loops for AI agents.
+- Stop giving agents random files. Give them the system map.
+
+### Problems solved
+
+- Agents waste context reading unrelated files.
+- Semantic search returns snippets, not architecture.
+- Refactors happen without blast-radius analysis.
+- Historical code intent is hidden in git history.
+- Project-specific rules disappear between sessions.
+- Type/lint/security diagnostics are ignored until late.
+- Patches are produced without a repeatable validation loop.
+
+### Differentiators
+
+- Local-first MCP server; no hosted code upload is required.
+- Bounded scanning keeps large repositories predictable.
+- Hybrid retrieval combines FAISS semantic search and BM25 lexical search.
+- Cognitive Runtime adds impact analysis, git intelligence, project memory,
+  diagnostics, and validation tools.
+- Diagnostics are fail-closed: broken tools become error findings, not false
+  success.
+- Bundled skills teach agents how to onboard, debug, add features, refactor,
+  review, and use Cognitive Runtime.
+
+## Recommended Listing Metadata
+
+```yaml
+name: Booster MCP
+category: Developer Tools
+tags:
+	- mcp
+	- coding-agents
+	- code-intelligence
+	- semantic-search
+	- repo-map
+	- diagnostics
+	- ai-engineering
+	- developer-productivity
+```
 
 Use the packaged installation and `booster control` for local client setup.
 The command writes the correct absolute Python and `server.py` paths for the
@@ -66,8 +141,37 @@ before publishing installation instructions.
 
 ## 4. Release Checklist
 
-- Document every tool with clear arguments and descriptions.
+- Lead with the pain: agents edit code without architecture, memory,
+  diagnostics, or validation.
+- Show the Cognitive Runtime workflow in [README.md](README.md).
 - Keep working examples and regression workflows in [COOKBOOK.md](COOKBOOK.md).
-- Publish versioned GitHub Releases.
+- Document every MCP tool with clear arguments and descriptions.
+- Publish versioned GitHub Releases with screenshots or CLI output examples.
 - Declare every runtime dependency in [pyproject.toml](pyproject.toml).
 - Validate the release with `uv lock --check`, `pytest`, and Ruff.
+
+## 5. Suggested Social / Launch Copy
+
+```text
+Most AI coding agents can write patches. The hard part is giving them the
+software system around the patch.
+
+Booster MCP builds a local world model for agents: repo map, hybrid search,
+AST impact graph, git history, project memory, diagnostics, and validation
+loops.
+
+It is not another grep wrapper. It is a Cognitive Runtime for coding agents.
+```
+
+```text
+Before editing code, an agent should know:
+
+- what calls this symbol;
+- which files and tests are affected;
+- why the code exists in git history;
+- what project rules must be remembered;
+- what type/lint/security diagnostics already fail;
+- which validation command to run after the patch.
+
+That is what Booster MCP gives it.
+```

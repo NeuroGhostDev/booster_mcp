@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from repomap import RepoMap
 
@@ -36,7 +37,7 @@ def get_repo_artifacts_status(repo_path: str | Path) -> dict[str, object]:
     }
 
 
-def setup_context_provider(mcp, indexer, repo_maps):
+def setup_context_provider(mcp: Any, indexer: Any, repo_maps: dict[str, RepoMap]) -> None:
     """
     Регистрирует ресурсы (resources) и инструменты (tools) для Context Injection.
     """

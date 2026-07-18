@@ -11,6 +11,13 @@ description: |
 
 `project_memory` позволяет сохранять важную информацию (контекст, архитектурные решения, TO-DO) в `.agents/booster/memory.json`. Это нужно, чтобы агент не "забывал" важные детали при перезапусках и смене сессий.
 
+В Cognitive Runtime добавлены структурированные факты:
+
+- `remember_project_fact(category, fact, confidence, source, repo)`
+- `project_memory_recall(query, categories, repo, limit)`
+
+Они живут в том же `memory.json`, но имеют категории, confidence и источник.
+
 ## Как использовать
 
 1. **Сохранение (set)**:
@@ -25,11 +32,19 @@ description: |
    Чтобы узнать, какие знания уже сохранены по проекту:
    `project_memory(action="list", key="")`
 
-4. **Удаление (delete) и очистка (clear)**:
+4. **Структурированный recall перед задачей**:
+   Перед изменением кода:
+   `project_memory_recall(query="добавить OAuth в auth flow")`
+
+5. **Сохранение проверенного факта**:
+   После анализа архитектуры:
+   `remember_project_fact(category="architecture", fact="Frontend ходит в backend только через BFF", confidence=0.95, source="repo_map+impact_analysis")`
+
+6. **Удаление (delete) и очистка (clear)**:
    Если информация устарела:
    `project_memory(action="delete", key="architecture:auth")`
    `project_memory(action="clear", key="")` # Очистить всю память
-   
+
 ## Антипаттерны
 
 - Не сохраняй огромные куски кода в память (сохраняй выводы и ссылки на файлы).
