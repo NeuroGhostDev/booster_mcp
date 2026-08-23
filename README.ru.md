@@ -38,6 +38,24 @@ booster control doctor --project .
 booster expand --profile balanced
 ```
 
+## Bootstrap для AI Agent
+
+При открытии GitHub-ссылки агент должен сначала прочитать [`AGENTS.md`](AGENTS.md)
+и [`RECOMENDET_PROMPT.md`](RECOMENDET_PROMPT.md), затем выполнить onboarding:
+
+```bash
+uv sync --locked --extra dev
+uv run python -c "from skill_installer import install_bundled_skills; print(install_bundled_skills())"
+uv run booster expand --profile balanced .
+uv run booster control connect --client vscode --scope workspace --project . --with-repository --force
+uv run booster control doctor --project .
+```
+
+Для Claude Desktop используйте `--client claude --scope user`. Репозиторий не
+перезаписывает скрытый system prompt хост-приложения: portable-механизмом
+являются `AGENTS.md`, `RECOMENDET_PROMPT.md`, bundled skills и выбранная MCP
+конфигурация.
+
 ## Подключение MCP
 
 Для workspace-подключения VS Code:

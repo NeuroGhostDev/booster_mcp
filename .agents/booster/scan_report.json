@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at_utc": "2026-08-23T09:51:07.132331+00:00",
+  "generated_at_utc": "2026-08-23T11:07:21.579664+00:00",
   "repository": "D:\\workSpace\\booster_mcp",
   "profile": "balanced",
   "limits": {
@@ -15,10 +15,14 @@
     "directories_scanned": 30,
     "files_inspected": 177,
     "source_files_selected": 149,
-    "selected_bytes": 1170541,
+    "selected_bytes": 1101085,
     "inventory_files": 149
   },
   "file_manifest": {
+    "AGENTS.md": {
+      "size_bytes": 2955,
+      "mtime_ns": 1787483115043398400
+    },
     "CHANGELOG.md": {
       "size_bytes": 9440,
       "mtime_ns": 1787475883978335500
@@ -52,8 +56,8 @@
       "mtime_ns": 1787399079407223600
     },
     "CONTRIBUTING.md": {
-      "size_bytes": 3340,
-      "mtime_ns": 1787475897703154800
+      "size_bytes": 3410,
+      "mtime_ns": 1787483159680498900
     },
     "control.py": {
       "size_bytes": 20088,
@@ -88,8 +92,8 @@
       "mtime_ns": 1787398525761915800
     },
     "indexing_jobs.py": {
-      "size_bytes": 10581,
-      "mtime_ns": 1787398240135771900
+      "size_bytes": 10597,
+      "mtime_ns": 1787479652322751300
     },
     "install.ps1": {
       "size_bytes": 5410,
@@ -116,16 +120,16 @@
       "mtime_ns": 1787399002641922600
     },
     "README.md": {
-      "size_bytes": 27189,
-      "mtime_ns": 1787477519515009000
+      "size_bytes": 29514,
+      "mtime_ns": 1787483115040415400
     },
     "README.ru.md": {
-      "size_bytes": 5589,
-      "mtime_ns": 1787475867788118700
+      "size_bytes": 6519,
+      "mtime_ns": 1787483134614241500
     },
     "README.zh-CN.md": {
-      "size_bytes": 4664,
-      "mtime_ns": 1787475867805676100
+      "size_bytes": 5416,
+      "mtime_ns": 1787483134638363300
     },
     "RECOMENDET_PROMPT.md": {
       "size_bytes": 40875,
@@ -154,10 +158,6 @@
     "skill_installer.py": {
       "size_bytes": 3648,
       "mtime_ns": 1784370817105056900
-    },
-    "SPEC.md": {
-      "size_bytes": 76504,
-      "mtime_ns": 1787073691961416300
     },
     "toolkit.py": {
       "size_bytes": 27326,
@@ -623,6 +623,7 @@
   },
   "limits_reached": [],
   "sample_files": [
+    "AGENTS.md",
     "CHANGELOG.md",
     "chunker.py",
     "city_server.py",
@@ -657,7 +658,6 @@
     "requirements.txt",
     "server.py",
     "skill_installer.py",
-    "SPEC.md",
     "toolkit.py",
     "vector_index.py",
     "visualizer.py",

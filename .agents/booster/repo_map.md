@@ -18,6 +18,8 @@
 .gitignore:
   roles: config
 
+AGENTS.md:
+
 CHANGELOG.md:
 
 CONTRIBUTING.md:
@@ -35,8 +37,6 @@ README.ru.md:
 README.zh-CN.md:
 
 RECOMENDET_PROMPT.md:
-
-SPEC.md:
 
 chunker.py:
   def semantic_chunks (line 3)
@@ -217,24 +217,24 @@ indexer.py:
   +6 symbols omitted by per-file cap
 
 indexing_jobs.py:
-  def IndexJobManager (line 14)
-  def __init__ (line 22)
-  def _condition (line 33)
-  def _now (line 41)
-  def _iso_now (line 45)
-  def _notify (line 50)
-  def start (line 55)
-  def _run (line 118)
-  def update (line 136)
-  def progress (line 159)
-  def _started_at (line 183)
-  def mark_running (line 187)
-  def finish (line 197)
-  def is_cancel_requested (line 207)
-  def cancel (line 211)
-  def get (line 230)
-  def wait (line 241)
-  def snapshot (line 265)
+  def IndexJobManager (line 15)
+  def __init__ (line 23)
+  def _condition (line 34)
+  def _now (line 42)
+  def _iso_now (line 46)
+  def _notify (line 51)
+  def start (line 56)
+  def _run (line 119)
+  def update (line 137)
+  def progress (line 160)
+  def _started_at (line 184)
+  def mark_running (line 188)
+  def finish (line 198)
+  def is_cancel_requested (line 208)
+  def cancel (line 212)
+  def get (line 231)
+  def wait (line 242)
+  def snapshot (line 266)
 
 install.ps1:
 

@@ -18,6 +18,7 @@ uv sync --locked --extra dev
 
 Before starting a non-trivial task, read:
 
+- [`AGENTS.md`](AGENTS.md) for the portable agent bootstrap contract;
 - [`RECOMENDET_PROMPT.md`](RECOMENDET_PROMPT.md) for the engineering workflow;
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for system boundaries;
 - the relevant section of [`README.md`](README.md).

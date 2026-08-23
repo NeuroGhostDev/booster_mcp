@@ -330,6 +330,7 @@ timelines or the legacy `.agents/booster/memory.json`.
 ├── cognitive_runtime.py      # Impact, memory, diagnostics, and validation tools
 ├── indexer.py                # Repository indexing and graph construction
 ├── visualizer.py             # Code City generation
+├── AGENTS.md                 # Agent-first bootstrap and project instructions
 ├── RECOMENDET_PROMPT.md      # Repository-wide engineering prompt for agents
 ├── CONTRIBUTING.md           # Development and contribution workflow
 ├── CHANGELOG.md              # Release history
@@ -407,6 +408,69 @@ python -m pip install .
 
 On Windows, activate with `\.venv\Scripts\Activate.ps1` and use
 `\.venv\Scripts\booster.exe` until the launcher is installed.
+
+## Agent Bootstrap: Paste a GitHub Link, Get the Workflow
+
+When this repository is opened from a GitHub URL in an AI coding agent, the
+agent should treat [`AGENTS.md`](AGENTS.md) as the project bootstrap contract.
+It should install the local dependencies, synchronize Booster skills, load the
+engineering guidance, create the bounded repository artifacts, and connect the
+MCP server before editing code.
+
+Run this once from the repository root:
+
+```bash
+# 1. Install the project and its development dependencies.
+uv sync --locked --extra dev
+
+# 2. Install or update the bundled Booster skills for the current agent.
+uv run python -c "from skill_installer import install_bundled_skills; print(install_bundled_skills())"
+
+# 3. Load the repository into the bounded Booster world model.
+uv run booster expand --profile balanced .
+
+# 4. Connect the current repository to VS Code MCP.
+uv run booster control connect \
+  --client vscode \
+  --scope workspace \
+  --project . \
+  --with-repository \
+  --force
+
+# 5. Verify the environment and generated artifacts.
+uv run booster control doctor --project .
+uv run booster control status --client vscode --scope workspace --project .
+```
+
+For Claude Desktop, use the user-level connection instead:
+
+```bash
+uv run booster control connect \
+  --client claude \
+  --scope user \
+  --project . \
+  --with-repository \
+  --force
+```
+
+If `uv` is unavailable, use `python -m pip install -e ".[dev]"` and replace
+`uv run booster` with `python -m cli` or the installed `booster` launcher.
+
+The agent should then start every non-trivial task with:
+
+```text
+Read AGENTS.md and RECOMENDET_PROMPT.md.
+Call inject_context(include_map=true, include_stack=true, include_conventions=true).
+Use preflight_analysis and impact_analysis before editing code.
+Use run_validation_checks after the patch.
+Call booster.task_complete(task_id="<task-id>") before the final response.
+```
+
+This is intentionally project-level and portable. A repository must not silently
+rewrite a host application's hidden system prompt or unrelated global client
+configuration. `AGENTS.md` is the instruction file that agent hosts can discover;
+`booster control connect` changes only the selected MCP client entry and preserves
+other servers.
 
 ## Connect to VS Code
 

@@ -38,6 +38,23 @@ booster control doctor --project .
 booster expand --profile balanced
 ```
 
+## AI Agent Bootstrap
+
+当 agent 通过 GitHub URL 打开仓库时，先读取 [`AGENTS.md`](AGENTS.md) 和
+[`RECOMENDET_PROMPT.md`](RECOMENDET_PROMPT.md)，然后执行 onboarding：
+
+```bash
+uv sync --locked --extra dev
+uv run python -c "from skill_installer import install_bundled_skills; print(install_bundled_skills())"
+uv run booster expand --profile balanced .
+uv run booster control connect --client vscode --scope workspace --project . --with-repository --force
+uv run booster control doctor --project .
+```
+
+对于 Claude Desktop，使用 `--client claude --scope user`。仓库不会静默修改
+host application 的隐藏 system prompt；portable 机制是 `AGENTS.md`、
+`RECOMENDET_PROMPT.md`、bundled skills 和选定的 MCP 配置。
+
 ## 连接 MCP
 
 为 VS Code workspace 创建连接：
