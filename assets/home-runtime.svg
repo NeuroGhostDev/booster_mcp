@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">Booster Home context compilation</title>
+  <desc id="desc">Booster Home classifies and normalizes context, persists raw blocks, allocates a token budget, retrieves targeted evidence, packs the request, and forwards it to the model.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081426"/>
+      <stop offset="1" stop-color="#17152f"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5de8dc"/>
+      <stop offset="0.52" stop-color="#55b9ff"/>
+      <stop offset="1" stop-color="#d69aff"/>
+    </linearGradient>
+    <filter id="glow" x="-25%" y="-50%" width="150%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#72e9db"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="430" rx="24" fill="url(#bg)"/>
+  <g opacity="0.13" stroke="#9bb0d0" stroke-width="1">
+    <path d="M0 92H1200 M0 184H1200 M0 276H1200 M0 368H1200"/>
+    <path d="M90 0V430 M210 0V430 M330 0V430 M450 0V430 M570 0V430 M690 0V430 M810 0V430 M930 0V430 M1050 0V430"/>
+  </g>
+  <text x="52" y="53" fill="#f1f6ff" font-size="25" font-family="Inter,Segoe UI,Arial,sans-serif" font-weight="700">Context compilation is recoverable</text>
+  <text x="52" y="80" fill="#98adcc" font-size="15" font-family="Inter,Segoe UI,Arial,sans-serif">Compression removes noise from the active request while raw blocks remain addressable.</text>
+
+  <g fill="#10283a" stroke="#55dcd5" stroke-width="2" filter="url(#glow)">
+    <rect x="48" y="142" width="132" height="82" rx="14"/>
+    <rect x="208" y="142" width="132" height="82" rx="14"/>
+    <rect x="368" y="142" width="132" height="82" rx="14"/>
+    <rect x="528" y="142" width="132" height="82" rx="14"/>
+    <rect x="688" y="142" width="132" height="82" rx="14"/>
+    <rect x="848" y="142" width="132" height="82" rx="14"/>
+    <rect x="1008" y="142" width="144" height="82" rx="14"/>
+  </g>
+  <g fill="#edf7ff" font-family="Inter,Segoe UI,Arial,sans-serif" text-anchor="middle">
+    <text x="114" y="174" font-size="15" font-weight="700">Classify</text>
+    <text x="114" y="198" font-size="12" fill="#9fe8df">roles + priority</text>
+    <text x="274" y="174" font-size="15" font-weight="700">Normalize</text>
+    <text x="274" y="198" font-size="12" fill="#9fe8df">noise + duplicates</text>
+    <text x="434" y="174" font-size="15" font-weight="700">Persist</text>
+    <text x="434" y="198" font-size="12" fill="#9fe8df">hash + artifact</text>
+    <text x="594" y="174" font-size="15" font-weight="700">Budget</text>
+    <text x="594" y="198" font-size="12" fill="#9fe8df">soft + hard limits</text>
+    <text x="754" y="174" font-size="15" font-weight="700">Retrieve</text>
+    <text x="754" y="198" font-size="12" fill="#9fe8df">targeted evidence</text>
+    <text x="914" y="174" font-size="15" font-weight="700">Pack</text>
+    <text x="914" y="198" font-size="12" fill="#9fe8df">safe message set</text>
+    <text x="1080" y="174" font-size="15" font-weight="700">Forward</text>
+    <text x="1080" y="198" font-size="12" fill="#9fe8df">model request</text>
+  </g>
+  <g fill="none" stroke="url(#line)" stroke-width="3" filter="url(#glow)">
+    <path d="M180 183H208" marker-end="url(#arrow)"/>
+    <path d="M340 183H368" marker-end="url(#arrow)"/>
+    <path d="M500 183H528" marker-end="url(#arrow)"/>
+    <path d="M660 183H688" marker-end="url(#arrow)"/>
+    <path d="M820 183H848" marker-end="url(#arrow)"/>
+    <path d="M980 183H1008" marker-end="url(#arrow)"/>
+  </g>
+
+  <rect x="168" y="292" width="864" height="74" rx="16" fill="#0e2037" stroke="#a98bff" stroke-width="1.5"/>
+  <g fill="#e8dcff" font-family="Inter,Segoe UI,Arial,sans-serif" text-anchor="middle">
+    <text x="600" y="321" font-size="16" font-weight="700">Compression is not forgetting</text>
+    <text x="600" y="346" font-size="13" fill="#c4b7ea">Evicted content is persisted first, hash-verified, and recoverable by artifact reference.</text>
+  </g>
+  <path d="M434 224V292" stroke="#a98bff" stroke-width="2" stroke-dasharray="6 7"/>
+  <path d="M914 224V292" stroke="#a98bff" stroke-width="2" stroke-dasharray="6 7"/>
+</svg>

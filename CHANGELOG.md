@@ -1,4 +1,40 @@
-# Booster MCP v3.1 Cognitive Runtime Release
+# Changelog
+
+## 4.0.0 - 2026-08-23
+
+- Added Booster Home, an OpenAI-compatible local data plane with context
+  compilation, session memory, recoverable artifacts, streaming, and telemetry.
+- Added the research coprocessor for project snapshots, experiment state,
+  artifact lookup, log digests, regime-safe run comparison, hypotheses,
+  experiment design, context packs, workers, checkpoint metadata, and existing
+  LightningField traces.
+- Added deterministic compression, persist-before-evict protection, bounded
+  budgets, recursive redaction, and provider-specific `reasoning_content`
+  handling.
+- Added repository architecture documentation, maintainer contribution rules,
+  README visual assets, and the repository-wide `RECOMENDET_PROMPT.md` agent
+  guidance.
+- Added a persistent cross-process repository registry, explicit
+  `booster.task_complete` final reindexing, and immutable commit-bound artifact
+  snapshots with preserved history.
+- Added observable job-based repository indexing with `job_id`, phase progress,
+  elapsed time, ETA, cancellation, bounded `wait_until_ready`, and nonblocking
+  `index_status` reads.
+- Changed `add_repo(wait=true)` to remain backward-compatible without holding the
+  MCP request open. Read-only repository tools continue serving the last ready
+  generation while a new generation is built.
+- Added staged generation promotion, source-manifest stability checks, stale
+  generation reporting, deleted-path filtering, and watcher-triggered rebuilds.
+- Added diversity-aware architecture maps with top-level module quotas,
+  entrypoint/config/contract coverage, per-file symbol caps, and coverage
+  summaries for large modules such as LEGION.
+- Added `repo_map_architecture.md`, `repo_map_symbols.md`, and
+  `index_health.json`; `repo_map.md` remains a compatibility copy.
+- Verified the OpenAI-compatible Home gateway against LM Studio's
+  `nvidia/nemotron-3-nano-4b`, including non-stream, `/v1/responses`, SSE, and
+  provider-specific `reasoning_content` handling.
+
+## 3.1 Cognitive Runtime Release
 
 Booster MCP now moves beyond repository search into a Cognitive Runtime for
 coding agents. The goal is simple: agents should not edit code while blind to
@@ -47,11 +83,11 @@ a clean initial scan.
 
 ## MCP Runtime Hardening
 
-- `add_repo` now starts indexing in the background by default. This keeps long
-  scan/embedding work out of the MCP stdio request and avoids crash-on-cancel
-  failures such as `AssertionError: Request already responded to` in the MCP
-  transport. Pass `wait=true` only for an intentionally blocking run.
-- `repo_stats` now reports per-repository indexing job status.
+- `add_repo` starts indexing in a background job. `wait=true` is retained for
+  client compatibility but is nonblocking; use `index_status` and
+  `wait_until_ready` when a caller needs an explicit lifecycle contract.
+- `repo_stats` and `list_repos` report generation, stale, completeness, and job
+  status metadata.
 - `RepoIndexer.index_repo` indexes one repository at a time instead of forcing
   every `add_repo` path through a full reindex of all repositories.
 - Code City Web UI now logs the real bound port when `CITY_PORT=0` is used,

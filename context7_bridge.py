@@ -21,7 +21,9 @@ def setup_context7_bridge(mcp: Any, indexer: Any) -> None:
 
         # 1. Анализируем типы файлов
         exts = set()
-        for f in indexer.symbols.keys():
+        symbols_snapshot = getattr(indexer, "symbols_snapshot", None)
+        symbols = symbols_snapshot() if callable(symbols_snapshot) else indexer.symbols
+        for f in symbols.keys():
             ext = Path(f).suffix.lower()
             if ext:
                 exts.add(ext)

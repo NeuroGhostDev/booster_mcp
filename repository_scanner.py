@@ -6,10 +6,10 @@ import fnmatch
 import json
 import os
 from collections import Counter, deque
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from grep_ast import filename_to_lang
 
@@ -287,6 +287,8 @@ class ScanResult:
     selected_bytes: int
     skipped: Counter[str]
     limits_reached: set[str]
+    file_manifest: dict[str, dict[str, int]] = field(default_factory=dict)
+    inventory_files: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -301,7 +303,9 @@ class ScanResult:
                 "files_inspected": self.inspected_files,
                 "source_files_selected": len(self.files),
                 "selected_bytes": self.selected_bytes,
+                "inventory_files": self.inventory_files or len(self.files),
             },
+            "file_manifest": self.file_manifest,
             "skipped": dict(sorted(self.skipped.items())),
             "limits_reached": sorted(self.limits_reached),
             "sample_files": [path.relative_to(self.root).as_posix() for path in self.files[:50]],
@@ -326,7 +330,11 @@ class RepositoryScanner:
         self.config = config or ScanConfig.load(self.root)
         self.ignore_rules = IgnoreRules.from_repository(self.root, self.config)
 
-    def scan(self) -> ScanResult:
+    def scan(
+        self,
+        progress: Callable[[str, int, int | None], None] | None = None,
+        cancel: Callable[[], bool] | None = None,
+    ) -> ScanResult:
         if not self.root.is_dir():
             raise NotADirectoryError(
                 f"Repository directory does not exist: {self.root}")
@@ -334,18 +342,25 @@ class RepositoryScanner:
         files: list[Path] = []
         skipped: Counter[str] = Counter()
         limits_reached: set[str] = set()
+        file_manifest: dict[str, dict[str, int]] = {}
         scanned_directories = 0
         inspected_files = 0
         selected_bytes = 0
+        inventory_files = 0
         directories: deque[tuple[Path, int]] = deque([(self.root, 0)])
 
         while directories:
+            if cancel is not None and cancel():
+                limits_reached.add("cancelled")
+                break
             if scanned_directories >= self.config.max_directories:
                 limits_reached.add("max_directories")
                 break
 
             directory, depth = directories.popleft()
             scanned_directories += 1
+            if progress is not None:
+                progress("scan", scanned_directories, self.config.max_directories)
             try:
                 entries = list(os.scandir(directory))
             except OSError:
@@ -379,16 +394,9 @@ class RepositoryScanner:
                 directories.append((Path(entry.path), depth + 1))
 
             for entry in sorted(file_entries, key=lambda item: item.name.casefold()):
-                if len(files) >= self.config.max_files:
-                    limits_reached.add("max_files")
-                    return self._result(
-                        files,
-                        scanned_directories,
-                        inspected_files,
-                        selected_bytes,
-                        skipped,
-                        limits_reached,
-                    )
+                if cancel is not None and cancel():
+                    limits_reached.add("cancelled")
+                    break
 
                 inspected_files += 1
                 path = Path(entry.path)
@@ -403,15 +411,31 @@ class RepositoryScanner:
                 except OSError:
                     skipped["unreadable_file"] += 1
                     continue
+                if not self._is_supported_source_file(path):
+                    skipped["unsupported_file"] += 1
+                    continue
+
+                inventory_files += 1
+                try:
+                    file_stat = entry.stat(follow_symlinks=False)
+                    file_manifest[self._relative_path(path)] = {
+                        "size_bytes": int(size_bytes),
+                        "mtime_ns": int(file_stat.st_mtime_ns),
+                    }
+                except OSError:
+                    skipped["unreadable_file"] += 1
+                    continue
+
+                if len(files) >= self.config.max_files:
+                    skipped["max_files"] += 1
+                    limits_reached.add("max_files")
+                    continue
                 if size_bytes > self.config.max_file_bytes:
                     skipped["max_file_bytes"] += 1
                     continue
                 if selected_bytes + size_bytes > self.config.max_total_bytes:
                     skipped["max_total_bytes"] += 1
                     limits_reached.add("max_total_bytes")
-                    continue
-                if not self._is_supported_source_file(path):
-                    skipped["unsupported_file"] += 1
                     continue
 
                 files.append(path)
@@ -424,6 +448,8 @@ class RepositoryScanner:
             selected_bytes,
             skipped,
             limits_reached,
+            file_manifest,
+            inventory_files,
         )
 
     def _result(
@@ -434,6 +460,8 @@ class RepositoryScanner:
         selected_bytes: int,
         skipped: Counter[str],
         limits_reached: set[str],
+        file_manifest: dict[str, dict[str, int]] | None = None,
+        inventory_files: int = 0,
     ) -> ScanResult:
         return ScanResult(
             root=self.root,
@@ -444,6 +472,8 @@ class RepositoryScanner:
             selected_bytes=selected_bytes,
             skipped=skipped,
             limits_reached=limits_reached,
+            file_manifest=file_manifest or {},
+            inventory_files=inventory_files,
         )
 
     def _directory_sort_key(self, entry: os.DirEntry[str]) -> tuple[int, str]:

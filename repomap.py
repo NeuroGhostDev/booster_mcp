@@ -4,6 +4,7 @@ RepoMap - генерация сжатой карты репозитория в �
 """
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 from grep_ast import filename_to_lang
 from tree_sitter_language_pack import get_parser
@@ -51,6 +52,43 @@ STANDARD_IGNORED_DIRS = {
     "target", "build", "dist", ".cache", "logs", "tmp", "temp",
 }
 
+ARCHITECTURE_CONFIG_NAMES = {
+    ".editorconfig",
+    ".gitignore",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    "pyproject.toml",
+    "package.json",
+    "tsconfig.json",
+    "Cargo.toml",
+    "go.mod",
+    "Makefile",
+}
+ENTRYPOINT_NAMES = {
+    "main.py",
+    "app.py",
+    "server.py",
+    "cli.py",
+    "index.ts",
+    "main.ts",
+    "main.go",
+    "main.rs",
+    "bootstrap.ts",
+    "bootstrap.js",
+}
+CONTRACT_PARTS = {
+    "api",
+    "contract",
+    "contracts",
+    "schema",
+    "schemas",
+    "protocol",
+    "interface",
+    "interfaces",
+    "dto",
+    "routes",
+}
+
 ALL_IGNORED_DIRS = IGNORED_DIRS | STANDARD_IGNORED_DIRS
 
 
@@ -81,10 +119,19 @@ def load_local_ignore(root: Path):
 class RepoMap:
     """Генерация сжатой карты репозитория для контекста AI."""
 
-    def __init__(self, root=None, max_tokens=4096, scan_config: ScanConfig | None = None):
-        self.root = Path(root) if root else Path.cwd()
+    def __init__(
+        self,
+        root=None,
+        max_tokens=4096,
+        scan_config: ScanConfig | None = None,
+        indexer: Any | None = None,
+    ):
+        self.root = Path(root).expanduser().resolve() if root else Path.cwd().resolve()
         self.max_tokens = max_tokens
         self.scan_config = scan_config
+        self.indexer = indexer
+        self.max_symbols_per_file = 20
+        self.max_module_ratio = 0.35
 
         # Загружаем локальные игноры из репозитория
         local_dirs, local_files, local_patterns = load_local_ignore(self.root)
@@ -93,6 +140,7 @@ class RepoMap:
         self.all_ignored_patterns = IGNORED_PATTERNS + local_patterns
         self._tags_cache = {}
         self.last_scan_result = None
+        self.last_coverage: dict[str, Any] = {}
 
     def get_repo_map(self, files=None):
         """
@@ -104,28 +152,212 @@ class RepoMap:
         Returns:
             Строка с картой репозитория (~4K токенов на 100K+ строк)
         """
-        if files is None:
-            files = self._collect_all_files()
+        records = self._records(files)
+        return self._render(records, symbol_cap=self.max_symbols_per_file)
 
-        if not files:
-            return ""
+    def get_architecture_map(self, files=None) -> str:
+        """Возвращает bounded macro map с разнообразием модулей."""
+        records = self._records(files)
+        return self._render(records, symbol_cap=self.max_symbols_per_file)
 
-        # Собираем теги (функции, классы, методы) из всех файлов
-        all_tags = []
-        for file in files:
-            tags = self._get_tags(file)
-            all_tags.extend(tags)
+    def get_symbol_map(self, files=None) -> str:
+        """Возвращает более подробную symbol map с тем же safety cap."""
+        records = self._records(files)
+        return self._render(records, symbol_cap=max(self.max_symbols_per_file, 40))
 
-        # Генерируем дерево с ограничением по токенам
-        tree = self._build_tree(all_tags)
-
-        return tree
+    def coverage_summary(self) -> dict[str, Any]:
+        """Возвращает объяснение bounded selection без чтения содержимого map."""
+        return dict(self.last_coverage)
 
     def _collect_all_files(self):
         """Собирает исходники в пределах сохранённого scan budget."""
         self.last_scan_result = RepositoryScanner(
             self.root, self.scan_config).scan()
-        return [str(path) for path in self.last_scan_result.files]
+        files = [str(path) for path in self.last_scan_result.files]
+        known = {Path(path).resolve() for path in files}
+        # Configs are architectural evidence even when the parser does not
+        # classify them as source files.
+        for name in ARCHITECTURE_CONFIG_NAMES:
+            candidate = self.root / name
+            if candidate.is_file() and candidate.resolve() not in known:
+                files.append(str(candidate))
+        return files
+
+    def _records(self, files=None) -> list[dict[str, Any]]:
+        selected_files = (
+            self._collect_all_files()
+            if files is None
+            else [str(path) for path in files]
+        )
+        records: list[dict[str, Any]] = []
+        for file_name in selected_files:
+            path = Path(file_name)
+            tags = self._get_tags(path)
+            relative = self._relative_name(path)
+            roles = self._roles(relative)
+            records.append(
+                {
+                    "file": relative,
+                    "tags": tags,
+                    "module": self._module_name(relative),
+                    "roles": roles,
+                    "score": self._architecture_score(relative, tags, roles),
+                }
+            )
+        return records
+
+    def _relative_name(self, path: Path) -> str:
+        try:
+            return path.resolve().relative_to(self.root).as_posix()
+        except ValueError:
+            return path.as_posix()
+
+    @staticmethod
+    def _module_name(relative: str) -> str:
+        parts = Path(relative).parts
+        return parts[0] if len(parts) > 1 else "."
+
+    @staticmethod
+    def _roles(relative: str) -> set[str]:
+        path = Path(relative)
+        name = path.name
+        lower_parts = {part.casefold() for part in path.parts}
+        roles: set[str] = set()
+        if name in ARCHITECTURE_CONFIG_NAMES or name.casefold().startswith("dockerfile"):
+            roles.add("config")
+        if name in ENTRYPOINT_NAMES or name.casefold() in {"__main__.py", "index.js"}:
+            roles.add("entrypoint")
+        if lower_parts & CONTRACT_PARTS or any(
+            token in path.stem.casefold()
+            for token in ("schema", "contract", "protocol", "interface")
+        ):
+            roles.add("contract")
+        if any(
+            token in path.stem.casefold()
+            for token in ("route", "worker", "bootstrap", "register")
+        ):
+            roles.add("control")
+        return roles
+
+    def _architecture_score(
+        self, relative: str, tags: list[dict[str, Any]], roles: set[str]
+    ) -> float:
+        score = min(2.0, len(tags) / 20)
+        score += 5.0 * len(roles)
+        if self.indexer is not None:
+            graphs = getattr(self.indexer, "graphs", None)
+            snapshot = getattr(graphs, "snapshot", None)
+            if callable(snapshot):
+                graph = snapshot()
+                imports = graph.get("import_graph", {})
+                score += min(2.0, len(imports.get(str(self.root / relative), [])) / 5)
+                score += min(2.0, sum(1 for values in imports.values() if relative in str(values)))
+        return score
+
+    def _select_records(
+        self, records: list[dict[str, Any]], symbol_cap: int
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        if not records:
+            return [], {"candidate_files": 0, "selected_files": 0, "modules": {}}
+
+        by_module: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for record in records:
+            by_module[record["module"]].append(record)
+        for values in by_module.values():
+            values.sort(key=lambda item: (-item["score"], item["file"]))
+
+        selected: list[dict[str, Any]] = []
+        selected_ids: set[str] = set()
+        budget_tokens = max(1, int(self.max_tokens))
+        module_budget = max(1, int(budget_tokens * self.max_module_ratio))
+        module_tokens: dict[str, int] = defaultdict(int)
+
+        def estimated_tokens(record: dict[str, Any]) -> int:
+            count = min(symbol_cap, len(record["tags"]))
+            return max(8, 4 + count * 4)
+
+        # Mandatory roles first, but still bounded by the global budget.
+        for role in ("config", "entrypoint", "contract", "control"):
+            candidates = [record for record in records if role in record["roles"]]
+            candidates.sort(key=lambda item: (-item["score"], item["file"]))
+            for record in candidates[: max(1, len(by_module))]:
+                cost = estimated_tokens(record)
+                module = record["module"]
+                if record["file"] in selected_ids or sum(
+                    estimated_tokens(item) for item in selected
+                ) + cost > budget_tokens:
+                    continue
+                if module_tokens[module] + cost > module_budget and selected:
+                    continue
+                selected.append(record)
+                selected_ids.add(record["file"])
+                module_tokens[module] += cost
+
+        # Weighted round-robin prevents a single giant module from filling the map.
+        while len(selected_ids) < len(records):
+            progressed = False
+            for module in sorted(by_module):
+                candidate = next(
+                    (item for item in by_module[module] if item["file"] not in selected_ids),
+                    None,
+                )
+                if candidate is None:
+                    continue
+                cost = estimated_tokens(candidate)
+                total = sum(estimated_tokens(item) for item in selected)
+                if total + cost > budget_tokens:
+                    continue
+                if module_tokens[module] + cost > module_budget and len(by_module) > 1:
+                    continue
+                selected.append(candidate)
+                selected_ids.add(candidate["file"])
+                module_tokens[module] += cost
+                progressed = True
+            if not progressed:
+                break
+
+        candidate_modules = sorted(by_module)
+        selected_modules = sorted({record["module"] for record in selected})
+        summary = {
+            "candidate_files": len(records),
+            "selected_files": len(selected),
+            "candidate_modules": candidate_modules,
+            "represented_modules": selected_modules,
+            "omitted_modules": [
+                module for module in candidate_modules if module not in selected_modules
+            ],
+            "mandatory_roles_found": sorted(
+                {role for record in records for role in record["roles"]}
+            ),
+            "mandatory_roles_selected": sorted(
+                {role for record in selected for role in record["roles"]}
+            ),
+            "symbol_cap_per_file": symbol_cap,
+            "module_budget_ratio": self.max_module_ratio,
+            "module_token_estimates": dict(sorted(module_tokens.items())),
+        }
+        return selected, summary
+
+    def _render(self, records: list[dict[str, Any]], symbol_cap: int) -> str:
+        selected, summary = self._select_records(records, symbol_cap)
+        self.last_coverage = summary
+        if not selected:
+            return ""
+        output = ["# Booster Repo Map", "", "## Coverage", ""]
+        output.extend(f"- {key}: {value}" for key, value in summary.items())
+        output.extend(["", "## Symbols", ""])
+        for record in sorted(selected, key=lambda item: (item["module"], item["file"])):
+            output.append(f"{record['file']}:")
+            if record["roles"]:
+                output.append(f"  roles: {', '.join(sorted(record['roles']))}")
+            tags = sorted(record["tags"], key=lambda item: item["line"])[:symbol_cap]
+            for tag in tags:
+                output.append(f"  def {tag['name']} (line {tag['line']})")
+            omitted = len(record["tags"]) - len(tags)
+            if omitted > 0:
+                output.append(f"  +{omitted} symbols omitted by per-file cap")
+            output.append("")
+        return "\n".join(output)
 
     def _get_tags(self, fname):
         """Извлекает теги (функции, классы) из файла."""

@@ -12,6 +12,14 @@ class FakeIndexer:
         self.indexed.append(path)
 
 
+class FakeObserver:
+    def __init__(self) -> None:
+        self.scheduled: list[str] = []
+
+    def schedule(self, handler, path: str, recursive: bool) -> None:
+        self.scheduled.append(path)
+
+
 def file_event(path: Path) -> SimpleNamespace:
     return SimpleNamespace(is_directory=False, src_path=str(path))
 
@@ -32,3 +40,13 @@ def test_watcher_respects_repository_scanner_ignore_rules(tmp_path: Path):
     watcher.on_modified(file_event(source_file))
 
     assert indexer.indexed == [source_file]
+
+
+def test_watcher_schedules_a_repository_only_once(tmp_path: Path):
+    observer = FakeObserver()
+    watcher = RepoWatcher(FakeIndexer(), [])
+
+    watcher.schedule_repository(observer, tmp_path)
+    watcher.schedule_repository(observer, tmp_path)
+
+    assert observer.scheduled == [str(tmp_path.resolve())]

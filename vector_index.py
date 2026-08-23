@@ -176,3 +176,21 @@ class VectorIndex:
             }
             results.append(result)
         return results
+
+    def clone(self) -> "VectorIndex":
+        """Клонирует FAISS/BM25 state для фоновой candidate generation."""
+        cloned = VectorIndex(self.dim)
+        cloned.index = faiss.clone_index(self.index)
+        cloned.base_index = getattr(cloned.index, "index", cloned.index)
+        cloned.meta = {identifier: dict(value) for identifier, value in self.meta.items()}
+        cloned.file_ids = {
+            file_name: list(identifiers) for file_name, identifiers in self.file_ids.items()
+        }
+        cloned.next_id = self.next_id
+        cloned._lexical_documents = {
+            identifier: list(tokens) for identifier, tokens in self._lexical_documents.items()
+        }
+        cloned._bm25 = None
+        cloned._bm25_ids = list(self._bm25_ids)
+        cloned._bm25_dirty = True
+        return cloned

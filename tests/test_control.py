@@ -1,7 +1,9 @@
 import json
 import os
+import sys
 from pathlib import Path
 
+import control
 from cli import main as cli_main
 from control import (
     LAUNCHER_MARKER,
@@ -166,3 +168,14 @@ def test_launcher_is_generated_for_windows_and_unix_without_touching_path(tmp_pa
     windows_path = Path(windows["launcher_path"])
     assert windows_path.name == "booster.cmd"
     assert LAUNCHER_MARKER in windows_path.read_text(encoding="utf-8")
+
+
+def test_runtime_info_prefers_project_virtualenv_over_system_python(monkeypatch):
+    project_root = Path(control.__file__).resolve().parent
+    venv_python = project_root / ".venv" / "Scripts" / "python.exe"
+    if not venv_python.is_file():
+        return
+
+    monkeypatch.setattr(sys, "executable", r"C:\Python312\python.exe")
+
+    assert control.runtime_info()["python"] == str(venv_python.resolve())

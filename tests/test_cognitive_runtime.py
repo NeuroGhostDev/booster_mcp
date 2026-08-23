@@ -75,6 +75,20 @@ def test_project_memory_recall_filters_structured_facts(tmp_path: Path):
     assert "BFF" in recalled["context"]
 
 
+def test_project_memory_rejects_corrupt_json_and_writes_valid_json(tmp_path: Path):
+    runtime = make_runtime(tmp_path)
+
+    saved = runtime.remember_project_fact(category="test", fact="atomic memory")
+    memory_path = tmp_path / ".agents" / "booster" / "memory.json"
+    assert saved["count"] == 1
+    assert json.loads(memory_path.read_text(encoding="utf-8"))["_booster_project_facts"]
+    assert not list(memory_path.parent.glob(f".{memory_path.name}.*"))
+
+    memory_path.write_text("{broken", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="project memory повреждена"):
+        runtime.project_memory_recall()
+
+
 def test_collect_diagnostics_reports_python_syntax_error(tmp_path: Path):
     runtime = make_runtime(tmp_path)
     broken = tmp_path / "broken.py"
@@ -130,6 +144,64 @@ def test_collect_diagnostics_fails_closed_on_external_tool_timeout(
     assert result["findings"][-1]["source"] == "pyright"
     assert result["findings"][-1]["rule"] == "tool_execution_failed"
     assert result["findings"][-1]["status"] == "timeout"
+
+
+def test_security_audit_reports_missing_scanners_as_incomplete(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    runtime = make_runtime(tmp_path)
+    monkeypatch.setattr("cognitive_runtime.shutil.which", lambda name: None)
+
+    result = runtime.security_audit(paths=[str(tmp_path / "service.py")])
+
+    assert result["status"] == "incomplete"
+    assert {item["tool"] for item in result["skipped_tools"]} == {"bandit", "semgrep"}
+
+
+def test_security_audit_keeps_high_findings_failed_when_other_scanner_missing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    runtime = make_runtime(tmp_path)
+
+    def fake_which(name: str) -> str | None:
+        return "bandit" if name == "bandit" else None
+
+    def fake_run_process(
+        command: object,
+        cwd: Path,
+        timeout_seconds: int = 120,
+        shell: bool = False,
+    ) -> dict[str, Any]:
+        return {
+            "command": "bandit -q -f json",
+            "returncode": 1,
+            "stdout": json.dumps(
+                {
+                    "results": [
+                        {
+                            "filename": str(tmp_path / "service.py"),
+                            "line_number": 1,
+                            "issue_severity": "HIGH",
+                            "issue_confidence": "HIGH",
+                            "issue_text": "unsafe test finding",
+                            "test_id": "B999",
+                        }
+                    ]
+                }
+            ),
+            "stderr": "",
+        }
+
+    monkeypatch.setattr("cognitive_runtime.shutil.which", fake_which)
+    monkeypatch.setattr(runtime, "_run_process", fake_run_process)
+
+    result = runtime.security_audit(paths=[str(tmp_path / "service.py")])
+
+    assert result["status"] == "failed"
+    assert result["findings"][0]["source"] == "bandit"
+    assert result["findings"][0]["severity"] == "high"
 
 
 def test_collect_diagnostics_parses_ruff_findings(

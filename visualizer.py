@@ -2,14 +2,15 @@
 Code City 3D - Визуализация архитектуры проекта в виде 3D города.
 Здания = файлы, высота = метрики, связи = зависимости.
 """
-import os
+
 import json
 import math
-from pathlib import Path
 from collections import defaultdict
-from typing import Dict, List, Any, Optional
-from tree_sitter_language_pack import get_parser
+from pathlib import Path
+from typing import Any, Dict, List
+
 from grep_ast import filename_to_lang
+from tree_sitter_language_pack import get_parser
 
 
 class CodeCityVisualizer:
@@ -17,25 +18,45 @@ class CodeCityVisualizer:
 
     # Цвета для разных типов файлов/компонентов
     COLORS = {
-        'python': '#3776AB',      # синий
-        'javascript': '#F7DF1E',  # жёлтый
-        'typescript': '#3178C6',  # синий
-        'rust': '#DEA584',        # оранжевый
-        'go': '#00ADD8',          # голубой
-        'java': '#B07219',        # коричневый
-        'cpp': '#00599C',         # синий
-        'c': '#555555',           # серый
-        'test': '#FF6B6B',        # красный
-        'config': '#4ECDC4',      # бирюзовый
-        'default': '#95A5A6',     # серый
+        "python": "#3776AB",  # синий
+        "javascript": "#F7DF1E",  # жёлтый
+        "typescript": "#3178C6",  # синий
+        "rust": "#DEA584",  # оранжевый
+        "go": "#00ADD8",  # голубой
+        "java": "#B07219",  # коричневый
+        "cpp": "#00599C",  # синий
+        "c": "#555555",  # серый
+        "test": "#FF6B6B",  # красный
+        "config": "#4ECDC4",  # бирюзовый
+        "default": "#95A5A6",  # серый
     }
 
     # Игнорируемые директории
     IGNORED_DIRS = {
-        ".git", "node_modules", "venv", ".venv", "env", ".env",
-        "__pycache__", ".pytest_cache", ".tox", ".nox", ".mypy_cache",
-        ".ruff_cache", ".idea", ".vscode", ".vs", "bin", "obj",
-        "target", "build", "dist", ".cache", "logs", "tmp", "temp",
+        ".git",
+        "node_modules",
+        "venv",
+        ".venv",
+        "env",
+        ".env",
+        "__pycache__",
+        ".pytest_cache",
+        ".tox",
+        ".nox",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".idea",
+        ".vscode",
+        ".vs",
+        "bin",
+        "obj",
+        "target",
+        "build",
+        "dist",
+        ".cache",
+        "logs",
+        "tmp",
+        "temp",
     }
 
     def __init__(self, indexer=None):
@@ -70,41 +91,47 @@ class CodeCityVisualizer:
         root = tree.root_node
 
         metrics = {
-            'file': str(path),
-            'filename': path.name,
-            'extension': path.suffix,
-            'language': lang,
-            'lines': code.count('\n') + 1,
-            'bytes': len(code_bytes),
-            'functions': 0,
-            'classes': 0,
-            'methods': 0,
-            'imports': 0,
-            'complexity': 0,  # цикломатическая сложность (упрощённо)
-            'comments': 0,
-            'blank_lines': 0,
+            "file": str(path),
+            "filename": path.name,
+            "extension": path.suffix,
+            "language": lang,
+            "lines": code.count("\n") + 1,
+            "bytes": len(code_bytes),
+            "functions": 0,
+            "classes": 0,
+            "methods": 0,
+            "imports": 0,
+            "complexity": 0,  # цикломатическая сложность (упрощённо)
+            "comments": 0,
+            "blank_lines": 0,
         }
 
         # Подсчёт строк кода и комментариев
-        lines = code.split('\n')
+        lines = code.split("\n")
         for line in lines:
             stripped = line.strip()
             if not stripped:
-                metrics['blank_lines'] += 1
-            elif stripped.startswith('#') or stripped.startswith('//') or stripped.startswith('/*'):
-                metrics['comments'] += 1
+                metrics["blank_lines"] += 1
+            elif stripped.startswith("#") or stripped.startswith("//") or stripped.startswith("/*"):
+                metrics["comments"] += 1
 
         # AST парсинг для метрик
         self._parse_metrics(root, code_bytes, metrics)
 
         # Добавляем данные из indexer если доступен
-        if self.indexer and str(path) in self.indexer.symbols:
-            symbols = self.indexer.symbols[str(path)]
-            metrics['functions'] = len([s for s in symbols if s.get('name', '')])
-            metrics['classes'] = len([s for s in symbols if 'class' in s.get('name', '').lower()])
+        symbols_by_file: dict[str, list[dict[str, Any]]] = {}
+        if self.indexer:
+            symbols_snapshot = getattr(self.indexer, "symbols_snapshot", None)
+            symbols_by_file = (
+                symbols_snapshot() if callable(symbols_snapshot) else self.indexer.symbols
+            )
+        if str(path) in symbols_by_file:
+            symbols = symbols_by_file[str(path)]
+            metrics["functions"] = len([s for s in symbols if s.get("name", "")])
+            metrics["classes"] = len([s for s in symbols if "class" in s.get("name", "").lower()])
 
         # Вычисляем "вес" файла для высоты здания
-        metrics['weight'] = self._calculate_weight(metrics)
+        metrics["weight"] = self._calculate_weight(metrics)
 
         return metrics
 
@@ -116,21 +143,32 @@ class CodeCityVisualizer:
         node_type = node.type
 
         # Считаем функции, классы, методы
-        if 'function' in node_type and 'definition' in node_type:
-            metrics['functions'] += 1
-        elif 'class' in node_type and ('definition' in node_type or 'declaration' in node_type):
-            metrics['classes'] += 1
-        elif 'method' in node_type:
-            metrics['methods'] += 1
+        if "function" in node_type and "definition" in node_type:
+            metrics["functions"] += 1
+        elif "class" in node_type and ("definition" in node_type or "declaration" in node_type):
+            metrics["classes"] += 1
+        elif "method" in node_type:
+            metrics["methods"] += 1
 
         # Считаем импорты
-        if 'import' in node_type:
-            metrics['imports'] += 1
+        if "import" in node_type:
+            metrics["imports"] += 1
 
         # Цикломатическая сложность (упрощённо)
-        if node_type in ['if_statement', 'for_statement', 'while_statement', 'elif_clause',
-                         'if', 'for', 'while', 'elif', 'case', 'catch', 'except']:
-            metrics['complexity'] += 1
+        if node_type in [
+            "if_statement",
+            "for_statement",
+            "while_statement",
+            "elif_clause",
+            "if",
+            "for",
+            "while",
+            "elif",
+            "case",
+            "catch",
+            "except",
+        ]:
+            metrics["complexity"] += 1
 
         # Рекурсивный обход детей
         for child in node.children:
@@ -140,10 +178,10 @@ class CodeCityVisualizer:
         """Вычисляет вес файла для определения высоты здания."""
         # Формула: строки + функции*10 + классы*15 + сложность*5
         return (
-            metrics['lines'] +
-            metrics['functions'] * 10 +
-            metrics['classes'] * 15 +
-            metrics['complexity'] * 5
+            metrics["lines"]
+            + metrics["functions"] * 10
+            + metrics["classes"] * 15
+            + metrics["complexity"] * 5
         )
 
     def _get_district(self, file_path: str) -> str:
@@ -153,7 +191,7 @@ class CodeCityVisualizer:
 
         # Игнорируем корень репозитория
         if len(parts) <= 2:
-            return 'root'
+            return "root"
 
         # Берём первые 2-3 уровня вложенности как район
         district_parts = []
@@ -164,27 +202,34 @@ class CodeCityVisualizer:
             if len(district_parts) >= 2:
                 break
 
-        return '/'.join(district_parts) if district_parts else 'root'
+        return "/".join(district_parts) if district_parts else "root"
 
     def _get_color(self, metrics: Dict) -> str:
         """Определяет цвет здания на основе типа файла."""
-        filename = metrics.get('filename', '').lower()
-        lang = metrics.get('language', '').lower()
+        filename = metrics.get("filename", "").lower()
+        lang = metrics.get("language", "").lower()
 
         # Тесты
-        if 'test' in filename or filename.startswith('test_'):
-            return self.COLORS['test']
+        if "test" in filename or filename.startswith("test_"):
+            return self.COLORS["test"]
 
         # Конфиги
-        if filename in ['package.json', 'tsconfig.json', 'settings.py', 'config.py',
-                        'docker-compose.yml', '.env', 'pyproject.toml']:
-            return self.COLORS['config']
+        if filename in [
+            "package.json",
+            "tsconfig.json",
+            "settings.py",
+            "config.py",
+            "docker-compose.yml",
+            ".env",
+            "pyproject.toml",
+        ]:
+            return self.COLORS["config"]
 
         # По языку
         if lang in self.COLORS:
             return self.COLORS[lang]
 
-        return self.COLORS['default']
+        return self.COLORS["default"]
 
     def generate_city_layout(self, repo_path: str = None) -> Dict[str, Any]:
         """Генерирует 3D layout города."""
@@ -192,21 +237,22 @@ class CodeCityVisualizer:
             if self.indexer and self.indexer.repos:
                 repo_path = self.indexer.repos[0]
             else:
-                return {'error': 'Нет репозиториев'}
+                return {"error": "Нет репозиториев"}
 
         repo_path = Path(repo_path)
         if not repo_path.exists():
-            return {'error': f'Репозиторий не найден: {repo_path}'}
+            return {"error": f"Репозиторий не найден: {repo_path}"}
 
         self.buildings = []
+        self.connections = []
         self.districts = defaultdict(list)
         total_metrics = {
-            'files': 0,
-            'lines': 0,
-            'functions': 0,
-            'classes': 0,
-            'complexity': 0,
-            'bytes': 0,
+            "files": 0,
+            "lines": 0,
+            "functions": 0,
+            "classes": 0,
+            "complexity": 0,
+            "bytes": 0,
         }
 
         # Собираем все файлы
@@ -218,16 +264,16 @@ class CodeCityVisualizer:
                 continue
 
             metrics = self.collect_file_metrics(str(file))
-            if metrics and metrics.get('weight', 0) > 0:
+            if metrics and metrics.get("weight", 0) > 0:
                 files.append(metrics)
 
                 # Агрегируем метрики
-                total_metrics['files'] += 1
-                total_metrics['lines'] += metrics['lines']
-                total_metrics['functions'] += metrics['functions']
-                total_metrics['classes'] += metrics['classes']
-                total_metrics['complexity'] += metrics['complexity']
-                total_metrics['bytes'] += metrics['bytes']
+                total_metrics["files"] += 1
+                total_metrics["lines"] += metrics["lines"]
+                total_metrics["functions"] += metrics["functions"]
+                total_metrics["classes"] += metrics["classes"]
+                total_metrics["complexity"] += metrics["complexity"]
+                total_metrics["bytes"] += metrics["bytes"]
 
                 # Распределяем по районам
                 district = self._get_district(str(file))
@@ -242,81 +288,79 @@ class CodeCityVisualizer:
         self.metrics = total_metrics
 
         return {
-            'buildings': self.buildings,
-            'connections': self.connections,
-            'districts': dict(self.districts),
-            'metrics': total_metrics,
-            'repo': str(repo_path),
+            "buildings": self.buildings,
+            "connections": self.connections,
+            "districts": dict(self.districts),
+            "metrics": total_metrics,
+            "repo": str(repo_path),
         }
 
     def _layout_buildings(self, files: List[Dict]):
         """Расставляет здания на плоскости."""
-        # Группируем по районам
         district_files = defaultdict(list)
         for f in files:
-            district = self._get_district(f['file'])
+            district = self._get_district(f["file"])
             district_files[district].append(f)
 
-        # Вычисляем позиции
+        # Pack districts into a square grid. A single horizontal strip makes
+        # large repositories impossible to frame in the orthographic camera.
         building_id = 0
-        district_offset_x = 0
-        district_spacing = 150  # расстояние между районами
+        districts = sorted(district_files.items())
+        district_columns = max(1, math.ceil(math.sqrt(len(districts))))
+        district_cell = 240
+        district_rows = max(1, math.ceil(len(districts) / district_columns))
+        city_width = district_columns * district_cell
+        city_depth = district_rows * district_cell
 
-        for district, d_files in sorted(district_files.items()):
-            # Сортируем файлы по весу внутри района
-            d_files.sort(key=lambda x: x['weight'], reverse=True)
+        for district_index, (district, d_files) in enumerate(districts):
+            d_files.sort(key=lambda x: x["weight"], reverse=True)
+            local_columns = max(3, math.ceil(math.sqrt(len(d_files))))
+            local_rows = max(1, math.ceil(len(d_files) / local_columns))
+            local_spacing = 44
+            district_x = (district_index % district_columns) * district_cell
+            district_z = (district_index // district_columns) * district_cell
+            local_offset_x = (local_columns - 1) * local_spacing / 2
+            local_offset_z = (local_rows - 1) * local_spacing / 2
 
-            # Позиция в пределах района
-            local_x = 0
-            local_z = 0
-            row_width = 0
-            max_in_row = max(5, int(math.sqrt(len(d_files))))
-            count_in_row = 0
-
-            for f in d_files:
-                # Размеры здания
-                base_width = min(30, max(8, math.log(f['weight']) * 3))
-                base_depth = min(30, max(8, math.log(f['weight']) * 2))
-                height = min(200, max(10, f['weight'] / 5))
-
-                # Позиция
-                pos_x = district_offset_x + local_x
-                pos_z = local_z
-                pos_y = 0  # на земле
+            for file_index, f in enumerate(d_files):
+                base_width = min(30, max(8, math.log1p(f["weight"]) * 2.8))
+                base_depth = min(30, max(8, math.log1p(f["weight"]) * 2.0))
+                height = min(200, max(10, math.sqrt(f["weight"]) * 5.2))
+                local_column = file_index % local_columns
+                local_row = file_index // local_columns
+                pos_x = district_x + local_column * local_spacing - local_offset_x
+                pos_z = district_z + local_row * local_spacing - local_offset_z
+                pos_y = 0
 
                 building = {
-                    'id': building_id,
-                    'file': f['file'],
-                    'filename': f['filename'],
-                    'district': district,
-                    'position': {'x': pos_x, 'y': pos_y, 'z': pos_z},
-                    'size': {'width': base_width, 'height': height, 'depth': base_depth},
-                    'color': self._get_color(f),
-                    'metrics': {
-                        'lines': f['lines'],
-                        'functions': f['functions'],
-                        'classes': f['classes'],
-                        'complexity': f['complexity'],
-                        'imports': f['imports'],
-                        'bytes': f['bytes'],
-                    }
+                    "id": building_id,
+                    "file": f["file"],
+                    "filename": f["filename"],
+                    "district": district,
+                    "position": {"x": pos_x, "y": pos_y, "z": pos_z},
+                    "size": {"width": base_width, "height": height, "depth": base_depth},
+                    "color": self._get_color(f),
+                    "metrics": {
+                        "lines": f["lines"],
+                        "functions": f["functions"],
+                        "classes": f["classes"],
+                        "complexity": f["complexity"],
+                        "imports": f["imports"],
+                        "bytes": f["bytes"],
+                        "weight": f["weight"],
+                    },
                 }
 
                 self.buildings.append(building)
                 building_id += 1
 
-                # Смещение для следующего здания
-                local_x += base_width + 5
-                row_width = max(row_width, base_width + 5)
-                count_in_row += 1
-
-                if count_in_row >= max_in_row:
-                    local_x = 0
-                    local_z += base_depth + 10
-                    count_in_row = 0
-
-            # Смещение для следующего района
-            district_offset_x += row_width + district_spacing
+        # Center the whole city around the origin so the default camera frames
+        # both small repositories and large monorepos consistently.
+        offset_x = city_width / 2 - district_cell / 2
+        offset_z = city_depth / 2 - district_cell / 2
+        for building in self.buildings:
+            building["position"]["x"] -= offset_x
+            building["position"]["z"] -= offset_z
 
     def _generate_connections(self, repo_path: Path):
         """Генерирует связи между зданиями на основе импортов/вызовов."""
@@ -326,10 +370,16 @@ class CodeCityVisualizer:
         # Строим маппинг файлов для быстрого поиска
         file_to_building = {}
         for b in self.buildings:
-            file_to_building[b['file']] = b['id']
+            file_to_building[b["file"]] = b["id"]
 
         # Связи из графа импортов
-        for file, imports in self.indexer.graphs.import_graph.items():
+        graph_snapshot = getattr(self.indexer.graphs, "snapshot", None)
+        import_graph = (
+            graph_snapshot()["import_graph"]
+            if callable(graph_snapshot)
+            else self.indexer.graphs.import_graph
+        )
+        for file, imports in import_graph.items():
             if file not in file_to_building:
                 continue
 
@@ -342,20 +392,18 @@ class CodeCityVisualizer:
                     target_name = Path(target_file).stem
                     if target_name in imp or imp.endswith(target_name):
                         if source_id != target_id:
-                            self.connections.append({
-                                'source': source_id,
-                                'target': target_id,
-                                'type': 'import'
-                            })
+                            self.connections.append(
+                                {"source": source_id, "target": target_id, "type": "import"}
+                            )
                         break
 
         # Связи из графа вызовов (межфайловые)
         # Это более сложная логика, упростим
         pass
 
-    def generate_html(self, city_data: Dict, output_path: str = 'code_city.html'):
+    def generate_html(self, city_data: Dict, output_path: str = "code_city.html"):
         """Генерирует HTML файл с 3D визуализацией."""
-        html = f'''<!DOCTYPE html>
+        html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -584,17 +632,41 @@ class CodeCityVisualizer:
         scene.background = new THREE.Color(0x050510);
         scene.fog = new THREE.FogExp2(0x050510, 0.0012);
 
-        // Isometric-ish Camera Setup
-        const aspect = window.innerWidth / window.innerHeight;
-        const d = 350;
-        const camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 5000);
-        camera.position.set(500, 400, 500); 
-        camera.lookAt(scene.position);
+        // Frame the generated city instead of assuming a fixed world size.
+        const cityBounds = cityData.buildings.reduce((bounds, b) => {{
+            bounds.minX = Math.min(bounds.minX, b.position.x - b.size.width / 2);
+            bounds.maxX = Math.max(bounds.maxX, b.position.x + b.size.width / 2);
+            bounds.minZ = Math.min(bounds.minZ, b.position.z - b.size.depth / 2);
+            bounds.maxZ = Math.max(bounds.maxZ, b.position.z + b.size.depth / 2);
+            return bounds;
+        }}, {{ minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity }});
+        const measuredWidth = Number.isFinite(cityBounds.minX) && Number.isFinite(cityBounds.maxX)
+            ? cityBounds.maxX - cityBounds.minX
+            : 0;
+        const measuredDepth = Number.isFinite(cityBounds.minZ) && Number.isFinite(cityBounds.maxZ)
+            ? cityBounds.maxZ - cityBounds.minZ
+            : 0;
+        const cityCenterX = measuredWidth ? (cityBounds.minX + cityBounds.maxX) / 2 : 0;
+        const cityCenterZ = measuredDepth ? (cityBounds.minZ + cityBounds.maxZ) / 2 : 0;
+        const citySpan = Math.max(
+            measuredWidth,
+            measuredDepth,
+            420
+        );
+        const initialAspect = window.innerWidth / window.innerHeight;
+        let viewSize = Math.max(300, citySpan * 0.95 / Math.min(1, initialAspect));
+        const camera = new THREE.OrthographicCamera(
+            -viewSize * initialAspect, viewSize * initialAspect,
+            viewSize, -viewSize, 1, 5000
+        );
+        camera.position.set(cityCenterX + viewSize, viewSize * 0.85, cityCenterZ + viewSize);
+        camera.lookAt(cityCenterX, 0, cityCenterZ);
 
         const renderer = new THREE.WebGLRenderer({{ canvas: document.getElementById('canvas'), antialias: false, powerPreference: "high-performance" }});
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.toneMapping = THREE.ReinhardToneMapping;
+        renderer.outputEncoding = THREE.sRGBEncoding;
 
         // Bloom Composer
         const renderScene = new THREE.RenderPass(scene, camera);
@@ -618,13 +690,19 @@ class CodeCityVisualizer:
         scene.add(ambientLight);
         
         // Cyber Grid Floor
-        const gridHelper = new THREE.GridHelper(3000, 150, 0x00ffcc, 0x002244);
+        const floorSize = Math.max(3000, citySpan * 3);
+        const gridHelper = new THREE.GridHelper(
+            floorSize,
+            Math.min(180, Math.max(60, Math.round(floorSize / 15))),
+            0x00ffcc,
+            0x002244
+        );
         gridHelper.position.y = 0.1;
         gridHelper.material.opacity = 0.4;
         gridHelper.material.transparent = true;
         scene.add(gridHelper);
 
-        const groundGeo = new THREE.PlaneGeometry(3000, 3000);
+        const groundGeo = new THREE.PlaneGeometry(floorSize, floorSize);
         const groundMat = new THREE.MeshBasicMaterial({{ color: 0x020205 }});
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = -Math.PI / 2;
@@ -643,7 +721,8 @@ class CodeCityVisualizer:
                 color: 0x0f0f1a,
                 transparent: true,
                 opacity: 0.9,
-                emissive: 0x000000
+                emissive: new THREE.Color(b.color),
+                emissiveIntensity: 0.08
             }});
             
             const building = new THREE.Mesh(geometry, material);
@@ -666,6 +745,26 @@ class CodeCityVisualizer:
             const edgeLines = new THREE.LineSegments(edges, edgeMat);
             building.add(edgeLines);
             building.userData.outline = edgeLines;
+
+            // Keep filenames visible in the city without requiring a font asset.
+            const labelCanvas = document.createElement('canvas');
+            labelCanvas.width = 320;
+            labelCanvas.height = 64;
+            const labelContext = labelCanvas.getContext('2d');
+            labelContext.font = 'bold 22px Consolas, monospace';
+            labelContext.fillStyle = b.color;
+            labelContext.shadowColor = b.color;
+            labelContext.shadowBlur = 10;
+            labelContext.fillText(b.filename.slice(0, 26), 8, 40);
+            const labelTexture = new THREE.CanvasTexture(labelCanvas);
+            const label = new THREE.Sprite(new THREE.SpriteMaterial({{
+                map: labelTexture,
+                transparent: true,
+                depthTest: true
+            }}));
+            label.scale.set(Math.max(24, b.size.width * 2.8), 8, 1);
+            label.position.set(0, b.size.height / 2 + 7, 0);
+            building.add(label);
 
             scene.add(building);
             buildings.push(building);
@@ -792,11 +891,14 @@ class CodeCityVisualizer:
         // Resize
         window.addEventListener('resize', () => {{
             const aspect = window.innerWidth / window.innerHeight;
-            camera.left = -d * aspect;
-            camera.right = d * aspect;
-            camera.top = d;
-            camera.bottom = -d;
+            viewSize = Math.max(300, citySpan * 0.95 / Math.min(1, aspect));
+            camera.left = -viewSize * aspect;
+            camera.right = viewSize * aspect;
+            camera.top = viewSize;
+            camera.bottom = -viewSize;
             camera.updateProjectionMatrix();
+            camera.position.set(cityCenterX + viewSize, viewSize * 0.85, cityCenterZ + viewSize);
+            camera.lookAt(cityCenterX, 0, cityCenterZ);
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
         }});
@@ -812,26 +914,26 @@ class CodeCityVisualizer:
         animate();
     </script>
 </body>
-</html>'''
-        with open(output_path, 'w', encoding='utf-8') as f:
+</html>"""
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(html)
 
         return output_path
 
-    def generate_visualization(self, repo_path: str = None, output_path: str = 'code_city.html'):
+    def generate_visualization(self, repo_path: str = None, output_path: str = "code_city.html"):
         """Полный цикл: генерация города + HTML."""
         city_data = self.generate_city_layout(repo_path)
 
-        if 'error' in city_data:
+        if "error" in city_data:
             return city_data
 
         html_path = self.generate_html(city_data, output_path)
 
         return {
-            'success': True,
-            'html_path': html_path,
-            'metrics': city_data['metrics'],
-            'buildings': len(city_data['buildings']),
-            'connections': len(city_data['connections']),
-            'districts': len(city_data['districts']),
+            "success": True,
+            "html_path": html_path,
+            "metrics": city_data["metrics"],
+            "buildings": len(city_data["buildings"]),
+            "connections": len(city_data["connections"]),
+            "districts": len(city_data["districts"]),
         }

@@ -1,151 +1,371 @@
 # Booster MCP
 
-**A Cognitive Runtime for coding agents.**
+<p align="center">
+  <strong>A cognitive runtime for AI coding agents</strong><br>
+  <sub>Repository intelligence, project memory, impact analysis, diagnostics, validation, and context compression.</sub>
+</p>
 
-Booster builds a live world model of your software system so AI coding agents
-can understand architecture, history, diagnostics, project rules, and validation
-requirements before they edit code.
+<p align="center">
+  <a href="https://github.com/NeuroGhostDev/Booster-mcp/actions/workflows/test.yml"><img src="https://github.com/NeuroGhostDev/Booster-mcp/actions/workflows/test.yml/badge.svg" alt="CI status"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11--3.13-3776AB?logo=python&logoColor=white" alt="Python 3.11 to 3.13"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea44f" alt="MIT license"></a>
+</p>
 
-Most agents already have hands: they can write patches quickly. What they lack
-is perception. They do not consistently see the architecture, old decisions,
-compiler errors, dependency impact, or the tests that should be run next.
-Booster is the local MCP layer that gives them that perception.
+**Documentation:** [English](README.md) | [Русский](README.ru.md) | [简体中文](README.zh-CN.md)
 
-## The Problem
+<p align="center">
+  <img src="assets/code_city.png" alt="Booster Code City architecture visualization" width="720">
+</p>
 
-Large codebases do not break agents because there are too many files. They
-break agents because there is no compact map of the system.
+Booster is a local [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
+server and cognitive runtime for AI coding agents. It builds a bounded, queryable
+world model of a repository so an agent can inspect architecture, history,
+diagnostics, project rules, and validation requirements before changing code.
 
-Without Booster, a coding agent usually does this:
+Most agents already have hands: they can write patches quickly. Booster gives
+them the perception layer that is usually missing.
+
+## Why Booster Exists
+
+Large repositories do not primarily overwhelm agents because they contain many
+files. They overwhelm agents because the important relationships are scattered
+across source code, tests, git history, diagnostics, and project conventions.
+
+Without Booster, an agent often follows this loop:
 
 ```text
-User request -> grep/search -> read a few files -> generate patch -> stop
+request -> grep/search -> read a few files -> write a patch -> stop
 ```
 
-That misses the things senior engineers rely on every day:
+That loop can miss:
 
-- Which symbols call this code?
-- What files and tests are affected if this interface changes?
-- Why was this code written this way in git history?
-- What project-specific rules must not be violated?
-- Are there existing type, lint, compiler, or security diagnostics?
-- Did the patch pass the right validation loop?
+- callers and callees of the target symbol;
+- the files and tests affected by an interface change;
+- the historical reason behind surprising code;
+- project-specific rules and stored architectural decisions;
+- existing compiler, type, lint, or security diagnostics;
+- the validation command that should run after the patch.
 
-Booster changes the loop:
+Booster adds those signals to the loop:
 
 ```text
-User request
+request
   -> project memory
-  -> repo map and hybrid search
+  -> repository map and hybrid search
   -> AST impact graph
-  -> git history/blame
-  -> compiler/linter/security diagnostics
+  -> git history and blame
+  -> diagnostics and security checks
   -> validation plan
-  -> agent patch
-  -> validation checks
+  -> focused patch
+  -> validation and repair
 ```
 
-## What Booster Gives Agents
+<p align="center">
+  <img src="assets/booster-pipeline.svg" alt="Booster architecture pipeline" width="960">
+</p>
 
-| Agent pain                                | Booster capability                                                                           | Result                                                        |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Blind search through huge repos           | Bounded scanning, Repo Map, hybrid semantic + lexical retrieval                              | Less context waste, faster orientation                        |
-| Text snippets without architecture        | Tree-sitter symbols, call/import graph, impact analysis                                      | Agents see blast radius before editing                        |
-| No memory between sessions                | Structured project memory in `.agents/booster/memory.json`                                   | Project rules and decisions survive restarts                  |
-| No idea why code exists                   | Git log and blame through `git_intelligence`                                                 | Debugging includes historical intent                          |
-| Ignored red squiggles                     | Fail-closed diagnostics with Python syntax, Ruff, Pyright, TypeScript, Rust, Bandit, Semgrep | Agents see errors before and after patches                    |
-| Patch generation without engineering loop | `validation_loop_plan` and `run_validation_checks`                                           | Plan -> implement -> validate -> repair                       |
-| Reindexing noise from dependencies        | Shared scan and watcher ignore rules                                                         | `.venv`, caches, and dependency folders stay out of the model |
+## Capabilities
 
-## Why This Is Not Just Another MCP Search Server
+| Agent problem | Booster capability | Outcome |
+| --- | --- | --- |
+| Blind search through a large repository | Bounded scanning, Repo Map, and hybrid semantic plus lexical retrieval | Faster orientation with less context waste |
+| File snippets without architecture | Tree-sitter symbols, import and call graphs, and impact analysis | Blast radius is visible before editing |
+| No memory between sessions | Structured project memory in `.agents/booster/memory.json` | Rules and decisions survive restarts |
+| Unclear historical intent | Git log and blame through `git_intelligence` | Debugging includes historical context |
+| Diagnostics ignored by the agent | Fail-closed compiler, linter, type, and security diagnostics | Broken checks are not reported as success |
+| Patch generation without an engineering loop | `validation_loop_plan` and `run_validation_checks` | Plan -> implement -> validate -> repair |
+| Reindexing generated files and dependencies | Shared scanner and watcher ignore rules | Caches and dependency folders stay out of the model |
 
-Search is only one part of the job. Booster combines retrieval with an
-engineering control loop:
+## Architecture
 
-- **World model**: repo map, symbols, imports, calls, artifacts, and Code City.
-- **Impact model**: `impact_analysis` separates internal affected symbols from
-  unresolved external calls and estimates blast radius.
-- **History model**: `git_intelligence` connects files and symbols to commits
-  and blame context.
-- **Memory model**: `remember_project_fact` and `project_memory_recall` store
-  architecture rules, decisions, and project constraints.
-- **Diagnostic model**: `collect_diagnostics` normalizes compiler, linter, and
-  security findings. Tool failures are treated as validation failures, not as
-  success.
-- **Validation model**: `run_validation_checks` combines diagnostics and focused
-  test commands in one result for the agent to repair.
+Booster has two complementary planes:
 
-Booster's position is simple:
+- **MCP control plane**: repository indexing, semantic search, graphs, memory,
+  diagnostics, skills, and validation tools.
+- **Booster Home data plane**: an optional local OpenAI-compatible gateway that
+  compiles context, stores recoverable artifacts, and forwards requests to a
+  local or remote model backend.
 
-> Give coding agents the same perception layer that human engineers get from
-> an IDE, git history, architecture knowledge, and test feedback.
+The existing repository index and Cognitive Runtime are reused. Home does not
+create a second repository index, gateway, or vector database.
 
-## What It Provides
+### MCP Control Plane
 
-- Hybrid retrieval: normalized FAISS cosine search, BM25 lexical search, and
-  reciprocal-rank fusion through `hybrid_search`.
-- Bounded scanning for large repositories with reproducible scan profiles.
-- Generated artifacts in `.agents/booster/`: `repo_map.md`, `code_city.html`,
-  `scan_config.json`, and `scan_report.json`.
-- Context injection through `repo://map`, `repo://stack`,
-  `repo://conventions`, and `repo://artifacts`.
-- Architecture and debugging tools: symbols, import and call graphs,
-  flipcharts, Code City, and repository diagnostics.
-- Cognitive Runtime tools for impact analysis, git history/blame, structured
-  project memory, fail-closed compiler/linter diagnostics, security checks,
-  and validation loops.
-- Twelve bundled workflow skills that are synced to `~/.agents/skills`.
-- `booster control`, a cross-platform post-install control surface for MCP
-  clients, scan settings, diagnostics, and launcher management.
+The core server provides:
 
-## Quick Cognitive Runtime Example
+- normalized FAISS cosine search, BM25 lexical search, and reciprocal-rank
+  fusion through `hybrid_search`;
+- bounded repository scanning with reproducible scan profiles;
+- generated `.agents/booster/` artifacts such as
+  `repo_map_architecture.md`, `repo_map_symbols.md`, `index_health.json`,
+  `repo_map.md`, `code_city.html`, `scan_config.json`, and `scan_report.json`;
+- context resources at `repo://map`, `repo://stack`, `repo://conventions`, and
+  `repo://artifacts`;
+- symbols, import and call graphs, flipcharts, Code City, and repository
+  diagnostics;
+- impact analysis, git intelligence, structured project memory, security
+  checks, and validation loops;
+- twelve bundled workflow skills synced to `~/.agents/skills`;
+- `booster control`, a cross-platform control surface for MCP clients, scan
+  settings, diagnostics, and launcher management.
 
-Ask your agent to connect the repository and run a preflight before editing:
+### Booster Home Runtime
+
+Home is an optional local data plane. It keeps the MCP control plane intact and
+adds an OpenAI-compatible gateway with deterministic context compilation,
+bounded local workers, session-scoped raw artifacts, and targeted integration
+with the existing Booster index and Cognitive Runtime.
+
+<p align="center">
+  <img src="assets/home-runtime.svg" alt="Booster Home context compilation pipeline" width="960">
+</p>
+
+Start it on loopback:
+
+```bash
+booster home \
+  --base-url http://127.0.0.1:1234/v1 \
+  --model nvidia/nemotron-3-nano-4b \
+  --api-key lm-studio \
+  --project .
+```
+
+Home exposes:
+
+- `/v1/models`;
+- `/v1/chat/completions`;
+- `/v1/responses`;
+- `/health`;
+- `/booster/status`.
+
+The upstream model ID is discovered from `/v1/models`; replace it with the ID
+reported by the local OpenAI-compatible server. Nemotron deployments may return
+provider-specific `reasoning_content` instead of `message.content` when the
+output budget is consumed by reasoning. Home preserves that field and does not
+silently convert an incomplete reasoning response into a successful answer.
+
+Streaming responses are forwarded as chunks. Before a block is evicted, its raw
+content is saved as an immutable artifact and verified by content hash. If
+persistence fails, the request fails closed instead of silently losing context.
+
+Repository indexing is job-based. `add_repo(wait=true)` remains accepted for
+compatibility but no longer blocks the MCP request. Use `index_status`,
+`cancel_index`, and bounded `wait_until_ready` to observe a job. Each status
+contains `job_id`, phase, processed/total, elapsed time, ETA, last progress,
+generation ID, stale state, and the last ready snapshot. Read-only repository
+methods continue returning that ready snapshot while a new generation is being
+built.
+
+The generated artifacts are split by purpose:
+
+- `repo_map_architecture.md` is a bounded macro map with top-level module
+  diversity, entrypoint/config/contract coverage, and a coverage summary;
+- `repo_map_symbols.md` contains the detailed symbol map with a per-file cap;
+- `index_health.json` records generation, stale paths, selected/skipped files,
+  and map completeness;
+- `repo_map.md` remains a compatibility copy of the architecture map.
+
+Configuration precedence is:
 
 ```text
-add_repo(repo_path="C:\\projects\\my-app")
-repo_stats()
-preflight_analysis(
-  task="Refactor AuthService token validation",
-  target="AuthService",
-  paths=["src/auth/service.py"],
-  repo="C:\\projects\\my-app"
-)
+defaults
+  -> ~/.booster/home.toml
+  -> <project>/.agents/booster/home.toml
+  -> explicit --config
+  -> CLI flags
 ```
 
-The agent receives:
+API keys are used only in upstream request headers and are redacted from status,
+telemetry, timelines, logs, and exception text. These commands inspect Home
+without starting a second server or repository index:
 
-- indexing status for the repository;
-- relevant project memory and constraints;
-- affected callers, callees, files, and suggested tests;
-- git history and blame context when requested;
-- existing diagnostics in the touched files;
-- the recommended validation order.
+```bash
+booster home status
+booster home doctor --json
+booster home inspect-context --input request.json --json
+booster home sessions delete <session-id>
+```
 
-After the patch:
+Loopback is the default and does not require a gateway token. A non-loopback
+bind is rejected unless `home.auth_token` is configured, either in TOML,
+through `BOOSTER_HOME_AUTH_TOKEN`, or with `--auth-token`. Remote requests must
+send `Authorization: Bearer <token>`; the token is never returned by status or
+logs.
+
+## Proof: Booster + Nemotron 4B
+
+The strongest way to understand Booster is to see the loop on a hard problem.
+In a manual LM Studio run with the same 4B-class Nemotron model, a plausible
+first solution failed hidden cases. After Booster context, explicit constraints,
+and a repair-and-submit loop, the same workflow produced accepted submissions:
+
+| Without the loop | With Booster context and verification |
+| --- | --- |
+| ![LeetCode Wrong Answer on the baseline attempt](algocheck/Pasted%20image%2020260819181509.png) | ![LeetCode accepted result with 354 of 354 tests](algocheck/Pasted%20image%2020260819182919.png) |
+| Hidden edge cases expose a plausible but incomplete recurrence. | Full judge validation: `354/354` accepted. |
+
+The pattern repeated on additional hard dynamic-programming tasks:
+
+- `689. Maximum Sum of 3 Non-Overlapping Subarrays`: tie-breaking failure ->
+  `43/43` accepted;
+- `123. Best Time to Buy and Sell Stock III`: `214/214` accepted;
+- the recorded accepted runs show `36 ms` and `170 ms` local runtimes.
+
+This is an evidence case study, not a controlled benchmark. It demonstrates the
+customer-facing value: Booster keeps constraints, project context, diagnostics,
+and validation in one loop instead of stopping at code that merely looks right.
+
+See the [full LeetCode case study](algocheck/Booster%20LeetCode%20check.md) for
+the baseline, repair steps, screenshots, and reproduction checklist.
+
+## Context Compression
+
+Home treats compression as context compilation, not irreversible forgetting:
+
+1. Classify messages by role and content type.
+2. Normalize deterministic noise such as duplicate lines, progress output, and
+   ANSI escape sequences.
+3. Persist the original block before it can be evicted.
+4. Score relevance and allocate the available input budget by priority.
+5. Optionally run bounded semantic workers and targeted world-model retrieval.
+6. Pack the selected messages while preserving protected context and tool-call
+   integrity.
+
+The compiler reports `original_tokens`, `compiled_tokens`, `removed_tokens`,
+`compression_ratio`, operations, warnings, and artifact references. The main
+invariants are:
+
+- system and active user context are protected;
+- known hard limits fail closed when protected context cannot fit;
+- raw data is persisted before eviction;
+- artifact content is hash-verified after writing and reading;
+- compression can be disabled, but `policy=off` still refuses a request above
+  a known hard input budget;
+- provider-specific fields, including `reasoning_content`, are preserved.
+
+Run the included stress benchmark:
+
+```bash
+uv run python benchmarks/home_context_benchmark.py
+```
+
+The benchmark prints raw, deterministic, retrieved, and final token counts,
+compression ratio, compiler latency, exact artifact recovery, and targeted
+enrichment results. A successful run must include:
 
 ```text
-run_validation_checks(
-  paths=["src/auth/service.py"],
-  commands=["pytest tests/auth -q"],
-  repo="C:\\projects\\my-app"
-)
+exact_artifact_recovery=True
 ```
 
-That result tells the agent whether to repair diagnostics, fix tests, or move
-to final review.
+## Research Coprocessor
 
-## Requirements
+Home also includes a bounded research coprocessor for local experiments. It
+reads evidence from `research_state.json`, `memory_bank.md` or
+`memory-bank/*.md`, metrics, and report files. It returns structured JSON rather
+than presenting an opaque model-generated summary as ground truth.
 
-- Python 3.11 through 3.13. Python 3.12 is recommended.
+| Tool | Purpose |
+| --- | --- |
+| `booster.project_snapshot` | Bounded project state; checkpoint files such as `.pt`, `.pth`, `.ckpt`, `.safetensors`, and `.bin` are metadata-only. |
+| `booster.experiment_state` | Baseline, best result, active and failed hypotheses, confounds, assumptions, history, and metrics. |
+| `booster.artifact_lookup` | Bounded lexical lookup by artifact meaning, name, and content. |
+| `booster.log_digest` | Numeric JSON or JSONL digest with trend, anomalies, invalid rows, and possible confounds. |
+| `booster.compare_runs` | Regime-aware run comparison; mismatches return `NOT DIRECTLY COMPARABLE` without numeric deltas. |
+| `booster.hypothesis_register` | Scientific memory with IDs such as `H-001`, evidence, status, confounds, and confidence. |
+| `booster.next_experiment` | Candidate experiment design derived from a registered hypothesis. |
+| `booster.context_pack` | Layered `L0`-`L4` context for `coding`, `debug`, `research`, `review`, or `benchmark` mode. |
+| `booster.worker_delegate` | Bounded delegation to a fixed research worker role. |
+| `booster.checkpoint_registry` | Checkpoint metadata plus `KEEP` and `DELETE_CANDIDATES`; files are never deleted automatically. |
+| `booster.lightning_trace` | Visualization of an existing LightningField trace; missing traces are not fabricated. |
+
+Binary checkpoint bodies are never read, indexed, or sent to the model. Only
+metadata such as filename, size, step, parent, metrics, experiment, status,
+keep flag, and branch is available. Sidecar metadata is searched next to the
+checkpoint using `.pt.json`, `.json`, `_metadata.json`, and `.metadata.json`
+conventions.
+
+The context pack is organized as:
+
+```text
+L0  current task
+L1  current experiment and active hypotheses
+L2  recent evidence and relevant code
+L3  project invariants and runtime contract
+L4  archive
+```
+
+Normal inference uses `L0`, `L1`, and relevant parts of `L2` and `L3`.
+Duplicate logs, old failed versions, binary artifacts, and irrelevant history
+are excluded by policy. Repository content, metrics, reports, and memory are
+untrusted data and are not executed as configuration.
+
+Allowed worker roles are:
+
+```text
+log_analyst
+code_search
+benchmark_reader
+artifact_indexer
+summarizer
+```
+
+The research state and registry are written atomically to
+`<project>/research_state.json`. Home session artifacts remain separate in
+`.agents/booster/runtime/sessions/`; research state is not mixed with chat
+timelines or the legacy `.agents/booster/memory.json`.
+
+## Repository Layout
+
+```text
+.
+├── booster_home/              # Optional OpenAI-compatible data plane
+├── assets/                    # README and Code City visual assets
+├── algocheck/                 # Customer-facing LeetCode validation evidence
+├── benchmarks/                # Reproducible context and runtime benchmarks
+├── docs/                      # Architecture and maintainer documentation
+├── skills/                    # Bundled agent workflow skills
+├── tests/                     # Pytest suite, including Home regressions
+├── server.py                 # MCP server entrypoint
+├── cli.py                    # `booster` CLI entrypoint
+├── cognitive_runtime.py      # Impact, memory, diagnostics, and validation tools
+├── indexer.py                # Repository indexing and graph construction
+├── visualizer.py             # Code City generation
+├── RECOMENDET_PROMPT.md      # Repository-wide engineering prompt for agents
+├── CONTRIBUTING.md           # Development and contribution workflow
+├── CHANGELOG.md              # Release history
+├── pyproject.toml            # Package metadata and tool configuration
+├── MANIFEST.in               # Source distribution contents
+└── uv.lock                   # Reproducible dependency lockfile
+```
+
+The legacy MCP control-plane modules intentionally remain at the repository
+root. The package entrypoints (`server:main` and `cli:main`) and existing
+integrations rely on those stable module names. Moving them into `src/` should
+be treated as a separate compatibility migration, not mixed into routine
+feature work.
+
+## Recommended Agent Prompt
+
+This repository includes a dedicated engineering system prompt:
+[`RECOMENDET_PROMPT.md`](RECOMENDET_PROMPT.md).
+
+Load it at the beginning of a non-trivial coding session when the agent needs
+to work as an engineer rather than as a patch generator. The prompt defines the
+project-context routing rules, the `PERCEIVE -> MODEL -> PLAN -> ACT -> VERIFY
+-> LEARN` workflow, Booster-first context retrieval, root-cause analysis,
+security checks, validation requirements, and memory discipline.
+
+It is repository guidance for coding agents, not application runtime
+configuration. The prompt is intentionally kept at the root so agent tooling
+can discover it before the first edit.
+
+## Installation
+
+### Requirements
+
+- Python 3.11, 3.12, or 3.13. Python 3.12 is recommended.
 - Git.
 - Internet access on the first run to download the embedding model.
-
-## Install
-
-The installers prefer `uv` and the committed `uv.lock`. If `uv` is not
-available, they create a compatible virtual environment and install the local
-package with pip.
 
 ### Windows
 
@@ -162,11 +382,11 @@ curl -fsSL https://raw.githubusercontent.com/NeuroGhostDev/Booster-mcp/main/inst
 
 Each installer creates a `booster` launcher in the user-local bin directory:
 
-- Windows: `%USERPROFILE%\.local\bin\booster.cmd`
-- macOS and Linux: `~/.local/bin/booster`
+- Windows: `%USERPROFILE%\.local\bin\booster.cmd`;
+- macOS and Linux: `~/.local/bin/booster`.
 
-The installer adds that directory to the user PATH. Open a new terminal after
-installation if the current shell does not yet find `booster`.
+The installer adds that directory to `PATH`. Open a new terminal if the current
+shell does not see the launcher yet.
 
 ### Development Installation
 
@@ -176,7 +396,7 @@ cd Booster-mcp
 uv sync --locked --extra dev
 ```
 
-Without `uv`, create a Python 3.12 virtual environment and install the project:
+Without `uv`, use a Python 3.12 virtual environment:
 
 ```bash
 python3.12 -m venv .venv
@@ -188,7 +408,7 @@ python -m pip install .
 On Windows, activate with `\.venv\Scripts\Activate.ps1` and use
 `\.venv\Scripts\booster.exe` until the launcher is installed.
 
-## Connect Booster to VS Code
+## Connect to VS Code
 
 Run the control menu from the repository you want to manage:
 
@@ -196,13 +416,7 @@ Run the control menu from the repository you want to manage:
 booster control
 ```
 
-For automation, use one of the two explicit connection scopes.
-
-### Workspace Connection
-
-Use this for a repository-specific server. It writes `.vscode/mcp.json`, starts
-Booster with that repository in `REPOS`, and is the recommended default for a
-project that you control.
+Use a workspace connection for one repository:
 
 ```text
 cd path/to/project
@@ -210,37 +424,29 @@ booster control connect --client vscode --scope workspace --project .
 booster expand --profile balanced
 ```
 
-### User Connection
-
-Use this once when you want Booster to appear in every VS Code workspace. It
-writes the VS Code user `mcp.json`, uses the exact Python from the Booster
-installation, and deliberately starts without a fixed `REPOS` value. This
-prevents a global server from repeatedly indexing the last project you opened.
+Use a user connection when Booster should appear in every VS Code workspace:
 
 ```text
 booster control connect --client vscode --scope user --project .
 ```
 
-After the global server starts, ask the agent to call `add_repo` with the
-repository currently being worked on. `add_repo` starts indexing in the
-background by default and `repo_stats` reports the current indexing status. Pass
-`wait=true` only when you intentionally want a blocking call. To intentionally
-bind a user-level server to one repository, pass `--with-repository`.
+After a user-level server starts, ask the agent to call `add_repo` for the
+repository currently being edited. Indexing runs in the background by default;
+`index_status` reports phase and progress. `add_repo(wait=true)` remains
+accepted for compatibility but is also non-blocking. Use `cancel_index` or
+bounded `wait_until_ready` when needed. Use `--with-repository` to bind a
+user-level server to one repo.
 
-VS Code keeps workspace and user MCP configuration separately. After adding or
-changing a server, run `MCP: List Servers`, select `Booster`, then start or
-restart it and accept the trust prompt. If the entry is still not visible, run
-`Developer: Reload Window` and inspect `MCP: List Servers` > `Booster` >
-`Show Output`.
-
-Every configuration write is atomic. The previous file is saved beside it with
-the `.booster.bak` suffix.
+VS Code keeps workspace and user MCP configuration separately. After changing a
+server, run `MCP: List Servers`, select Booster, start or restart it, and accept
+the trust prompt. If it is still missing, run `Developer: Reload Window` and
+inspect `MCP: List Servers -> Booster -> Show Output`.
 
 ## Booster Control
 
-`booster control` opens an interactive menu with connection management, scan
-profiles, artifact refresh, diagnostics, server removal, and launcher updates.
-The same operations are available as non-interactive commands:
+`booster control` provides interactive connection management, scan profiles,
+artifact refresh, diagnostics, server removal, and launcher updates. The same
+operations are available non-interactively:
 
 ```text
 # Show the active runtime, client entry, scan policy, and artifacts.
@@ -250,7 +456,7 @@ booster control status --client vscode --scope workspace --project .
 booster control connect --client vscode --scope workspace --project .
 booster control disconnect --client vscode --scope workspace --project .
 
-# Connect Claude Desktop in the user profile.
+# Connect another desktop client in the user profile.
 booster control connect --client claude --scope user --project .
 
 # Inspect and persist the bounded scan policy.
@@ -264,17 +470,17 @@ booster control doctor --project .
 ## Bounded Repository Scanning
 
 Run `booster expand` before attaching a large repository. It saves the scan
-policy and generates the initial map without requiring a live MCP connection.
+policy and generates an initial map without requiring a live MCP connection.
 
 ```text
 booster expand --profile balanced
 ```
 
-| Profile    | Depth | Source files | Selected source size | Best for                 |
-| ---------- | ----: | -----------: | -------------------: | ------------------------ |
-| `quick`    |     6 |          250 |                8 MiB | Fast initial orientation |
-| `balanced` |    12 |          800 |               32 MiB | Most repositories        |
-| `deep`     |    20 |        3,000 |              128 MiB | Large monorepos          |
+| Profile | Depth | Source files | Selected source size | Best for |
+| --- | ---: | ---: | ---: | --- |
+| `quick` | 6 | 250 | 8 MiB | Fast initial orientation |
+| `balanced` | 12 | 800 | 32 MiB | Most repositories |
+| `deep` | 20 | 3,000 | 128 MiB | Large monorepos |
 
 The scanner prioritizes conventional source roots, ignores generated and
 dependency directories by default, and records every limit decision in
@@ -283,17 +489,17 @@ when a directory is irrelevant to the current task.
 
 ## Cognitive Runtime Workflow
 
-Use this flow when the agent is about to change code:
+Use this flow when an agent is about to change code:
 
-1. **Recall project rules** with `project_memory_recall`.
-2. **Find the target** with `hybrid_search`, `semantic_search`, or
-   `find_symbol`.
-3. **Estimate blast radius** with `impact_analysis`.
-4. **Check history** with `git_intelligence` when code looks surprising.
-5. **Collect diagnostics** with `collect_diagnostics` for the files in scope.
-6. **Patch narrowly** using the project's existing patterns.
-7. **Validate** with `run_validation_checks` and repair the same slice until it
-   passes or the hypothesis is wrong.
+1. Recall project rules with `project_memory_recall`.
+2. Find the target with `hybrid_search`, `semantic_search`, or `find_symbol`.
+3. Estimate the blast radius with `impact_analysis`.
+4. Check history with `git_intelligence` when code looks surprising.
+5. Collect diagnostics with `collect_diagnostics` for files in scope.
+   For security-sensitive changes, run the separate advisory `security_audit`.
+6. Patch narrowly using the project's existing patterns.
+7. Validate with `run_validation_checks` and repair the same slice until it
+   passes or the hypothesis is rejected.
 
 Typical preflight:
 
@@ -318,18 +524,18 @@ run_validation_checks(
 
 Booster treats diagnostics as engineering evidence. A diagnostic tool that
 times out, crashes, or returns unparseable output is reported as an `error`
-finding. This prevents agents from mistaking a broken validation run for a
+finding. This prevents an agent from mistaking a broken validation run for a
 clean codebase.
 
-| Language or area      | Current checks                                               |
-| --------------------- | ------------------------------------------------------------ |
-| Python                | in-process syntax compile, Ruff, Pyright when installed      |
-| TypeScript/JavaScript | `tsc --noEmit` when `tsconfig.json` and `tsc` exist          |
-| Rust                  | `cargo check --message-format=json` when `Cargo.toml` exists |
-| Security              | Bandit and Semgrep when installed                            |
-| Tests                 | Any focused command passed to `run_validation_checks`        |
+| Area | Checks |
+| --- | --- |
+| Python | In-process syntax compile, Ruff, and Pyright when installed |
+| TypeScript and JavaScript | `tsc --noEmit` when `tsconfig.json` and `tsc` exist |
+| Rust | `cargo check --message-format=json` when `Cargo.toml` exists |
+| Security | `security_audit` runs Bandit and Semgrep when installed |
+| Tests | Any focused command passed to `run_validation_checks` |
 
-## Example Use Cases
+## Examples
 
 ### Before a Refactor
 
@@ -339,8 +545,8 @@ git_intelligence(symbol="AuthService", repo="<repo>")
 collect_diagnostics(paths=["src/auth/service.py"], repo="<repo>")
 ```
 
-The agent can answer: what calls it, what it calls, which files are affected,
-what tests look relevant, and whether there are already red diagnostics.
+The agent can answer what calls the service, what it calls, which files are
+affected, which tests are relevant, and whether red diagnostics already exist.
 
 ### During a Bug Hunt
 
@@ -350,8 +556,8 @@ git_intelligence(path="src/payments/locks.py", symbol="payment_lock")
 flipchart_call_graph(symbol="payment_lock", max_depth=4)
 ```
 
-The agent can combine stack traces, call graph context, and the historical
-reason a suspicious line exists.
+The agent can combine the stack trace, call graph, and historical reason behind
+a suspicious line.
 
 ### For Long-Term Project Knowledge
 
@@ -364,24 +570,9 @@ remember_project_fact(
 )
 ```
 
-Future sessions can recall that fact before editing API or frontend code.
+Future sessions can recall that fact before editing the API or frontend.
 
-## Typical Agent Workflow
-
-1. Connect the repository with `booster control` or `add_repo`.
-2. Check `repo_stats` until indexing is completed for workflows that need a
-   fresh graph.
-3. Run `get_repo_artifacts` and `get_repo_map` before broad file reads.
-4. Use `semantic_search` and `hybrid_search` to find behavior and exact
-   identifiers.
-5. Use the matching workflow skill: `booster-onboard`, `booster-bug-hunt`,
-   `booster-feature-add`, `booster-refactor`, or `booster-review`.
-6. Run `preflight_analysis` or `impact_analysis` before changing shared code.
-7. Use graph and flipchart tools only after a relevant symbol is identified.
-8. Validate the smallest affected test or command after each implementation
-   step.
-
-Bundled skills:
+## Bundled Workflow Skills
 
 - `booster-architecture-map`
 - `booster-bug-hunt`
@@ -398,30 +589,28 @@ Bundled skills:
 
 ## Key MCP Tools
 
-| Area                    | Examples                                                                                                                                                                              |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Repository lifecycle    | `add_repo`, `remove_repo`, `reindex_repo`, `list_repos`, `repo_stats`                                                                                                                 |
-| Search and navigation   | `semantic_search`, `hybrid_search`, `find_symbol`                                                                                                                                     |
-| Context and artifacts   | `inject_context`, `get_repo_artifacts`, `get_repo_map`, `get_code_city`                                                                                                               |
-| Reasoning and debugging | `flipchart_quick_debug`, `flipchart_call_graph`, `flipchart_sequence_diagram`                                                                                                         |
-| Cognitive runtime       | `preflight_analysis`, `impact_analysis`, `git_intelligence`, `remember_project_fact`, `project_memory_recall`, `collect_diagnostics`, `validation_loop_plan`, `run_validation_checks` |
-| Workflow support        | `list_agent_skills`, `install_agent_skills`, `fetch_stack_docs`                                                                                                                       |
+| Area | Examples |
+| --- | --- |
+| Repository lifecycle | `add_repo`, `remove_repo`, `reindex_repo`, `index_status`, `cancel_index`, `wait_until_ready`, `booster.task_complete`, `list_repos`, `repo_stats` |
+| Search and navigation | `semantic_search`, `hybrid_search`, `find_symbol` |
+| Context and artifacts | `inject_context`, `get_repo_artifacts`, `get_repo_map`, `get_code_city` |
+| Reasoning and debugging | `flipchart_quick_debug`, `flipchart_call_graph`, `flipchart_sequence_diagram` |
+| Cognitive Runtime | `preflight_analysis`, `impact_analysis`, `git_intelligence`, `remember_project_fact`, `project_memory_recall`, `collect_diagnostics`, `security_audit`, `validation_loop_plan`, `run_validation_checks` |
+| Workflow support | `list_agent_skills`, `install_agent_skills`, `fetch_stack_docs` |
 
-## Roadmap
-
-Booster already uses an in-memory Tree-sitter symbol/call/import graph. The
-next production steps are:
-
-- Persist the knowledge graph to Neo4j or Memgraph for cross-session graph
-  queries and deeper dependency traversal.
-- Add a headless LSP client for Pyright, typescript-language-server,
-  rust-analyzer, gopls, clangd, and Java language servers.
-- Link commits to PRs and issues so `git_intelligence` can explain not only
-  what changed, but why it changed.
-- Add richer validation recipes for Docker Compose, health checks, and service
-  logs.
-- Expand bundled skills into architecture, debugging, memory, and quality
-  packs for agent-specific workflows.
+Repository bindings are persisted in the shared user registry at
+`~/.booster/repositories/`, so independently spawned MCP processes see the
+same active projects. `booster.task_complete` queues a final bounded reindex
+for the task's repositories. Each completed index preserves
+`.agents/booster/repo_map.md`, `code_city.html`, `scan_config.json`, and
+`scan_report.json` in an immutable
+`.agents/booster/snapshots/<commit>-<state>-<digest>/` directory. Previous
+snapshots are never deleted; `.agents/booster/latest.json` points to the newest
+one. Each snapshot also preserves `repo_map_architecture.md`,
+`repo_map_symbols.md`, and `index_health.json`. The architecture map reserves
+space for top-level module diversity and entrypoint/config/contract coverage;
+the symbol map applies a per-file cap so large files cannot consume the whole
+context budget.
 
 ## Troubleshooting
 
@@ -435,14 +624,14 @@ booster control status --client vscode --scope user --project .
 ```
 
 Only a workspace entry is visible in that workspace. A user entry is visible in
-all workspaces. Use `MCP: List Servers` to start, trust, restart, or inspect
-the server. Use `MCP: Open User Configuration` to open the exact global file
-that VS Code is reading.
+all workspaces. Use `MCP: List Servers` to start, trust, restart, or inspect the
+server. Use `MCP: Open User Configuration` to open the exact global file VS Code
+is reading.
 
 ### `No module named rank_bm25`
 
-The client is starting an old system Python rather than Booster's environment.
-Repair the project environment and reconnect it through Booster Control:
+The client is starting a different system Python instead of Booster's
+environment. Repair the environment and reconnect through Booster Control:
 
 ```text
 uv sync --locked --extra dev
@@ -459,16 +648,35 @@ booster control scan --project . --profile deep
 booster expand --profile deep
 ```
 
-## Validation
+## Release Validation
 
-```text
+```bash
 uv lock --check
-python -m pytest tests -q
-ruff check cli.py control.py tests
+uv run python -m pytest tests -q
+uv run ruff check .
+uv run python -m compileall -q booster_home indexing_jobs.py server.py
+uv build
 ```
 
-See [COOKBOOK.md](COOKBOOK.md) for detailed workflows and
-[MARKETPLACE.md](MARKETPLACE.md) for publishing and client distribution.
+For detailed workflows, see [COOKBOOK.md](COOKBOOK.md). For publishing and
+client distribution, see [MARKETPLACE.md](MARKETPLACE.md). Maintainers should
+also read [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CHANGELOG.md](CHANGELOG.md).
+
+## Roadmap
+
+Booster already maintains an in-memory Tree-sitter symbol, call, and import
+graph. Planned production improvements include:
+
+- persisting the knowledge graph to Neo4j or Memgraph for cross-session graph
+  queries and deeper dependency traversal;
+- adding headless LSP clients for Pyright, TypeScript, rust-analyzer, gopls,
+  clangd, and Java language servers;
+- linking commits to pull requests and issues so `git_intelligence` can explain
+  why code changed, not only what changed;
+- adding validation recipes for Docker Compose, health checks, and service logs;
+- expanding bundled skills into agent-specific architecture, debugging,
+  memory, and quality packs.
 
 ## License
 

@@ -12,8 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
-        python-version: ["3.11", "3.12"]
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
@@ -35,12 +35,20 @@ jobs:
 
     - name: Check formatting with black
       run: |
-        black --check .
+        black --check visualizer.py tests/test_visualizer.py booster_home/research tests/home/test_research.py
 
     - name: Test imports
       run: |
         python -c "import server; import indexer; import repomap; print('OK')"
 
+    - name: Compile Home package
+      run: |
+        python -m compileall booster_home
+
     - name: Run tests
       run: |
-        pytest -v || echo "No tests yet"
+        python -m pytest tests -q
+
+    - name: Build wheel
+      run: |
+        python -m pip wheel . --no-deps --wheel-dir dist

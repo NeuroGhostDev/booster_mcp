@@ -60,6 +60,7 @@ __pycache__
 
 # Code City (генерируется автоматически)
 code_city.html
+test_city.html
 
 # Logs
 *.log
@@ -81,5 +82,14 @@ $RECYCLE.BIN/
 
 # Тесты
 test_results/
+test_logs.txt
 *.prof
 .prof
+SPEC.md
+.kilo/plans/1787078983107-booster-home-full-runtime-plan.md
+.agents
+.agents/booster/repo_map.md
+.agents/booster/scan_report.json
+.serena/
+.agents/booster/repo_map.md
+.agents/booster/scan_report.json

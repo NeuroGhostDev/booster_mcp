@@ -44,11 +44,22 @@ def resolve_project(path: str | Path) -> Path:
 
 def runtime_info() -> dict[str, str]:
     """Возвращает исполняемый Python и server.py текущей установки Booster."""
-    server_path = Path(__file__).resolve().with_name("server.py")
+    installation = Path(__file__).resolve().parent
+    server_path = installation / "server.py"
+    python_path = Path(sys.executable).resolve()
+    if server_path.is_file():
+        candidates = (
+            installation / ".venv" / "Scripts" / "python.exe",
+            installation / ".venv" / "bin" / "python",
+        )
+        python_path = next(
+            (candidate.resolve() for candidate in candidates if candidate.is_file()),
+            python_path,
+        )
     return {
-        "python": str(Path(sys.executable).resolve()),
+        "python": str(python_path),
         "server": str(server_path),
-        "installation": str(Path(__file__).resolve().parent),
+        "installation": str(installation),
     }
 
 

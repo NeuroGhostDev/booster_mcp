@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from repomap import RepoMap
+from repository_lifecycle import RepositorySnapshotStore
 
 
 def get_repo_artifacts_status(repo_path: str | Path) -> dict[str, object]:
@@ -20,11 +21,17 @@ def get_repo_artifacts_status(repo_path: str | Path) -> dict[str, object]:
             "path": str(path),
             "exists": True,
             "size_bytes": stat.st_size,
-            "modified_at_utc": datetime.fromtimestamp(
-                stat.st_mtime, tz=timezone.utc
-            ).isoformat(),
+            "modified_at_utc": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
         }
 
+    snapshot_store = RepositorySnapshotStore(repo)
+    health_path = artifacts_dir / "index_health.json"
+    try:
+        index_health = json.loads(health_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        index_health = {}
+    if not isinstance(index_health, dict):
+        index_health = {}
     return {
         "repo": str(repo),
         "artifacts_dir": str(artifacts_dir),
@@ -33,6 +40,19 @@ def get_repo_artifacts_status(repo_path: str | Path) -> dict[str, object]:
             "code_city": get_file_status(artifacts_dir / "code_city.html"),
             "scan_config": get_file_status(artifacts_dir / "scan_config.json"),
             "scan_report": get_file_status(artifacts_dir / "scan_report.json"),
+        },
+        "split_artifacts": {
+            "repo_map_architecture": get_file_status(artifacts_dir / "repo_map_architecture.md"),
+            "repo_map_symbols": get_file_status(artifacts_dir / "repo_map_symbols.md"),
+            "index_health": get_file_status(artifacts_dir / "index_health.json"),
+        },
+        "index_health": index_health,
+        "generation_id": index_health.get("generation_id"),
+        "stale": bool(index_health.get("stale", False)),
+        "completeness": index_health.get("map_coverage", {}),
+        "snapshot_history": {
+            "latest": snapshot_store.latest(),
+            "items": snapshot_store.list_snapshots(limit=20),
         },
     }
 
@@ -49,6 +69,12 @@ def setup_context_provider(mcp: Any, indexer: Any, repo_maps: dict[str, RepoMap]
             return "Нет добавленных репозиториев"
 
         repo = indexer.repos[0]
+        architecture_map = Path(repo) / ".agents" / "booster" / "repo_map_architecture.md"
+        if architecture_map.is_file():
+            return architecture_map.read_text(encoding="utf-8")
+        index_health = getattr(indexer, "index_health", None)
+        if callable(index_health) and not index_health().get("ready", False):
+            return "Индексация ещё не завершена; Repo Map пока недоступна."
         repo_map = repo_maps.get(repo)
         if repo_map is None:
             repo_map = RepoMap(root=repo)
@@ -75,7 +101,9 @@ def setup_context_provider(mcp: Any, indexer: Any, repo_maps: dict[str, RepoMap]
             return "Нет добавленных репозиториев"
 
         exts = set()
-        for f in indexer.symbols.keys():
+        symbols_snapshot = getattr(indexer, "symbols_snapshot", None)
+        symbols = symbols_snapshot() if callable(symbols_snapshot) else indexer.symbols
+        for f in symbols.keys():
             ext = Path(f).suffix.lower()
             if ext:
                 exts.add(ext)
@@ -103,7 +131,7 @@ def setup_context_provider(mcp: Any, indexer: Any, repo_maps: dict[str, RepoMap]
             config_path = repo_path / config_name
             if config_path.exists():
                 try:
-                    content = config_path.read_text(encoding='utf-8')
+                    content = config_path.read_text(encoding="utf-8")
                     # Обрезаем если слишком длинный
                     if len(content) > 1500:
                         content = content[:1500] + "\n... (оборвано)"
@@ -143,15 +171,12 @@ def setup_context_provider(mcp: Any, indexer: Any, repo_maps: dict[str, RepoMap]
         """
         context = []
         if include_map:
-            context.append(
-                "=== Карта репозитория (repo://map) ===\n" + get_repo_map_resource())
+            context.append("=== Карта репозитория (repo://map) ===\n" + get_repo_map_resource())
         if include_stack:
-            context.append(
-                "=== Стек технологий (repo://stack) ===\n" + get_repo_stack_resource())
+            context.append("=== Стек технологий (repo://stack) ===\n" + get_repo_stack_resource())
         if include_conventions:
             context.append(
-                "=== Конвенции проекта (repo://conventions) ===\n"
-                + get_repo_conventions_resource()
+                "=== Конвенции проекта (repo://conventions) ===\n" + get_repo_conventions_resource()
             )
 
         return {"context": "\n\n".join(context)}

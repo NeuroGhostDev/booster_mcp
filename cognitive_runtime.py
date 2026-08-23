@@ -9,14 +9,19 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import threading
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional, cast
+
+from repository_scanner import RepositoryScanner
 
 SOURCE_EXTENSIONS = {".py", ".js", ".jsx",
                      ".ts", ".tsx", ".rs", ".go", ".java"}
@@ -47,6 +52,7 @@ class CognitiveRuntime:
     def __init__(self, indexer: Any, repos: list[str]):
         self.indexer = indexer
         self.repos = repos
+        self._memory_lock = threading.RLock()
 
     def _resolve_repo(self, repo: Optional[str] = None) -> Path:
         if repo:
@@ -71,15 +77,27 @@ class CognitiveRuntime:
         if not path.exists():
             return {}
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            return {}
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"project memory повреждена: {path}") from exc
+        if not isinstance(value, dict):
+            raise RuntimeError(f"project memory должна быть JSON object: {path}")
+        return value
 
     def _save_memory(self, repo_path: Path, memory: dict[str, Any]) -> None:
-        self._memory_file(repo_path).write_text(
-            json.dumps(memory, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        path = self._memory_file(repo_path)
+        payload = json.dumps(memory, ensure_ascii=False, indent=2).encode("utf-8")
+        with self._memory_lock:
+            fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
+            try:
+                with os.fdopen(fd, "wb") as stream:
+                    stream.write(payload)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.replace(temporary, path)
+            except Exception:
+                Path(temporary).unlink(missing_ok=True)
+                raise
 
     def _inside_repo(self, path: Path, repo_path: Path) -> bool:
         try:
@@ -698,6 +716,74 @@ class CognitiveRuntime:
             "findings": findings,
             "commands": commands,
             "skipped_tools": skipped_tools,
+        }
+
+    def security_audit(
+        self,
+        paths: Optional[list[str]] = None,
+        repo: Optional[str] = None,
+        run_external: bool = True,
+        timeout_seconds: int = 60,
+    ) -> dict[str, Any]:
+        """Запускает bounded security-only audit без блокировки обычного workflow."""
+        try:
+            repo_path = self._resolve_repo(repo)
+        except ValueError as exc:
+            return {"error": str(exc)}
+
+        target_paths = self._resolve_paths(paths, repo_path)
+        if not target_paths:
+            try:
+                target_paths = [
+                    path.resolve() for path in RepositoryScanner(repo_path).scan().files
+                ]
+            except Exception as exc:
+                return {
+                    "repo": str(repo_path),
+                    "status": "error",
+                    "error": f"Не удалось определить файлы для security audit: {exc}",
+                }
+        source_paths = [
+            path for path in target_paths if path.suffix.lower() in SOURCE_EXTENSIONS
+        ]
+        bounded_timeout = max(1, min(int(timeout_seconds), 300))
+        commands: list[dict[str, Any]] = []
+        skipped_tools: list[dict[str, str]] = []
+        if run_external and source_paths:
+            findings = self._collect_security(
+                repo_path,
+                source_paths,
+                commands,
+                skipped_tools,
+                bounded_timeout,
+            )
+        else:
+            findings = []
+            reason = "external_scanners_disabled" if not run_external else "no_source_files"
+            skipped_tools.append({"tool": "security_audit", "reason": reason})
+
+        summary = self._diagnostics_summary(findings)
+        if summary["status"] == "failed":
+            pass
+        elif not source_paths:
+            summary["status"] = "incomplete"
+        elif not run_external:
+            summary["status"] = "not_run"
+        elif skipped_tools:
+            summary["status"] = "incomplete"
+        return {
+            "repo": str(repo_path),
+            "paths_checked": [str(path) for path in source_paths],
+            "status": summary["status"],
+            "summary": summary,
+            "findings": findings,
+            "commands": commands,
+            "skipped_tools": skipped_tools,
+            "coverage": {
+                "mode": "external" if run_external else "disabled",
+                "tools": sorted({str(item.get("tool")) for item in commands}),
+                "advisory": True,
+            },
         }
 
     def _summarize_command(self, tool: str, result: dict[str, Any]) -> dict[str, Any]:
@@ -1354,6 +1440,16 @@ def setup_cognitive_runtime_tools(mcp: Any, indexer: Any, repos: list[str]):
             run_external,
             timeout_seconds,
         )
+
+    @mcp.tool()
+    def security_audit(
+        paths: Optional[list[str]] = None,
+        repo: Optional[str] = None,
+        run_external: bool = True,
+        timeout_seconds: int = 60,
+    ):
+        """Запускает advisory security audit через доступные Bandit/Semgrep scanners."""
+        return runtime.security_audit(paths, repo, run_external, timeout_seconds)
 
     @mcp.tool()
     def preflight_analysis(

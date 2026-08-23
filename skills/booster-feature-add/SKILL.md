@@ -43,6 +43,11 @@ find_symbol("<new symbol>")
 collect_diagnostics(paths=["<changed file>"], repo="<repo>")
 validation_loop_plan(task="<feature description>", changed_paths=["<changed file>"], repo="<repo>")
 run_validation_checks(commands=["<project tests>"], paths=["<changed file>"], repo="<repo>")
+booster.task_complete(task_id="<task-id>", repo_paths=["<repo>"])
 project_memory("set", "feature_<name>", "...", repo="<repo>")
 remember_project_fact(category="feature", fact="<what changed and why>", repo="<repo>")
 ```
+
+`booster.task_complete()` is the lifecycle boundary for the agent task. It
+queues a final bounded reindex and preserves the generated artifacts in an
+immutable snapshot keyed by the current git commit and artifact digest.

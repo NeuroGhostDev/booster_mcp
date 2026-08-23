@@ -1,6 +1,8 @@
 # Booster MCP Cookbook
 
-Welcome to the **Booster MCP Cookbook**! This guide contains best practices, recipes, and examples of how AI agents and developers can maximize the capabilities of Booster MCP v3.1.
+Welcome to the **Booster MCP Cookbook**. This guide contains verified recipes for
+Booster MCP 4.0: repository intelligence, Context Injection, Cognitive Runtime,
+job-based indexing, and Booster Home.
 
 Booster MCP transforms your AI agent into a "Senior Engineer" capable of quickly understanding architecture, finding deep context, building 3D visualizations, integrating up-to-date library documentation (Context7), and running a Cognitive Runtime loop before and after code changes.
 
@@ -18,7 +20,22 @@ Example: add_repo(repo_path="C:\\projects\\my_large_app")
 Then call repo_stats() to check indexing progress.
 ```
 
-_What happens:_ Booster registers the repository and starts indexing in the background so a long scan cannot block the MCP stdio request. When indexing completes, Booster has code symbols, call and import graphs, and generated artifacts: `.agents/booster/code_city.html` and `.agents/booster/repo_map.md`. It also auto-generates a `.ignore` file to skip noisy directories like `node_modules` and `venv`. Use `add_repo(..., wait=true)` only for an intentionally blocking run.
+_What happens:_ Booster registers the repository and starts a background job, so a
+long scan cannot block the MCP stdio request. When indexing completes, Booster
+has code symbols, call and import graphs, and generated artifacts under
+`.agents/booster/`: `repo_map_architecture.md`, `repo_map_symbols.md`,
+`index_health.json`, `code_city.html`, and the compatibility `repo_map.md`. It
+also auto-generates a `.ignore` file to skip noisy directories such as
+`node_modules` and `venv`. The old `wait=true` argument remains accepted but is
+non-blocking; use the job tools below for lifecycle control.
+
+Check the job explicitly:
+
+```text
+index_status(repo_path="C:\\projects\\my_large_app")
+wait_until_ready(job_id="idx_...", timeout_seconds=30)
+cancel_index(job_id="idx_...")
+```
 
 **Step 2. Request the Repository Map**
 
@@ -211,9 +228,95 @@ Large monorepos can overwhelm unbounded indexing. Start with the Booster CLI to 
 Terminal: cd C:\projects\massive_monorepo && booster expand --profile balanced
 ```
 
-_What happens:_ Booster stores `.agents/booster/scan_config.json`, then creates `repo_map.md` and `scan_report.json`. The shared scanner prioritizes source roots, prunes generated and dependency directories early, and applies limits for depth, directories, file count, individual file size, and total selected bytes. `add_repo()` starts background indexing with the same policy, and `reindex_repo()` reuses that policy for explicit rebuilds.
+_What happens:_ Booster stores `.agents/booster/scan_config.json`, then creates
+the architecture map, symbol map, `index_health.json`, compatibility
+`repo_map.md`, and `scan_report.json`. The shared scanner prioritizes source
+roots, prunes generated and dependency directories early, and applies limits for
+depth, directories, file count, individual file size, and total selected bytes.
+It continues a bounded metadata inventory beyond the selected-file cap so
+changes outside the body budget can mark a generation stale. `add_repo()` uses
+the same policy and `reindex_repo()` queues an explicit rebuild.
+
+At the end of the agent task, call `booster.task_complete(task_id="task-123")`.
+Booster queues one final bounded reindex and stores the generated artifacts in
+an immutable snapshot keyed by the current git commit and artifact digest.
+Earlier snapshots remain available under `.agents/booster/snapshots/`.
 
 **Result:** The first map is available quickly, the selected scope is explainable from `scan_report.json`, and agents can request `--profile deep` only when the task genuinely needs broader coverage.
+
+---
+
+## Release Recipe: Run Booster Home with Nemotron 4B
+
+Use Booster Home as a local OpenAI-compatible data plane in front of LM Studio.
+The model ID must match the ID reported by `/v1/models`.
+
+```bash
+booster home \
+  --base-url http://127.0.0.1:1234/v1 \
+  --model nvidia/nemotron-3-nano-4b \
+  --api-key lm-studio \
+  --project .
+```
+
+Check the configuration without starting a second gateway:
+
+```bash
+booster home --base-url http://127.0.0.1:1234/v1 \
+  --model nvidia/nemotron-3-nano-4b --api-key lm-studio \
+  --probe-generation doctor --json
+```
+
+Home preserves provider-specific fields such as `reasoning_content`. Nemotron
+may consume a small output budget in reasoning and return an empty
+`message.content` with `finish_reason=length`; increase the output budget or
+inspect the reasoning field instead of treating that response as a complete
+answer.
+
+Smoke-test the three public request paths:
+
+```text
+GET  /health
+GET  /v1/models
+POST /v1/chat/completions
+POST /v1/responses
+```
+
+For streaming, measure time to the first SSE chunk separately from total
+completion time. Home forwards chunks instead of buffering the entire upstream
+response.
+
+---
+
+## Release Recipe: Context Injection Before a Change
+
+Use the existing Booster world model before reading a large repository manually:
+
+```text
+add_repo(repo_path="C:\\projects\\my_app")
+index_status(repo_path="C:\\projects\\my_app")
+inject_context(
+    include_map=true,
+    include_stack=true,
+    include_conventions=true
+)
+```
+
+Then run a focused preflight:
+
+```text
+preflight_analysis(
+    task="Change the authentication flow",
+    target="AuthService",
+    paths=["src/auth/service.py"],
+    repo="C:\\projects\\my_app"
+)
+```
+
+The injected slice should contain the architecture map, stack, project
+conventions, relevant diagnostics, and impact evidence. Use `artifact_lookup` or
+`retrieve_session_artifact` when exact evicted content is needed; do not replace
+an exact artifact with a model-generated reconstruction.
 
 ---
 

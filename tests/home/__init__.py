@@ -1,0 +1,1 @@
+"""Тесты Booster Home runtime."""

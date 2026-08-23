@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at_utc": "2026-07-18T10:36:28.378677+00:00",
+  "generated_at_utc": "2026-08-23T09:51:07.132331+00:00",
   "repository": "D:\\workSpace\\booster_mcp",
   "profile": "balanced",
   "limits": {
@@ -12,68 +12,666 @@
   },
   "include_dependencies": false,
   "summary": {
-    "directories_scanned": 17,
-    "files_inspected": 66,
-    "source_files_selected": 50,
-    "selected_bytes": 425095
+    "directories_scanned": 30,
+    "files_inspected": 177,
+    "source_files_selected": 149,
+    "selected_bytes": 1170541,
+    "inventory_files": 149
+  },
+  "file_manifest": {
+    "CHANGELOG.md": {
+      "size_bytes": 9440,
+      "mtime_ns": 1787475883978335500
+    },
+    "chunker.py": {
+      "size_bytes": 427,
+      "mtime_ns": 1784370816870304300
+    },
+    "city_server.py": {
+      "size_bytes": 40187,
+      "mtime_ns": 1787398696322663700
+    },
+    "cli.py": {
+      "size_bytes": 37119,
+      "mtime_ns": 1787213231185511900
+    },
+    "code_city.html": {
+      "size_bytes": 176058,
+      "mtime_ns": 1787409462707940800
+    },
+    "cognitive_runtime.py": {
+      "size_bytes": 57211,
+      "mtime_ns": 1787219118219658700
+    },
+    "context7_bridge.py": {
+      "size_bytes": 2699,
+      "mtime_ns": 1787327329742063500
+    },
+    "context_provider.py": {
+      "size_bytes": 7777,
+      "mtime_ns": 1787399079407223600
+    },
+    "CONTRIBUTING.md": {
+      "size_bytes": 3340,
+      "mtime_ns": 1787475897703154800
+    },
+    "control.py": {
+      "size_bytes": 20088,
+      "mtime_ns": 1787326733352456000
+    },
+    "COOKBOOK.md": {
+      "size_bytes": 17801,
+      "mtime_ns": 1787475947744679900
+    },
+    "dsa.json": {
+      "size_bytes": 0,
+      "mtime_ns": 1787070917825424500
+    },
+    "embedder.py": {
+      "size_bytes": 717,
+      "mtime_ns": 1787129764752924100
+    },
+    "file_lock.py": {
+      "size_bytes": 1134,
+      "mtime_ns": 1787213190930449700
+    },
+    "flipchart.py": {
+      "size_bytes": 10320,
+      "mtime_ns": 1784370817928019600
+    },
+    "graphs.py": {
+      "size_bytes": 2731,
+      "mtime_ns": 1787398040710153600
+    },
+    "indexer.py": {
+      "size_bytes": 15011,
+      "mtime_ns": 1787398525761915800
+    },
+    "indexing_jobs.py": {
+      "size_bytes": 10581,
+      "mtime_ns": 1787398240135771900
+    },
+    "install.ps1": {
+      "size_bytes": 5410,
+      "mtime_ns": 1784198929666066200
+    },
+    "install.sh": {
+      "size_bytes": 4062,
+      "mtime_ns": 1784198929369611200
+    },
+    "MANIFEST.in": {
+      "size_bytes": 209,
+      "mtime_ns": 1787145809313639300
+    },
+    "MARKETPLACE.md": {
+      "size_bytes": 7578,
+      "mtime_ns": 1787475968231099700
+    },
+    "parser_router.py": {
+      "size_bytes": 715,
+      "mtime_ns": 1784370816935305800
+    },
+    "pyproject.toml": {
+      "size_bytes": 2869,
+      "mtime_ns": 1787399002641922600
+    },
+    "README.md": {
+      "size_bytes": 27189,
+      "mtime_ns": 1787477519515009000
+    },
+    "README.ru.md": {
+      "size_bytes": 5589,
+      "mtime_ns": 1787475867788118700
+    },
+    "README.zh-CN.md": {
+      "size_bytes": 4664,
+      "mtime_ns": 1787475867805676100
+    },
+    "RECOMENDET_PROMPT.md": {
+      "size_bytes": 40875,
+      "mtime_ns": 1787146945517789800
+    },
+    "repomap.py": {
+      "size_bytes": 18241,
+      "mtime_ns": 1787398440665147900
+    },
+    "repository_lifecycle.py": {
+      "size_bytes": 12639,
+      "mtime_ns": 1787398348259342100
+    },
+    "repository_scanner.py": {
+      "size_bytes": 17050,
+      "mtime_ns": 1787398696314161400
+    },
+    "requirements.txt": {
+      "size_bytes": 284,
+      "mtime_ns": 1787125370734976800
+    },
+    "server.py": {
+      "size_bytes": 29953,
+      "mtime_ns": 1787399079335263500
+    },
+    "skill_installer.py": {
+      "size_bytes": 3648,
+      "mtime_ns": 1784370817105056900
+    },
+    "SPEC.md": {
+      "size_bytes": 76504,
+      "mtime_ns": 1787073691961416300
+    },
+    "toolkit.py": {
+      "size_bytes": 27326,
+      "mtime_ns": 1787327329719925300
+    },
+    "vector_index.py": {
+      "size_bytes": 7473,
+      "mtime_ns": 1787398040711198500
+    },
+    "visualizer.py": {
+      "size_bytes": 39132,
+      "mtime_ns": 1787327404435333500
+    },
+    "watcher.py": {
+      "size_bytes": 5109,
+      "mtime_ns": 1787398390115967200
+    },
+    "algocheck/Booster LeetCode check.md": {
+      "size_bytes": 7198,
+      "mtime_ns": 1787477783193813800
+    },
+    "assets/booster-pipeline.svg": {
+      "size_bytes": 5499,
+      "mtime_ns": 1787132196575392700
+    },
+    "assets/home-runtime.svg": {
+      "size_bytes": 4543,
+      "mtime_ns": 1787132196575928500
+    },
+    "benchmarks/home_context_benchmark.py": {
+      "size_bytes": 4967,
+      "mtime_ns": 1787126183528729700
+    },
+    "booster_home/__init__.py": {
+      "size_bytes": 694,
+      "mtime_ns": 1787125638028277200
+    },
+    "booster_home/app.py": {
+      "size_bytes": 1487,
+      "mtime_ns": 1787125638033276200
+    },
+    "booster_home/config.py": {
+      "size_bytes": 16579,
+      "mtime_ns": 1787213250595118600
+    },
+    "booster_home/delegation.py": {
+      "size_bytes": 1310,
+      "mtime_ns": 1787124842144765700
+    },
+    "booster_home/mcp.py": {
+      "size_bytes": 13603,
+      "mtime_ns": 1787131297537561000
+    },
+    "booster_home/models.py": {
+      "size_bytes": 8337,
+      "mtime_ns": 1787126571366840400
+    },
+    "booster_home/routing.py": {
+      "size_bytes": 1487,
+      "mtime_ns": 1787124445488945100
+    },
+    "booster_home/runtime.py": {
+      "size_bytes": 12356,
+      "mtime_ns": 1787157606418119800
+    },
+    "skills/__init__.py": {
+      "size_bytes": 68,
+      "mtime_ns": 1787145809326390000
+    },
+    "tests/test_city_server.py": {
+      "size_bytes": 1801,
+      "mtime_ns": 1787328028363078600
+    },
+    "tests/test_cognitive_runtime.py": {
+      "size_bytes": 9536,
+      "mtime_ns": 1787219170059541300
+    },
+    "tests/test_context_provider.py": {
+      "size_bytes": 2517,
+      "mtime_ns": 1784191416744018000
+    },
+    "tests/test_control.py": {
+      "size_bytes": 5999,
+      "mtime_ns": 1787327000995893800
+    },
+    "tests/test_hybrid_search.py": {
+      "size_bytes": 1746,
+      "mtime_ns": 1784185443996493900
+    },
+    "tests/test_index_jobs.py": {
+      "size_bytes": 2276,
+      "mtime_ns": 1787398582994912000
+    },
+    "tests/test_indexer.py": {
+      "size_bytes": 964,
+      "mtime_ns": 1787327001021178900
+    },
+    "tests/test_repomap.py": {
+      "size_bytes": 1777,
+      "mtime_ns": 1787398583004396500
+    },
+    "tests/test_repository_lifecycle.py": {
+      "size_bytes": 5017,
+      "mtime_ns": 1787219170033817700
+    },
+    "tests/test_repository_scanner.py": {
+      "size_bytes": 3070,
+      "mtime_ns": 1784191418111750900
+    },
+    "tests/test_runtime_hardening.py": {
+      "size_bytes": 1311,
+      "mtime_ns": 1784370816593418000
+    },
+    "tests/test_server_index_jobs.py": {
+      "size_bytes": 2178,
+      "mtime_ns": 1787398621551860400
+    },
+    "tests/test_server_scope.py": {
+      "size_bytes": 1097,
+      "mtime_ns": 1787328293486286600
+    },
+    "tests/test_skill_installer.py": {
+      "size_bytes": 244,
+      "mtime_ns": 1787145809327459300
+    },
+    "tests/test_visualizer.py": {
+      "size_bytes": 1329,
+      "mtime_ns": 1787132566554870100
+    },
+    "tests/test_watcher.py": {
+      "size_bytes": 1602,
+      "mtime_ns": 1787327001018145700
+    },
+    "docs/API.md": {
+      "size_bytes": 5007,
+      "mtime_ns": 1787476030246874800
+    },
+    "docs/ARCHITECTURE.md": {
+      "size_bytes": 5040,
+      "mtime_ns": 1787476030231381800
+    },
+    "docs/RELEASE.md": {
+      "size_bytes": 3919,
+      "mtime_ns": 1787477537456415200
+    },
+    "booster_home/api/__init__.py": {
+      "size_bytes": 117,
+      "mtime_ns": 1787125207772373600
+    },
+    "booster_home/api/gateway.py": {
+      "size_bytes": 16985,
+      "mtime_ns": 1787213231171215800
+    },
+    "booster_home/api/models.py": {
+      "size_bytes": 3407,
+      "mtime_ns": 1787157261182136000
+    },
+    "booster_home/api/streaming.py": {
+      "size_bytes": 820,
+      "mtime_ns": 1787125207801371200
+    },
+    "booster_home/adapters/__init__.py": {
+      "size_bytes": 769,
+      "mtime_ns": 1787124966333265000
+    },
+    "booster_home/adapters/booster.py": {
+      "size_bytes": 4292,
+      "mtime_ns": 1787125632306389900
+    },
+    "booster_home/adapters/diagnostics.py": {
+      "size_bytes": 2329,
+      "mtime_ns": 1787125632306389900
+    },
+    "booster_home/adapters/lsp.py": {
+      "size_bytes": 11065,
+      "mtime_ns": 1787126825711043000
+    },
+    "booster_home/adapters/project_memory.py": {
+      "size_bytes": 2560,
+      "mtime_ns": 1787125632306389900
+    },
+    "booster_home/adapters/repomap.py": {
+      "size_bytes": 621,
+      "mtime_ns": 1787124966352343300
+    },
+    "booster_home/context/__init__.py": {
+      "size_bytes": 953,
+      "mtime_ns": 1787126834209278500
+    },
+    "booster_home/context/budget.py": {
+      "size_bytes": 5826,
+      "mtime_ns": 1787126722600453100
+    },
+    "booster_home/context/classifier.py": {
+      "size_bytes": 3923,
+      "mtime_ns": 1787126729968345300
+    },
+    "booster_home/context/compiler.py": {
+      "size_bytes": 15592,
+      "mtime_ns": 1787157130439167900
+    },
+    "booster_home/context/deterministic.py": {
+      "size_bytes": 3704,
+      "mtime_ns": 1787125638033276200
+    },
+    "booster_home/context/diagnostic.py": {
+      "size_bytes": 4597,
+      "mtime_ns": 1787127144061183500
+    },
+    "booster_home/context/packer.py": {
+      "size_bytes": 5223,
+      "mtime_ns": 1787126738498873400
+    },
+    "booster_home/context/policy.py": {
+      "size_bytes": 1477,
+      "mtime_ns": 1787126225586996900
+    },
+    "booster_home/context/relevance.py": {
+      "size_bytes": 1646,
+      "mtime_ns": 1787125638030277800
+    },
+    "booster_home/context/semantic.py": {
+      "size_bytes": 2269,
+      "mtime_ns": 1787125638031279300
+    },
+    "booster_home/context/tokenizer.py": {
+      "size_bytes": 2151,
+      "mtime_ns": 1787124751589959000
+    },
+    "booster_home/memory/__init__.py": {
+      "size_bytes": 555,
+      "mtime_ns": 1787124594011440400
+    },
+    "booster_home/memory/artifact_store.py": {
+      "size_bytes": 9656,
+      "mtime_ns": 1787131139957693000
+    },
+    "booster_home/memory/models.py": {
+      "size_bytes": 2411,
+      "mtime_ns": 1787127124733817800
+    },
+    "booster_home/memory/pager.py": {
+      "size_bytes": 1770,
+      "mtime_ns": 1787125638027278600
+    },
+    "booster_home/memory/session_store.py": {
+      "size_bytes": 9872,
+      "mtime_ns": 1787213190949424600
+    },
+    "booster_home/research/__init__.py": {
+      "size_bytes": 136,
+      "mtime_ns": 1787129157317367500
+    },
+    "booster_home/research/analysis.py": {
+      "size_bytes": 11164,
+      "mtime_ns": 1787130983085477000
+    },
+    "booster_home/research/models.py": {
+      "size_bytes": 3448,
+      "mtime_ns": 1787130952375712600
+    },
+    "booster_home/research/service.py": {
+      "size_bytes": 44949,
+      "mtime_ns": 1787131297525863000
+    },
+    "booster_home/research/store.py": {
+      "size_bytes": 11581,
+      "mtime_ns": 1787130952375712600
+    },
+    "booster_home/telemetry/__init__.py": {
+      "size_bytes": 400,
+      "mtime_ns": 1787127083238959000
+    },
+    "booster_home/telemetry/events.py": {
+      "size_bytes": 1621,
+      "mtime_ns": 1787157080412930700
+    },
+    "booster_home/telemetry/logging.py": {
+      "size_bytes": 2560,
+      "mtime_ns": 1787127052246729600
+    },
+    "booster_home/telemetry/metrics.py": {
+      "size_bytes": 1745,
+      "mtime_ns": 1787125638025277800
+    },
+    "booster_home/upstream/__init__.py": {
+      "size_bytes": 327,
+      "mtime_ns": 1787125632308462100
+    },
+    "booster_home/upstream/client.py": {
+      "size_bytes": 232,
+      "mtime_ns": 1787125978142466200
+    },
+    "booster_home/upstream/discovery.py": {
+      "size_bytes": 3857,
+      "mtime_ns": 1787157606417121900
+    },
+    "booster_home/upstream/models.py": {
+      "size_bytes": 2320,
+      "mtime_ns": 1787125632307454400
+    },
+    "booster_home/upstream/provider.py": {
+      "size_bytes": 7370,
+      "mtime_ns": 1787125632313000100
+    },
+    "booster_home/workers/__init__.py": {
+      "size_bytes": 393,
+      "mtime_ns": 1787124842087006400
+    },
+    "booster_home/workers/cache.py": {
+      "size_bytes": 1256,
+      "mtime_ns": 1787125638025277800
+    },
+    "booster_home/workers/client.py": {
+      "size_bytes": 5451,
+      "mtime_ns": 1787128951390051100
+    },
+    "booster_home/workers/pool.py": {
+      "size_bytes": 2231,
+      "mtime_ns": 1787125638034276900
+    },
+    "booster_home/workers/prompts.py": {
+      "size_bytes": 1032,
+      "mtime_ns": 1787125638029276900
+    },
+    "booster_home/workers/schemas.py": {
+      "size_bytes": 1750,
+      "mtime_ns": 1787125632325006800
+    },
+    "skills/booster-architecture-map/SKILL.md": {
+      "size_bytes": 2721,
+      "mtime_ns": 1787476123491335900
+    },
+    "skills/booster-bug-hunt/SKILL.md": {
+      "size_bytes": 1663,
+      "mtime_ns": 1784366975261951100
+    },
+    "skills/booster-cognitive-runtime/SKILL.md": {
+      "size_bytes": 2455,
+      "mtime_ns": 1784367394131217300
+    },
+    "skills/booster-context-inject/SKILL.md": {
+      "size_bytes": 2389,
+      "mtime_ns": 1773333830520474500
+    },
+    "skills/booster-deep-dive/SKILL.md": {
+      "size_bytes": 1537,
+      "mtime_ns": 1784366975270698800
+    },
+    "skills/booster-feature-add/SKILL.md": {
+      "size_bytes": 2307,
+      "mtime_ns": 1787146931197471500
+    },
+    "skills/booster-flipchart/SKILL.md": {
+      "size_bytes": 2323,
+      "mtime_ns": 1773337512886565000
+    },
+    "skills/booster-mcp-workflow/SKILL.md": {
+      "size_bytes": 6282,
+      "mtime_ns": 1787476123488326100
+    },
+    "skills/booster-onboard/SKILL.md": {
+      "size_bytes": 2389,
+      "mtime_ns": 1784191416547582500
+    },
+    "skills/booster-project-memory/SKILL.md": {
+      "size_bytes": 2748,
+      "mtime_ns": 1784366975269900700
+    },
+    "skills/booster-refactor/SKILL.md": {
+      "size_bytes": 1524,
+      "mtime_ns": 1784366975270698800
+    },
+    "skills/booster-review/SKILL.md": {
+      "size_bytes": 1487,
+      "mtime_ns": 1784366975278911600
+    },
+    "tests/home/__init__.py": {
+      "size_bytes": 39,
+      "mtime_ns": 1787125451212895300
+    },
+    "tests/home/conftest.py": {
+      "size_bytes": 2331,
+      "mtime_ns": 1787125632323005400
+    },
+    "tests/home/test_artifact_store.py": {
+      "size_bytes": 1538,
+      "mtime_ns": 1787131150468524800
+    },
+    "tests/home/test_budget.py": {
+      "size_bytes": 926,
+      "mtime_ns": 1787125632316999800
+    },
+    "tests/home/test_compiler.py": {
+      "size_bytes": 2177,
+      "mtime_ns": 1787125992079830900
+    },
+    "tests/home/test_config.py": {
+      "size_bytes": 2065,
+      "mtime_ns": 1787219169975355700
+    },
+    "tests/home/test_delegation.py": {
+      "size_bytes": 671,
+      "mtime_ns": 1787125992079099500
+    },
+    "tests/home/test_deterministic.py": {
+      "size_bytes": 718,
+      "mtime_ns": 1787125451270017900
+    },
+    "tests/home/test_diagnostic_lifecycle.py": {
+      "size_bytes": 649,
+      "mtime_ns": 1787125928219987800
+    },
+    "tests/home/test_gateway.py": {
+      "size_bytes": 5748,
+      "mtime_ns": 1787219170003457300
+    },
+    "tests/home/test_lsp.py": {
+      "size_bytes": 467,
+      "mtime_ns": 1787125451383051200
+    },
+    "tests/home/test_models.py": {
+      "size_bytes": 735,
+      "mtime_ns": 1787126582620480200
+    },
+    "tests/home/test_packer.py": {
+      "size_bytes": 1107,
+      "mtime_ns": 1787125632321006800
+    },
+    "tests/home/test_project_memory.py": {
+      "size_bytes": 839,
+      "mtime_ns": 1787127135417597300
+    },
+    "tests/home/test_research.py": {
+      "size_bytes": 10689,
+      "mtime_ns": 1787130741924576900
+    },
+    "tests/home/test_responses.py": {
+      "size_bytes": 1944,
+      "mtime_ns": 1787157204540245200
+    },
+    "tests/home/test_session_store.py": {
+      "size_bytes": 2111,
+      "mtime_ns": 1787157753817163900
+    },
+    "tests/home/test_telemetry.py": {
+      "size_bytes": 921,
+      "mtime_ns": 1787157204537055800
+    },
+    "tests/home/test_upstream.py": {
+      "size_bytes": 2013,
+      "mtime_ns": 1787126080884989800
+    },
+    "tests/home/test_workers.py": {
+      "size_bytes": 897,
+      "mtime_ns": 1787125451369540300
+    }
   },
   "skipped": {
-    "ignored_directory": 9,
-    "ignored_file": 3,
-    "max_file_bytes": 1,
-    "unsupported_file": 12
+    "ignored_directory": 23,
+    "ignored_file": 4,
+    "unsupported_file": 24
   },
   "limits_reached": [],
   "sample_files": [
+    "CHANGELOG.md",
     "chunker.py",
     "city_server.py",
     "cli.py",
+    "code_city.html",
     "cognitive_runtime.py",
     "context7_bridge.py",
     "context_provider.py",
+    "CONTRIBUTING.md",
     "control.py",
     "COOKBOOK.md",
+    "dsa.json",
     "embedder.py",
+    "file_lock.py",
     "flipchart.py",
     "graphs.py",
     "indexer.py",
+    "indexing_jobs.py",
     "install.ps1",
     "install.sh",
+    "MANIFEST.in",
     "MARKETPLACE.md",
     "parser_router.py",
     "pyproject.toml",
     "README.md",
-    "release_notes.md",
+    "README.ru.md",
+    "README.zh-CN.md",
+    "RECOMENDET_PROMPT.md",
     "repomap.py",
+    "repository_lifecycle.py",
     "repository_scanner.py",
     "requirements.txt",
     "server.py",
     "skill_installer.py",
-    "test_all.py",
-    "test_city.html",
-    "test_mcp.py",
+    "SPEC.md",
     "toolkit.py",
     "vector_index.py",
     "visualizer.py",
     "watcher.py",
-    "tests/test_cognitive_runtime.py",
-    "tests/test_context_provider.py",
-    "tests/test_control.py",
-    "tests/test_hybrid_search.py",
-    "tests/test_repository_scanner.py",
-    "tests/test_runtime_hardening.py",
-    "tests/test_watcher.py",
-    "skills/booster-architecture-map/SKILL.md",
-    "skills/booster-bug-hunt/SKILL.md",
-    "skills/booster-cognitive-runtime/SKILL.md",
-    "skills/booster-context-inject/SKILL.md",
-    "skills/booster-deep-dive/SKILL.md",
-    "skills/booster-feature-add/SKILL.md",
-    "skills/booster-flipchart/SKILL.md",
-    "skills/booster-mcp-workflow/SKILL.md",
-    "skills/booster-onboard/SKILL.md",
-    "skills/booster-project-memory/SKILL.md",
-    "skills/booster-refactor/SKILL.md",
-    "skills/booster-review/SKILL.md"
+    "algocheck/Booster LeetCode check.md",
+    "assets/booster-pipeline.svg",
+    "assets/home-runtime.svg",
+    "benchmarks/home_context_benchmark.py",
+    "booster_home/__init__.py",
+    "booster_home/app.py",
+    "booster_home/config.py",
+    "booster_home/delegation.py",
+    "booster_home/mcp.py",
+    "booster_home/models.py",
+    "booster_home/routing.py"
   ]
 }

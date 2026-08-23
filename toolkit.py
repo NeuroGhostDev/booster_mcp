@@ -22,6 +22,12 @@ class CodeToolkit:
         self.indexer = indexer
         self.repos = repos
 
+    def _symbols_snapshot(self) -> dict[str, list[dict[str, Any]]]:
+        snapshot = getattr(self.indexer, "symbols_snapshot", None)
+        if callable(snapshot):
+            return snapshot()
+        return dict(self.indexer.symbols)
+
     def _get_repo_memory_file(self, repo: str) -> Path:
         p = Path(repo).expanduser().resolve() / \
             ".agents" / "booster" / "memory.json"
@@ -274,7 +280,7 @@ class CodeToolkit:
 
         # Ищем совпадения в символах
         matching_symbols = []
-        for file_path, syms in self.indexer.symbols.items():
+        for file_path, syms in self._symbols_snapshot().items():
             for sym in syms:
                 sym_name = sym.get("name", "")
                 for kw in keywords:
@@ -437,7 +443,7 @@ class CodeToolkit:
             lines = content.split("\n")
 
             # Ищем символ в файле
-            for i, syms in self.indexer.symbols.items():
+            for i, syms in self._symbols_snapshot().items():
                 if Path(i).resolve() == path.resolve():
                     for sym in syms:
                         if sym.get("name") == sym_name:
@@ -480,7 +486,7 @@ class CodeToolkit:
         # Хэш для каждого блока N строк
         block_hashes = defaultdict(list)
 
-        for file_path, _syms in self.indexer.symbols.items():
+        for file_path, _syms in self._symbols_snapshot().items():
             try:
                 content = Path(file_path).read_text(
                     encoding="utf-8", errors="ignore")
@@ -587,14 +593,14 @@ class CodeToolkit:
             files_to_search = [file]
         elif symbol:
             # Ищем файлы с этим символом
-            for file_path, syms in self.indexer.symbols.items():
+            for file_path, syms in self._symbols_snapshot().items():
                 for sym in syms:
                     if sym.get("name") == symbol:
                         files_to_search.append(file_path)
                         break
         else:
             # Все файлы
-            files_to_search = list(self.indexer.symbols.keys())
+            files_to_search = list(self._symbols_snapshot().keys())
 
         for file_path in files_to_search[:100]:  # Ограничение
             try:

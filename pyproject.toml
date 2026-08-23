@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Booster-mcp"
-version = "3.1.0"
+version = "4.0.0"
 description = "Cognitive Runtime for AI coding agents: repo maps, code graphs, git intelligence, diagnostics, memory, and validation loops"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
 requires-python = ">=3.11,<3.14"
 authors = [{ name = "NeuroGhostDev" }]
 keywords = [
@@ -26,7 +26,6 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -35,6 +34,11 @@ classifiers = [
 ]
 dependencies = [
     "fastmcp>=0.1.0",
+    "fastapi>=0.115.0,<1.0",
+    "uvicorn>=0.30.0,<1.0",
+    "httpx>=0.27.0,<1.0",
+    "pydantic>=2.7.0,<3.0",
+    "zstandard>=0.22.0,<1.0",
     "tree-sitter>=0.25.0",
     "watchdog>=4.0.0",
     "faiss-cpu>=1.7.0",
@@ -72,12 +76,15 @@ py-modules = [
     "context7_bridge",
     "context_provider",
     "embedder",
+    "file_lock",
     "flipchart",
     "graphs",
     "indexer",
+    "indexing_jobs",
     "parser_router",
     "repomap",
     "repository_scanner",
+    "repository_lifecycle",
     "server",
     "skill_installer",
     "toolkit",
@@ -85,6 +92,12 @@ py-modules = [
     "visualizer",
     "watcher",
 ]
+
+[tool.setuptools.packages.find]
+include = ["booster_home*", "skills"]
+
+[tool.setuptools.package-data]
+skills = ["*/SKILL.md"]
 
 [tool.black]
 line-length = 100
@@ -96,6 +109,11 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# HTML/JavaScript template строки намеренно длинные и содержат пробелы для
+# сохранения читаемой разметки в итоговом Code City artifact.
+"visualizer.py" = ["E501", "W291", "W293"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

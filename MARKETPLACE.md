@@ -1,8 +1,9 @@
 # Booster MCP Marketplace and Distribution Guide
 
-Booster MCP is a Cognitive Runtime for coding agents. It builds a local world
-model of a repository: repo map, hybrid search, AST impact graph, git history,
-project memory, diagnostics, and validation loops.
+Booster MCP 4.0 is a Cognitive Runtime for coding agents. It builds a local
+world model of a repository: architecture and symbol maps, hybrid search, AST
+impact graph, git history, project memory, diagnostics, validation loops, and an
+optional OpenAI-compatible Booster Home gateway.
 
 Use this document when publishing Booster to MCP catalogs such as Smithery,
 Glama, VS Code, Claude Desktop, and community lists.
@@ -61,6 +62,10 @@ through Plan -> Implement -> Validate -> Repair.
   success.
 - Bundled skills teach agents how to onboard, debug, add features, refactor,
   review, and use Cognitive Runtime.
+- Booster Home compiles context, preserves evicted raw artifacts, forwards SSE,
+  and supports local OpenAI-compatible backends such as LM Studio and vLLM.
+- Nemotron-specific `reasoning_content` is preserved instead of being silently
+  discarded when ordinary message content is empty.
 
 ## Recommended Listing Metadata
 
@@ -68,14 +73,22 @@ through Plan -> Implement -> Validate -> Repair.
 name: Booster MCP
 category: Developer Tools
 tags:
-	- mcp
-	- coding-agents
-	- code-intelligence
-	- semantic-search
-	- repo-map
-	- diagnostics
-	- ai-engineering
-	- developer-productivity
+  - mcp
+  - coding-agents
+  - code-intelligence
+  - semantic-search
+  - repo-map
+  - diagnostics
+  - context-runtime
+  - openai-compatible
+  - ai-engineering
+  - developer-productivity
+version: 4.0.0
+license: MIT
+repository: https://github.com/NeuroGhostDev/Booster-mcp
+runtime:
+  python: ">=3.11,<3.14"
+  entrypoint: booster
 ```
 
 Use the packaged installation and `booster control` for local client setup.
@@ -146,9 +159,21 @@ before publishing installation instructions.
 - Show the Cognitive Runtime workflow in [README.md](README.md).
 - Keep working examples and regression workflows in [COOKBOOK.md](COOKBOOK.md).
 - Document every MCP tool with clear arguments and descriptions.
+- Document `index_status`, `cancel_index`, and `wait_until_ready`; do not describe
+  `add_repo(wait=true)` as a blocking operation.
+- List the split repository artifacts: `repo_map_architecture.md`,
+  `repo_map_symbols.md`, `index_health.json`, and compatibility `repo_map.md`.
+- Verify the Home gateway against the selected OpenAI-compatible backend. For
+  Nemotron, check both `message.content` and `reasoning_content`.
 - Publish versioned GitHub Releases with screenshots or CLI output examples.
 - Declare every runtime dependency in [pyproject.toml](pyproject.toml).
-- Validate the release with `uv lock --check`, `pytest`, and Ruff.
+- Validate the release with `uv lock --check`, `uv run python -m pytest tests -q`,
+  `uv run ruff check .`, and `uv build`.
+- Inspect wheel contents for credentials, local paths, caches, generated
+  artifacts, and session data.
+
+See [docs/RELEASE.md](docs/RELEASE.md) for the maintainer release procedure and
+[docs/API.md](docs/API.md) for the public MCP and Home contracts.
 
 ## 5. Suggested Social / Launch Copy
 
