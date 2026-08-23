@@ -6,6 +6,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 TERMINAL_STATUSES = frozenset({"cancelled", "completed", "failed", "superseded"})
@@ -111,7 +112,7 @@ class IndexJobManager:
             target=self._run,
             args=(repo, job_id, cancel_event, worker),
             daemon=True,
-            name=f"booster-index-{repo.rsplit('\\', 1)[-1] or 'repo'}",
+            name=f"booster-index-{Path(repo).name or 'repo'}",
         )
         thread.start()
         return dict(record), True
