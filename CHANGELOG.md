@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.2 - 2026-09-01
+
+- Fixed concurrent Windows lock-file initialization for cross-process stores.
+- Made demo snapshot ordering assertions platform-independent.
+
 ## 4.1.1 - 2026-09-01
 
 - Fixed Code City repository-relative filtering on Unix temporary paths.

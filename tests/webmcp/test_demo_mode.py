@@ -229,10 +229,10 @@ def test_demo_runtime_uses_only_prepared_read_only_state(tmp_path: Path, monkeyp
     assert history.status_code == 200, history.text
     assert diagnostics.json()["result"]["findings"][0]["message"] == "prepared finding"
     assert history.json()["result"]["commits"][0]["message"] == "Prepared history"
-    assert [item["id"] for item in snapshots.json()["result"]["snapshots"]] == [
+    assert {item["id"] for item in snapshots.json()["result"]["snapshots"]} == {
         "current",
         "baseline",
-    ]
+    }
     assert comparison.json()["result"]["changed"] == ["service.py"]
     assert before == after
     assert not (demo / ".snapshots.lock").exists()
