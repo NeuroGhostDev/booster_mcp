@@ -27,7 +27,7 @@ def create_app(
         finally:
             await runtime.close()
 
-    app = FastAPI(title="Booster Home", version="4.1.0", lifespan=lifespan)
+    app = FastAPI(title="Booster Home", version="4.1.1", lifespan=lifespan)
     app.include_router(create_gateway_router(runtime))
     app.state.home_runtime = runtime
     return app

@@ -65,3 +65,19 @@ def test_dense_search_keeps_its_existing_result_shape():
             "chunk": "def create_invoice():\n    return None",
         }
     ]
+
+
+def test_dense_search_uses_safe_darwin_fallback_after_round_trip(tmp_path, monkeypatch):
+    index = build_index()
+    index.save(tmp_path)
+    restored = VectorIndex.load(tmp_path)
+    monkeypatch.setattr("vector_index.platform.system", lambda: "Darwin")
+
+    results = restored.search([0, 1], k=1)
+
+    assert results == [
+        {
+            "file": "billing.py",
+            "chunk": "def create_invoice():\n    return None",
+        }
+    ]

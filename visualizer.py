@@ -66,6 +66,7 @@ class CodeCityVisualizer:
         self.connections = []
         self.districts = {}
         self.metrics = {}
+        self._layout_root: Path | None = None
 
     def collect_file_metrics(self, file_path: str) -> Dict[str, Any]:
         """Собирает подробные метрики для файла."""
@@ -188,16 +189,25 @@ class CodeCityVisualizer:
     def _get_district(self, file_path: str) -> str:
         """Определяет район (папку) для файла."""
         path = Path(file_path)
-        parts = path.parts
+        relative = False
+        if self._layout_root is not None:
+            try:
+                parts = path.resolve().relative_to(self._layout_root).parts
+                relative = True
+            except ValueError:
+                parts = path.parts
+        else:
+            parts = path.parts
 
         # Игнорируем корень репозитория
-        if len(parts) <= 2:
+        if len(parts) <= (1 if relative else 2):
             return "root"
 
         # Берём первые 2-3 уровня вложенности как район
         district_parts = []
-        for part in parts[1:-1]:  # пропускаем корень и имя файла
-            if part in self.IGNORED_DIRS:
+        candidates = parts[:-1] if relative else parts[1:-1]
+        for part in candidates:  # пропускаем корень и имя файла
+            if part.casefold() in self.IGNORED_DIRS:
                 continue
             district_parts.append(part)
             if len(district_parts) >= 2:
@@ -243,6 +253,8 @@ class CodeCityVisualizer:
         repo_path = Path(repo_path)
         if not repo_path.exists():
             return {"error": f"Репозиторий не найден: {repo_path}"}
+        repo_path = repo_path.resolve()
+        self._layout_root = repo_path
 
         self.buildings = []
         self.connections = []
@@ -261,7 +273,11 @@ class CodeCityVisualizer:
         for file in repo_path.rglob("*"):
             if not file.is_file():
                 continue
-            if any(part in self.IGNORED_DIRS for part in file.parts):
+            try:
+                relative_file = file.relative_to(repo_path)
+            except ValueError:
+                continue
+            if any(part.casefold() in self.IGNORED_DIRS for part in relative_file.parts[:-1]):
                 continue
 
             metrics = self.collect_file_metrics(str(file))

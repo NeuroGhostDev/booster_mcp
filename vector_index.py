@@ -1,4 +1,5 @@
 import json
+import platform
 import re
 from collections.abc import Iterable
 from pathlib import Path
@@ -23,6 +24,7 @@ class VectorIndex:
         self.file_ids: dict[str, list[int]] = {}
         self.next_id = 0
         self._lexical_documents: dict[int, list[str]] = {}
+        self._vectors: dict[int, np.ndarray] = {}
         self._bm25: BM25Okapi | None = None
         self._bm25_ids: list[int] = []
         self._bm25_dirty = True
@@ -67,9 +69,22 @@ class VectorIndex:
         if self.index.ntotal == 0 or limit <= 0:
             return []
 
-        scores, identifiers = self.index.search(
-            self._normalize_vector(vector), min(limit, self.index.ntotal)
-        )
+        normalized = self._normalize_vector(vector)
+        if platform.system() == "Darwin":
+            if not self._vectors:
+                return []
+            query = normalized[0]
+            ranked = sorted(
+                (
+                    (identifier, float(np.dot(query, stored)))
+                    for identifier, stored in self._vectors.items()
+                    if identifier in self.meta
+                ),
+                key=lambda item: (-item[1], item[0]),
+            )
+            return ranked[:limit]
+
+        scores, identifiers = self.index.search(normalized, min(limit, self.index.ntotal))
         return [
             (int(identifier), float(score))
             for score, identifier in zip(scores[0], identifiers[0])
@@ -84,6 +99,7 @@ class VectorIndex:
         self.index.remove_ids(np.asarray(ids_to_remove, dtype=np.int64))
         for identifier in ids_to_remove:
             self.meta.pop(identifier, None)
+            self._vectors.pop(identifier, None)
             self._lexical_documents.pop(identifier, None)
         self._mark_lexical_index_dirty()
 
@@ -92,12 +108,11 @@ class VectorIndex:
         vec_id = self.next_id
         self.next_id += 1
 
-        self.index.add_with_ids(
-            self._normalize_vector(vector),
-            np.asarray([vec_id], dtype=np.int64),
-        )
+        normalized = self._normalize_vector(vector)
+        self.index.add_with_ids(normalized, np.asarray([vec_id], dtype=np.int64))
 
         self.meta[vec_id] = meta
+        self._vectors[vec_id] = normalized[0].copy()
         self.file_ids.setdefault(file, []).append(vec_id)
         document = f"{meta.get('file', '')}\n{meta.get('chunk', '')}"
         self._lexical_documents[vec_id] = self._tokenize(document)
@@ -189,6 +204,7 @@ class VectorIndex:
         cloned._lexical_documents = {
             identifier: list(tokens) for identifier, tokens in self._lexical_documents.items()
         }
+        cloned._vectors = {identifier: value.copy() for identifier, value in self._vectors.items()}
         cloned._bm25 = None
         cloned._bm25_ids = list(self._bm25_ids)
         cloned._bm25_dirty = True
@@ -252,6 +268,15 @@ class VectorIndex:
         result = cls(dim=dim)
         result.index = loaded_index
         result.base_index = getattr(loaded_index, "index", loaded_index)
+        try:
+            identifiers = faiss.vector_to_array(loaded_index.id_map)
+            vectors = result.base_index.reconstruct_n(0, result.base_index.ntotal)
+            result._vectors = {
+                int(identifier): np.asarray(vector, dtype=np.float32).copy()
+                for identifier, vector in zip(identifiers, vectors)
+            }
+        except (AttributeError, RuntimeError, ValueError):
+            result._vectors = {}
         raw_meta = payload.get("meta")
         raw_file_ids = payload.get("file_ids")
         raw_lexical = payload.get("lexical_documents")

@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.1.1 - 2026-09-01
+
+- Fixed Code City repository-relative filtering on Unix temporary paths.
+- Added a Darwin-safe dense search fallback while preserving FAISS state
+  serialization and the shared vector index.
+- Added cross-platform visualizer and FAISS round-trip regression coverage.
+
 ## 4.1.0 - 2026-09-01
 
 - Added the read-only Booster Observatory with normalized Code City data,
