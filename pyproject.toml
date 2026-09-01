@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Booster-mcp"
-version = "4.0.0"
+version = "4.1.0"
 description = "Cognitive Runtime for AI coding agents: repo maps, code graphs, git intelligence, diagnostics, memory, and validation loops"
 readme = "README.md"
 license = "MIT"

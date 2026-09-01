@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.1.0 - 2026-09-01
+
+- Added the read-only Booster Observatory with normalized Code City data,
+  native WebMCP tools, contextual selected-file tools, shared Workspace state,
+  and generation-safe UI updates.
+- Added portable JSON+FAISS demo state with precomputed diagnostics and Git
+  history, deterministic baseline/current snapshots, and Git-less runtime
+  startup.
+- Added SHA-256 snapshot manifests, legacy unverified handling, impact roles,
+  Code City reset/diff APIs, and generation-aware activity tracing.
+- Added demo, browser, WebMCP, snapshot, and same-size content regression tests.
+- Restored project-wide Black formatting and documented Observatory release
+  behavior.
+
 ## 4.0.0 - 2026-08-23
 
 - Added Booster Home, an OpenAI-compatible local data plane with context
