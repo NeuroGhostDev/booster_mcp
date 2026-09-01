@@ -87,10 +87,7 @@ class ContextCompiler:
                 "запрошенный output budget не оставляет input budget"
             ) from exc
         if self.policy == ContextPolicy.OFF:
-            if (
-                budget.input_hard_limit is not None
-                and original_tokens > budget.input_hard_limit
-            ):
+            if budget.input_hard_limit is not None and original_tokens > budget.input_hard_limit:
                 raise ContextIntegrityError("контекст превышает известный hard input budget")
             return CompiledContext(
                 messages=list(messages),

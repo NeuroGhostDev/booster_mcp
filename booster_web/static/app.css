@@ -1,0 +1,94 @@
+:root {
+  color-scheme: dark;
+  --bg: #081016;
+  --panel: #101c24;
+  --line: #25404a;
+  --text: #d8e4e7;
+  --muted: #7f9aa2;
+  --accent: #38d4bd;
+  --warn: #f2bb65;
+  --danger: #ef7180;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: radial-gradient(circle at 50% 0, #142d35, var(--bg) 55%);
+  color: var(--text);
+  font: 14px/1.45 Consolas, "SFMono-Regular", monospace;
+}
+
+header, main, footer { width: min(1500px, calc(100% - 32px)); margin: 0 auto; }
+
+header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 0 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+h1 { margin: 0; color: var(--accent); font-size: clamp(20px, 3vw, 32px); letter-spacing: .08em; }
+h2 { margin: 0 0 12px; color: var(--accent); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+
+.status-strip { display: flex; flex-wrap: wrap; gap: 16px; color: var(--muted); }
+.status-strip strong { color: var(--text); font-weight: 400; }
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.panel { background: color-mix(in srgb, var(--panel) 92%, transparent); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+.city-panel { min-height: 620px; }
+#city-frame { display: block; width: 100%; min-height: 570px; border: 1px solid var(--line); border-radius: 4px; background: #050a0e; }
+#city-status, .hint { color: var(--muted); }
+
+label { display: block; margin: 14px 0 6px; color: var(--muted); }
+input { width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 9px; background: #071116; color: var(--text); font: inherit; }
+button { margin-top: 8px; border: 1px solid var(--accent); border-radius: 4px; padding: 8px 12px; background: transparent; color: var(--accent); cursor: pointer; font: inherit; }
+button:hover, button:focus-visible { background: #153f43; }
+
+#search-results { max-height: 180px; overflow: auto; margin: 12px 0; padding-left: 24px; color: var(--text); }
+#search-results li { padding: 3px 0; overflow-wrap: anywhere; }
+#impact-heading { margin-top: 22px; }
+#impact-heading ~ div { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); }
+#impact-heading ~ div strong { color: var(--text); font-weight: 400; text-align: right; overflow-wrap: anywhere; }
+#diagnostics-list, #related-tests-list { max-height: 180px; overflow: auto; margin: 10px 0; padding-left: 20px; }
+#diagnostics-list li, #related-tests-list li { padding: 3px 0; overflow-wrap: anywhere; }
+#history-list { max-height: 180px; overflow: auto; margin: 10px 0; padding-left: 20px; }
+#history-list li { padding: 3px 0; overflow-wrap: anywhere; }
+#snapshot-list, #snapshot-diff { max-height: 180px; overflow: auto; margin: 10px 0; padding-left: 20px; }
+#snapshot-list li, #snapshot-diff li { padding: 3px 0; overflow-wrap: anywhere; }
+#architecture-map { max-height: 260px; overflow: auto; white-space: pre-wrap; color: var(--muted); }
+#share-status { min-height: 1.45em; overflow-wrap: anywhere; }
+
+.activity { display: grid; grid-template-columns: auto 1fr auto; gap: 8px 16px; align-items: baseline; padding: 14px 0 26px; border-top: 1px solid var(--line); }
+.activity h2 { grid-column: 1 / -1; margin-bottom: 0; }
+.activity-label { color: var(--muted); }
+#activity-state[data-status="completed"] { color: var(--accent); }
+#activity-state[data-status="failed"] { color: var(--danger); }
+#app-error { min-height: 1.45em; color: var(--danger); }
+
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
+  .city-panel { min-height: 0; }
+  #city-frame { min-height: 480px; }
+}
+
+@media (max-width: 600px) {
+  header { align-items: flex-start; flex-direction: column; padding-top: 16px; }
+  header, main, footer { width: min(100% - 20px, 1500px); }
+  .status-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+  .city-panel { padding: 10px; }
+  #city-frame { min-height: 380px; }
+  .panel { padding: 12px; }
+  .activity { grid-template-columns: auto 1fr; }
+  .activity h2 { grid-column: 1 / -1; }
+  .activity > span:nth-of-type(3n) { display: none; }
+}

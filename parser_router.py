@@ -11,7 +11,7 @@ EXT_MAP = {
     ".go": "go",
     ".java": "java",
     ".c": "c",
-    ".cpp": "cpp"
+    ".cpp": "cpp",
 }
 
 

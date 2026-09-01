@@ -56,6 +56,12 @@ dev = [
     "black>=23.0.0",
     "ruff>=0.1.0",
 ]
+browser = [
+    "playwright>=1.50.0,<2.0.0",
+]
+security = [
+    "bandit>=1.8.0,<2.0.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/NeuroGhostDev/Booster-mcp"
@@ -94,10 +100,11 @@ py-modules = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["booster_home*", "skills"]
+include = ["booster_home*", "skills", "booster_web*"]
 
 [tool.setuptools.package-data]
 skills = ["*/SKILL.md"]
+booster_web = ["static/*.html", "static/*.css", "static/*.js"]
 
 [tool.black]
 line-length = 100

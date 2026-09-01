@@ -2,67 +2,44 @@
 
 ## Coverage
 
-- candidate_files: 150
-- selected_files: 125
-- candidate_modules: ['.', 'algocheck', 'assets', 'benchmarks', 'booster_home', 'docs', 'skills', 'tests']
-- represented_modules: ['.', 'algocheck', 'assets', 'benchmarks', 'booster_home', 'docs', 'skills', 'tests']
+- candidate_files: 182
+- selected_files: 87
+- candidate_modules: ['.', 'algocheck', 'assets', 'benchmarks', 'booster_home', 'booster_web', 'docs', 'skills', 'tests']
+- represented_modules: ['.', 'algocheck', 'assets', 'benchmarks', 'booster_home', 'booster_web', 'docs', 'skills', 'tests']
 - omitted_modules: []
 - mandatory_roles_found: ['config', 'contract', 'control', 'entrypoint']
 - mandatory_roles_selected: ['config', 'contract', 'control', 'entrypoint']
 - symbol_cap_per_file: 20
 - module_budget_ratio: 0.35
-- module_token_estimates: {'.': 1428, 'algocheck': 8, 'assets': 16, 'benchmarks': 16, 'booster_home': 1420, 'docs': 24, 'skills': 104, 'tests': 764}
+- module_token_estimates: {'.': 1176, 'algocheck': 8, 'assets': 16, 'benchmarks': 16, 'booster_home': 1040, 'booster_web': 932, 'docs': 24, 'skills': 104, 'tests': 780}
 
 ## Symbols
 
 .gitignore:
   roles: config
 
-AGENTS.md:
-
-CHANGELOG.md:
-
-CONTRIBUTING.md:
-
-COOKBOOK.md:
-
-MANIFEST.in:
-
-MARKETPLACE.md:
-
-README.md:
-
-README.ru.md:
-
-README.zh-CN.md:
-
-RECOMENDET_PROMPT.md:
-
-chunker.py:
-  def semantic_chunks (line 3)
-
 city_server.py:
-  def _code_city_path (line 35)
-  def set_indexer (line 39)
-  def ensure_watch_started (line 47)
-  def get_indexer (line 62)
-  def CodeCityHandler (line 77)
-  def send_json_response (line 80)
-  def send_html_response (line 90)
-  def do_OPTIONS (line 98)
-  def do_GET (line 106)
-  def do_POST (line 129)
-  def handle_index (line 160)
-  def handle_list_repos (line 165)
-  def handle_stats (line 176)
-  def handle_get_code_city (line 208)
-  def handle_serve_code_city (line 236)
-  def handle_get_repo_map (line 255)
-  def handle_add_repo (line 281)
-  def handle_remove_repo (line 345)
-  def handle_reindex_repo (line 366)
-  def handle_generate_city (line 415)
-  +3 symbols omitted by per-file cap
+  def _code_city_path (line 36)
+  def set_indexer (line 40)
+  def ensure_watch_started (line 48)
+  def stop_watch (line 63)
+  def get_indexer (line 76)
+  def CodeCityHandler (line 90)
+  def send_json_response (line 93)
+  def send_html_response (line 103)
+  def do_OPTIONS (line 111)
+  def do_GET (line 119)
+  def do_POST (line 142)
+  def handle_index (line 172)
+  def handle_list_repos (line 177)
+  def handle_stats (line 188)
+  def handle_get_code_city (line 220)
+  def handle_serve_code_city (line 247)
+  def handle_get_repo_map (line 266)
+  def handle_add_repo (line 289)
+  def handle_remove_repo (line 354)
+  def handle_reindex_repo (line 373)
+  +4 symbols omitted by per-file cap
 
 cli.py:
   roles: entrypoint
@@ -71,51 +48,45 @@ cli.py:
   def _context_window (line 55)
   def _worker_count (line 61)
   def _build_parser (line 67)
-  def _add_connection_arguments (line 306)
-  def _add_repository_binding_arguments (line 320)
-  def _resolve_config (line 337)
-  def _expand (line 362)
-  def _print_json (line 417)
-  def _control_status (line 421)
-  def _print_control_status (line 432)
-  def _print_connection_result (line 463)
-  def _print_scan_result (line 477)
-  def _print_doctor_result (line 494)
-  def _run_control_menu (line 504)
-  def _control (line 597)
-  def _home_config (line 702)
-  def _home_status (line 728)
-  def _home_doctor (line 773)
-  +4 symbols omitted by per-file cap
-
-code_city.html:
+  def _add_connection_arguments (line 326)
+  def _add_repository_binding_arguments (line 340)
+  def _resolve_config (line 357)
+  def _expand (line 382)
+  def _web (line 437)
+  def _print_json (line 468)
+  def _control_status (line 472)
+  def _print_control_status (line 483)
+  def _print_connection_result (line 514)
+  def _print_scan_result (line 528)
+  def _print_doctor_result (line 545)
+  def _run_control_menu (line 555)
+  def _control (line 648)
+  def _home_config (line 753)
+  def _home_status (line 779)
+  +5 symbols omitted by per-file cap
 
 cognitive_runtime.py:
-  def _utc_now (line 32)
-  def _last_identifier (line 36)
-  def _callee_matches (line 41)
-  def CognitiveRuntime (line 48)
-  def __init__ (line 51)
-  def _resolve_repo (line 56)
-  def _memory_file (line 69)
-  def _load_memory (line 74)
-  def _save_memory (line 86)
-  def _inside_repo (line 101)
-  def _relative (line 108)
-  def _resolve_paths (line 114)
-  def _run_process (line 136)
-  def _symbol_records (line 177)
-  def impact_analysis (line 199)
-  def _suggest_tests (line 337)
-  def _rank_risk (line 370)
-  def git_intelligence (line 385)
-  def _resolve_git_target (line 437)
-  def _parse_git_log (line 455)
+  def _utc_now (line 31)
+  def _last_identifier (line 35)
+  def _callee_matches (line 40)
+  def CognitiveRuntime (line 47)
+  def __init__ (line 50)
+  def _resolve_repo (line 55)
+  def _memory_file (line 67)
+  def _load_memory (line 72)
+  def _save_memory (line 84)
+  def _inside_repo (line 99)
+  def _relative (line 106)
+  def _resolve_paths (line 112)
+  def _run_process (line 134)
+  def _symbol_records (line 175)
+  def impact_analysis (line 197)
+  def _suggest_tests (line 333)
+  def _rank_risk (line 365)
+  def git_intelligence (line 380)
+  def _resolve_git_target (line 431)
+  def _parse_git_log (line 449)
   +38 symbols omitted by per-file cap
-
-context7_bridge.py:
-  def setup_context7_bridge (line 4)
-  def fetch_stack_docs (line 11)
 
 context_provider.py:
   def get_repo_artifacts_status (line 9)
@@ -136,85 +107,43 @@ control.py:
   def _platform_name (line 65)
   def _user_home (line 69)
   def vscode_user_config_path (line 73)
-  def claude_user_config_path (line 90)
+  def claude_user_config_path (line 92)
   def resolve_connection_target (line 113)
-  def _read_json_object (line 162)
-  def _atomic_write_json (line 179)
-  def _server_store (line 203)
-  def build_server_definition (line 212)
-  def connect (line 245)
-  def disconnect (line 305)
-  def connection_status (line 353)
-  def scan_settings (line 400)
-  def update_scan_settings (line 412)
-  def artifact_status (line 439)
-  def doctor (line 454)
+  def _read_json_object (line 160)
+  def _atomic_write_json (line 176)
+  def _server_store (line 200)
+  def build_server_definition (line 209)
+  def connect (line 241)
+  def disconnect (line 299)
+  def connection_status (line 347)
+  def scan_settings (line 393)
+  def update_scan_settings (line 405)
+  def artifact_status (line 431)
+  def doctor (line 446)
   +4 symbols omitted by per-file cap
 
-dsa.json:
-
-embedder.py:
-  def Embedder (line 6)
-  def __init__ (line 7)
-  def _ensure_model (line 12)
-  def embed (line 19)
-
-file_lock.py:
-  def cross_process_file_lock (line 11)
-
-flipchart.py:
-  def Flipchart (line 9)
-  def __init__ (line 12)
-  def generate_call_graph_mermaid (line 16)
-  def generate_import_graph_mermaid (line 45)
-  def generate_sequence_diagram (line 61)
-  def _trace_execution (line 83)
-  def _safe_id (line 115)
-  def create_session (line 125)
-  def add_note (line 145)
-  def get_board (line 163)
-  def quick_debug (line 178)
-  def setup_flipchart_tools (line 211)
-  def flipchart_quick_debug (line 216)
-  def flipchart_create_session (line 224)
-  def flipchart_add_note (line 232)
-  def flipchart_get_board (line 241)
-  def flipchart_call_graph (line 248)
-  def flipchart_sequence_diagram (line 255)
-
-graphs.py:
-  def Graphs (line 3)
-  def __init__ (line 4)
-  def clear_file (line 13)
-  def add_call (line 25)
-  def add_import (line 30)
-  def calls (line 37)
-  def imports (line 41)
-  def snapshot (line 45)
-  def clone (line 54)
-
 indexer.py:
-  def IndexCancelled (line 15)
-  def IndexGeneration (line 20)
-  def RepoIndexer (line 30)
-  def __init__ (line 31)
-  def _operation_lock (line 50)
-  def operation_lock (line 59)
-  def extract_data (line 63)
-  def index_file (line 125)
-  def _index_file_unlocked (line 129)
-  def _index_file_in_state (line 132)
-  def _staging_state (line 178)
-  def build_generation (line 199)
-  def scan_progress (line 209)
-  def promote_generation (line 252)
-  def full_index (line 270)
-  def index_repo (line 274)
-  def search (line 302)
-  def hybrid_search (line 308)
-  def _remove_file_unlocked (line 315)
-  def remove_file (line 320)
-  +6 symbols omitted by per-file cap
+  def IndexCancelled (line 16)
+  def IndexGeneration (line 21)
+  def RepoIndexer (line 31)
+  def __init__ (line 32)
+  def _operation_lock (line 51)
+  def operation_lock (line 60)
+  def extract_data (line 64)
+  def index_file (line 126)
+  def _index_file_unlocked (line 130)
+  def _index_file_in_state (line 133)
+  def _staging_state (line 185)
+  def build_generation (line 206)
+  def scan_progress (line 216)
+  def promote_generation (line 277)
+  def full_index (line 295)
+  def index_repo (line 299)
+  def search (line 327)
+  def hybrid_search (line 333)
+  def _remove_file_unlocked (line 340)
+  def remove_file (line 345)
+  +9 symbols omitted by per-file cap
 
 indexing_jobs.py:
   def IndexJobManager (line 15)
@@ -236,8 +165,6 @@ indexing_jobs.py:
   def wait (line 242)
   def snapshot (line 266)
 
-install.ps1:
-
 parser_router.py:
   roles: control
   def ParserRouter (line 17)
@@ -248,57 +175,57 @@ pyproject.toml:
   roles: config
 
 repomap.py:
-  def load_ignore (line 16)
-  def load_local_ignore (line 94)
-  def RepoMap (line 118)
-  def __init__ (line 121)
-  def get_repo_map (line 144)
-  def get_architecture_map (line 157)
-  def get_symbol_map (line 162)
-  def coverage_summary (line 167)
-  def _collect_all_files (line 171)
-  def _records (line 185)
-  def _relative_name (line 208)
-  def _module_name (line 215)
-  def _roles (line 220)
-  def _architecture_score (line 241)
-  def _select_records (line 256)
-  def estimated_tokens (line 274)
-  def _render (line 340)
-  def _get_tags (line 361)
-  def _traverse_tree (line 396)
-  def _find_name_node (line 434)
+  def load_ignore (line 17)
+  def load_local_ignore (line 115)
+  def RepoMap (line 139)
+  def __init__ (line 142)
+  def get_repo_map (line 165)
+  def get_architecture_map (line 178)
+  def get_symbol_map (line 183)
+  def coverage_summary (line 188)
+  def _collect_all_files (line 192)
+  def _records (line 205)
+  def _relative_name (line 226)
+  def _module_name (line 233)
+  def _roles (line 238)
+  def _architecture_score (line 258)
+  def _select_records (line 273)
+  def estimated_tokens (line 291)
+  def _render (line 358)
+  def _get_tags (line 379)
+  def _traverse_tree (line 414)
+  def _find_name_node (line 455)
   +1 symbols omitted by per-file cap
 
 repository_lifecycle.py:
-  def _utc_now (line 30)
-  def _atomic_write_json (line 34)
-  def _atomic_copy (line 51)
-  def _sha256_file (line 65)
-  def RepositoryRegistry (line 73)
-  def __init__ (line 76)
-  def normalize (line 87)
-  def _key (line 91)
-  def _record_path (line 94)
-  def _read_record (line 97)
-  def list_records (line 106)
+  def _utc_now (line 31)
+  def _atomic_write_json (line 35)
+  def _atomic_copy (line 52)
+  def _sha256_file (line 66)
+  def RepositoryRegistry (line 74)
+  def __init__ (line 77)
+  def normalize (line 88)
+  def _key (line 92)
+  def _record_path (line 95)
+  def _read_record (line 98)
+  def list_records (line 107)
   def list_repos (line 121)
   def get (line 124)
-  def add (line 130)
-  def update (line 144)
-  def remove (line 159)
-  def RepositorySnapshotStore (line 170)
-  def __init__ (line 173)
-  def _git (line 180)
-  def _git_state (line 196)
+  def add (line 129)
+  def update (line 143)
+  def remove (line 158)
+  def RepositorySnapshotStore (line 169)
+  def __init__ (line 172)
+  def _git (line 183)
+  def _git_state (line 202)
   +4 symbols omitted by per-file cap
 
 repository_scanner.py:
-  def ScanConfig (line 109)
-  def __post_init__ (line 120)
-  def for_profile (line 132)
-  def load (line 142)
-  def with_overrides (line 178)
+  def ScanConfig (line 110)
+  def __post_init__ (line 121)
+  def for_profile (line 133)
+  def load (line 143)
+  def with_overrides (line 179)
   def to_dict (line 183)
   def save (line 197)
   def IgnoreRules (line 209)
@@ -314,88 +241,92 @@ repository_scanner.py:
   def scan (line 332)
   def _result (line 454)
   def _directory_sort_key (line 478)
-  +2 symbols omitted by per-file cap
+  +3 symbols omitted by per-file cap
 
 server.py:
   roles: entrypoint
   def _unique_repos (line 39)
   def _startup_repos (line 50)
   def on_index_callback (line 60)
-  def _utc_now (line 133)
-  def _sync_registered_repos (line 137)
-  def _initialize_runtime (line 150)
-  def _start_city_web (line 161)
-  def _set_index_job (line 175)
-  def _index_jobs_snapshot (line 185)
-  def _registry_records_for_repos (line 195)
-  def _index_state (line 204)
-  def _require_search_ready (line 223)
-  def _ensure_watch_started (line 237)
-  def on_repository_change (line 240)
-  def _index_repo_job (line 249)
-  def progress (line 256)
-  def _start_index_repo_job (line 337)
-  def semantic_search (line 353)
-  def hybrid_search (line 360)
-  def find_symbol (line 367)
+  def _utc_now (line 138)
+  def _sync_registered_repos (line 142)
+  def _initialize_runtime (line 155)
+  def _start_city_web (line 166)
+  def _set_index_job (line 180)
+  def _index_jobs_snapshot (line 190)
+  def _registry_records_for_repos (line 200)
+  def _index_state (line 209)
+  def _require_search_ready (line 228)
+  def _ensure_watch_started (line 242)
+  def on_repository_change (line 246)
+  def _index_repo_job (line 255)
+  def progress (line 262)
+  def _start_index_repo_job (line 344)
+  def semantic_search (line 360)
+  def hybrid_search (line 367)
+  def find_symbol (line 374)
   +14 symbols omitted by per-file cap
 
 skill_installer.py:
   def list_bundled_skills (line 10)
   def install_bundled_skills (line 22)
-  def auto_install_bundled_skills (line 93)
+  def auto_install_bundled_skills (line 90)
 
 toolkit.py:
-  def CodeToolkit (line 17)
-  def __init__ (line 20)
-  def _symbols_snapshot (line 24)
-  def _get_repo_memory_file (line 30)
+  def CodeToolkit (line 18)
+  def __init__ (line 21)
+  def _symbols_snapshot (line 25)
+  def _get_repo_memory_file (line 31)
   def _load_repo_memory (line 36)
   def _save_repo_memory (line 46)
   def code_grep (line 53)
-  def read_with_context (line 96)
-  def read_file (line 130)
-  def git_diff (line 157)
+  def read_with_context (line 103)
+  def read_file (line 135)
+  def git_diff (line 159)
   def git_log (line 201)
-  def run_command (line 238)
-  def analyze_error (line 272)
-  def list_configs (line 317)
-  def project_memory (line 389)
-  def compare_symbols (line 434)
-  def extract_symbol_content (line 436)
-  def find_duplicates (line 482)
-  def external_deps (line 535)
-  def setup_toolkit_tools (line 631)
+  def run_command (line 239)
+  def analyze_error (line 273)
+  def list_configs (line 320)
+  def project_memory (line 413)
+  def compare_symbols (line 448)
+  def extract_symbol_content (line 451)
+  def find_duplicates (line 499)
+  def external_deps (line 546)
+  def setup_toolkit_tools (line 634)
   +12 symbols omitted by per-file cap
 
 vector_index.py:
-  def VectorIndex (line 13)
-  def __init__ (line 16)
-  def _tokenize (line 29)
-  def _normalize_vector (line 40)
-  def _mark_lexical_index_dirty (line 49)
-  def _ensure_bm25 (line 52)
+  def VectorIndex (line 14)
+  def __init__ (line 17)
+  def _tokenize (line 30)
+  def _normalize_vector (line 41)
+  def _mark_lexical_index_dirty (line 50)
+  def _ensure_bm25 (line 53)
   def _dense_candidates (line 65)
   def remove_file (line 78)
   def add (line 89)
   def search (line 105)
   def hybrid_search (line 109)
   def add_rank (line 126)
-  def clone (line 179)
+  def clone (line 178)
+  def save (line 196)
+  def portable_path (line 202)
+  def load (line 236)
+  def absolute_path (line 265)
 
 visualizer.py:
-  def CodeCityVisualizer (line 15)
-  def __init__ (line 61)
-  def collect_file_metrics (line 68)
-  def _parse_metrics (line 137)
-  def _calculate_weight (line 176)
-  def _get_district (line 186)
-  def _get_color (line 206)
-  def generate_city_layout (line 233)
-  def _layout_buildings (line 297)
-  def _generate_connections (line 364)
-  def generate_html (line 403)
-  def generate_visualization (line 922)
+  def CodeCityVisualizer (line 16)
+  def __init__ (line 62)
+  def collect_file_metrics (line 69)
+  def _parse_metrics (line 138)
+  def _calculate_weight (line 177)
+  def _get_district (line 187)
+  def _get_color (line 207)
+  def generate_city_layout (line 234)
+  def _layout_buildings (line 298)
+  def _generate_connections (line 365)
+  def generate_html (line 429)
+  def generate_visualization (line 1507)
 
 watcher.py:
   def RepoWatcher (line 14)
@@ -404,11 +335,11 @@ watcher.py:
   def schedule_repository (line 32)
   def _repo_for_path (line 38)
   def _should_index (line 48)
-  def on_modified (line 64)
-  def on_created (line 76)
-  def on_deleted (line 88)
-  def on_any_event (line 108)
-  def start_watch (line 123)
+  def on_modified (line 68)
+  def on_created (line 80)
+  def on_deleted (line 92)
+  def on_any_event (line 112)
+  def start_watch (line 127)
 
 algocheck/Booster LeetCode check.md:
 
@@ -420,24 +351,6 @@ benchmarks/home_context_benchmark.py:
   def TargetedFooServiceWorldModel (line 26)
   def enrich (line 29)
   def run (line 47)
-
-booster_home/adapters/booster.py:
-  def EnrichmentResult (line 14)
-  def BoosterWorldModelAdapter (line 21)
-  def __init__ (line 24)
-  def enrich (line 37)
-  def _enrich_sync (line 49)
-  def _infer_target (line 102)
-
-booster_home/adapters/diagnostics.py:
-  def DiagnosticCollection (line 13)
-  def __iter__ (line 19)
-  def __len__ (line 22)
-  def DiagnosticSource (line 26)
-  def collect (line 27)
-  def CognitiveRuntimeDiagnosticSource (line 32)
-  def __init__ (line 35)
-  def collect (line 39)
 
 booster_home/adapters/lsp.py:
   def LspProtocolError (line 15)
@@ -477,8 +390,8 @@ booster_home/api/gateway.py:
   def chat_completions (line 167)
   def complete (line 200)
   def responses (line 238)
-  def complete (line 316)
-  def events (line 371)
+  def complete (line 314)
+  def events (line 369)
 
 booster_home/api/models.py:
   roles: contract
@@ -519,41 +432,6 @@ booster_home/config.py:
   def HomeConfig (line 210)
   def normalize_flat_values (line 228)
   +13 symbols omitted by per-file cap
-
-booster_home/context/compiler.py:
-  def ContextCompiler (line 35)
-  def __init__ (line 38)
-  def compile (line 67)
-  def _classify (line 221)
-  def _active_task (line 265)
-  def _noise_score (line 272)
-  def _apply_worker_results (line 284)
-  def _allocate (line 312)
-
-booster_home/context/deterministic.py:
-  def strip_ansi (line 15)
-  def collapse_duplicate_lines (line 19)
-  def collapse_progress (line 36)
-  def fold_stack_trace (line 48)
-  def compact_success_noise (line 67)
-  def normalize_structured_output (line 80)
-  def deterministic_normalize (line 92)
-
-booster_home/context/diagnostic.py:
-  def Diagnostic (line 12)
-  def model_post_init (line 30)
-  def _from_item (line 47)
-  def normalize_diagnostics (line 64)
-  def DiagnosticLifecycle (line 93)
-  def update (line 98)
-
-booster_home/context/packer.py:
-  def PackingError (line 10)
-  def ContextPacker (line 14)
-  def __init__ (line 17)
-  def _message (line 20)
-  def _role_for (line 31)
-  def pack (line 48)
 
 booster_home/context/tokenizer.py:
   def TokenCounter (line 11)
@@ -609,23 +487,6 @@ booster_home/memory/artifact_store.py:
   def retrieve_fragment (line 207)
   def list_metadata (line 221)
 
-booster_home/memory/models.py:
-  def MemoryModel (line 11)
-  def utc_now (line 15)
-  def Session (line 19)
-  def Episode (line 27)
-  def Fact (line 36)
-  def Decision (line 49)
-  def WorkingSet (line 61)
-  def TimelineEvent (line 73)
-
-booster_home/memory/pager.py:
-  def ContextIntegrityError (line 8)
-  def MemoryPager (line 12)
-  def __init__ (line 15)
-  def persist_before_evict (line 19)
-  def retrieve (line 42)
-
 booster_home/memory/session_store.py:
   def SessionStore (line 20)
   def __init__ (line 23)
@@ -680,16 +541,6 @@ booster_home/research/analysis.py:
   def regime_signature (line 168)
   def scientific_digest (line 177)
   def compare_run_records (line 274)
-
-booster_home/research/models.py:
-  def ResearchModel (line 11)
-  def ResearchMode (line 17)
-  def HypothesisStatus (line 27)
-  def WorkerRole (line 38)
-  def CheckpointRecord (line 50)
-  def HypothesisRecord (line 69)
-  def validate_confidence (line 90)
-  def ResearchBlock (line 96)
 
 booster_home/research/service.py:
   def _words (line 57)
@@ -747,36 +598,9 @@ booster_home/runtime.py:
   def resolve_session (line 184)
   def event (line 204)
   def status (line 210)
-  def health (line 251)
-  def close (line 258)
-  def build_runtime (line 278)
-
-booster_home/telemetry/logging.py:
-  def redact_endpoint (line 12)
-  def redact_mapping (line 26)
-  def RedactedLogger (line 40)
-  def __init__ (line 43)
-  def log (line 53)
-  def info (line 64)
-  def warning (line 67)
-  def error (line 70)
-
-booster_home/telemetry/metrics.py:
-  def MetricsRegistry (line 12)
-  def __init__ (line 15)
-  def increment (line 21)
-  def observe (line 25)
-  def timer (line 32)
-  def snapshot (line 39)
-
-booster_home/upstream/discovery.py:
-  def ModelDiscovery (line 14)
-  def __init__ (line 17)
-  def refresh (line 32)
-  def list_models (line 39)
-  def profile (line 48)
-  def discover (line 82)
-  def _registry_profile (line 87)
+  def health (line 248)
+  def close (line 255)
+  def build_runtime (line 275)
 
 booster_home/upstream/provider.py:
   def UpstreamProvider (line 16)
@@ -817,6 +641,260 @@ booster_home/workers/schemas.py:
   def _extract_json (line 28)
   def parse_worker_payload (line 43)
 
+booster_web/__init__.py:
+
+booster_web/api.py:
+  def _request_id (line 31)
+  def _error_response (line 35)
+  def _internal_error (line 64)
+  def _success_response (line 69)
+  def _run_guarded (line 81)
+  def _check_rate (line 91)
+  def create_router (line 98)
+  def status (line 103)
+  def architecture (line 124)
+  def focus_symbol (line 136)
+  def search (line 148)
+  def impact (line 160)
+  def history (line 172)
+  def diagnostics (line 184)
+  def related_tests (line 196)
+  def snapshots (line 208)
+  def compare_snapshots (line 225)
+  def city (line 239)
+  def city_html (line 265)
+
+booster_web/app.py:
+  roles: entrypoint
+  def _project_repo_id (line 24)
+  def _read_demo_object (line 34)
+  def _default_facade (line 44)
+  def demo_snapshot_factory (line 85)
+  def create_app (line 127)
+  def validation_error_handler (line 148)
+  def index (line 160)
+  def _parse_args (line 167)
+  def main (line 177)
+
+booster_web/cache.py:
+  def ReadOnlyCache (line 12)
+  def __init__ (line 15)
+  def key (line 24)
+  def get (line 35)
+  def set (line 48)
+  def invalidate_repo (line 55)
+  def clear (line 65)
+  def __len__ (line 69)
+
+booster_web/demo.py:
+  def _write_json (line 28)
+  def _portable_city (line 33)
+  def portable_value (line 34)
+  def _safe_snapshot (line 59)
+  def _portable_diagnostics (line 67)
+  def _portable_history (line 99)
+  def _precompute_history (line 130)
+  def _git_text (line 141)
+  def _git_blob (line 163)
+  def _portable_report (line 181)
+  def _write_prepared_snapshot (line 187)
+  def _prepare_snapshot_pair (line 226)
+  def _wait_for_index (line 303)
+  def prepare_demo (line 332)
+
+booster_web/facade.py:
+  def FacadeError (line 69)
+  def __init__ (line 72)
+  def BoosterFacade (line 79)
+  def __init__ (line 82)
+  def _indexer_symbol_lookup (line 134)
+  def _indexer_search_lookup (line 140)
+  def _indexer_impact_lookup (line 146)
+  def _indexer_history_lookup (line 152)
+  def _indexer_diagnostics_lookup (line 160)
+  def _resolve_repo (line 168)
+  def _health (line 176)
+  def _stats (line 183)
+  def _state (line 190)
+  def _cache_key (line 196)
+  def inspect_architecture (line 211)
+  def _commit_from_record (line 228)
+  def _repository_metadata (line 239)
+  def _normalize_city_value (line 271)
+  def city_data (line 289)
+  def _demo_history (line 321)
+  +32 symbols omitted by per-file cap
+
+booster_web/models.py:
+  def SymbolFocusRequest (line 22)
+  def reject_blank_values (line 36)
+  def SearchRequest (line 43)
+  def reject_blank_values (line 58)
+  def ImpactRequest (line 65)
+  def reject_blank_values (line 80)
+  def HistoryRequest (line 87)
+  def strip_optional_values (line 103)
+  def require_target (line 107)
+  def DiagnosticsRequest (line 113)
+  def strip_repo_id (line 127)
+  def validate_paths (line 132)
+  def RelatedTestsRequest (line 139)
+  def strip_values (line 154)
+  def SnapshotCompareRequest (line 161)
+  def strip_values (line 186)
+  def RepositoryMetadata (line 193)
+  def SymbolLocation (line 201)
+  def FocusSymbolResult (line 209)
+  def UIFocus (line 213)
+  +34 symbols omitted by per-file cap
+
+booster_web/security.py:
+  def RateLimitExceeded (line 19)
+  def OperationTimedOut (line 23)
+  def WebSecuritySettings (line 28)
+  def __post_init__ (line 36)
+  def from_env (line 47)
+  def read_int (line 50)
+  def read_float (line 57)
+  def _SlidingWindowLimiter (line 74)
+  def __init__ (line 75)
+  def allow (line 81)
+  def WebRequestGuard (line 100)
+  def __init__ (line 103)
+  def client_key (line 112)
+  def check_rate (line 115)
+  def run (line 119)
+  def RepositoryAllowlist (line 145)
+  def __init__ (line 153)
+  def _normalize_root (line 187)
+  def _validate_repo_id (line 196)
+  def _safe_registry_id (line 201)
+  +5 symbols omitted by per-file cap
+
+booster_web/static/api-client.js:
+  def BoosterApiError (line 0)
+  def constructor (line 1)
+  def requestJson (line 10)
+  def status (line 40)
+  def focusSymbol (line 44)
+  def searchCode (line 51)
+  def traceImpact (line 58)
+  def explainHistory (line 65)
+  def showDiagnostics (line 72)
+  def findRelatedTests (line 79)
+  def listSnapshots (line 86)
+  def compareSnapshots (line 89)
+  def inspectArchitecture (line 96)
+
+booster_web/static/app.js:
+  def onStatus (line 70)
+  def applyStatus (line 79)
+  def scheduleStatusPoll (line 107)
+  def showError (line 125)
+  def renderState (line 130)
+  def renderSearchResults (line 149)
+  def renderImpact (line 159)
+  def renderHistory (line 168)
+  def renderDiagnostics (line 186)
+  def renderRelatedTests (line 200)
+  def renderSnapshots (line 210)
+  def renderArchitecture (line 245)
+  def focusFromHuman (line 250)
+  def searchFromHuman (line 265)
+  def impactFromHuman (line 281)
+  def historyFromHuman (line 296)
+  def diagnosticsFromHuman (line 311)
+  def relatedTestsFromHuman (line 327)
+  def compareSnapshotsFromHuman (line 345)
+  def start (line 361)
+  +1 symbols omitted by per-file cap
+
+booster_web/static/city-adapter.js:
+  def createCityAdapter (line 0)
+  def flushPending (line 9)
+  def resolveApi (line 38)
+  def onFrameLoad (line 48)
+  def onMessage (line 54)
+  def setCityApi (line 73)
+  def reset (line 78)
+  def getSelection (line 88)
+  def setMode (line 91)
+  def selectFile (line 94)
+  def focusFile (line 97)
+  def highlightFiles (line 105)
+  def clearHighlights (line 117)
+  def showImpact (line 124)
+  def showHistory (line 134)
+  def showDiagnostics (line 145)
+  def showSnapshotDiff (line 156)
+  def showSnapshotComparison (line 168)
+  def showRelatedTests (line 171)
+  def clearSelection (line 176)
+  +2 symbols omitted by per-file cap
+
+booster_web/static/contextual-tools.js:
+  def selectionIsCurrent (line 0)
+  def createAnalyzeSelectedFileTool (line 5)
+  def execute (line 17)
+  def createHistoryOfSelectedFileTool (line 59)
+  def execute (line 71)
+  def createContextualToolManager (line 116)
+  def abortCurrent (line 123)
+  def refresh (line 131)
+  def start (line 160)
+  def stop (line 172)
+
+booster_web/static/webmcp-registry.js:
+  def hasWebMCP (line 0)
+  def createWebMCPRegistry (line 8)
+  def log (line 12)
+  def registerTools (line 21)
+  def stop (line 47)
+  def beginCall (line 56)
+  def finishCall (line 67)
+
+booster_web/static/webmcp-tools.js:
+  def createFocusSymbolTool (line 0)
+  def execute (line 16)
+  def toolArgumentError (line 59)
+  def createSearchCodeTool (line 65)
+  def execute (line 82)
+  def createTraceImpactTool (line 131)
+  def execute (line 148)
+  def createExplainHistoryTool (line 200)
+  def execute (line 218)
+  def createShowDiagnosticsTool (line 277)
+  def execute (line 293)
+  def createFindRelatedTestsTool (line 344)
+  def execute (line 361)
+  def createCompareSnapshotsTool (line 413)
+  def execute (line 430)
+  def createInspectArchitectureTool (line 485)
+  def execute (line 500)
+
+booster_web/static/workspace-store.js:
+  def createWorkspaceStore (line 7)
+  def ensureCurrentResponse (line 29)
+  def snapshot (line 51)
+  def emit (line 55)
+  def update (line 63)
+  def subscribe (line 72)
+  def setRepo (line 76)
+  def applyStatus (line 79)
+  def selectFile (line 115)
+  def clearSelection (line 124)
+  def setError (line 131)
+  def applyFocusResult (line 134)
+  def applySearchResult (line 151)
+  def applyImpactResult (line 175)
+  def applyHistoryResult (line 211)
+  def applyDiagnosticsResult (line 248)
+  def applyRelatedTestsResult (line 276)
+  def applySnapshotList (line 303)
+  def applySnapshotComparison (line 312)
+  def applyArchitectureResult (line 340)
+  +4 symbols omitted by per-file cap
+
 docs/API.md:
 
 docs/ARCHITECTURE.md:
@@ -849,8 +927,6 @@ skills/booster-refactor/SKILL.md:
 
 skills/booster-review/SKILL.md:
 
-tests/home/__init__.py:
-
 tests/home/conftest.py:
   def FakeProvider (line 13)
   def __init__ (line 14)
@@ -863,38 +939,6 @@ tests/home/conftest.py:
   def close (line 69)
   def fake_provider (line 74)
 
-tests/home/test_artifact_store.py:
-  def test_artifact_exact_retrieval_and_secret_redaction (line 8)
-  def test_artifacts_are_session_isolated (line 25)
-  def test_utf8_bytes_are_redacted_before_persistence (line 33)
-
-tests/home/test_budget.py:
-  def test_budget_uses_minimum_physical_and_configured_window (line 5)
-  def test_unknown_window_has_no_hard_limit (line 18)
-  def test_invalid_output_reserve_fails_closed (line 24)
-
-tests/home/test_compiler.py:
-  def test_compiler_persists_evicted_raw_block (line 12)
-  def test_compiler_fails_closed_when_persistence_is_disabled (line 41)
-
-tests/home/test_config.py:
-  def test_config_precedence_and_redaction (line 9)
-  def test_invalid_context_budget_is_rejected (line 33)
-  def test_redacted_config_removes_endpoint_query_secret (line 38)
-  def test_non_loopback_home_requires_auth_token (line 46)
-
-tests/home/test_delegation.py:
-  def Backend (line 9)
-  def execute (line 10)
-  def test_delegation_uses_shared_pool (line 17)
-
-tests/home/test_deterministic.py:
-  def test_ansi_duplicates_and_progress_are_compacted (line 9)
-  def test_structured_json_remains_json_and_unicode_survives (line 15)
-
-tests/home/test_diagnostic_lifecycle.py:
-  def test_diagnostic_change_and_reappearance_are_distinguished (line 3)
-
 tests/home/test_gateway.py:
   def _config (line 19)
   def test_gateway_preserves_unknown_chat_fields_and_redacts_status (line 32)
@@ -906,20 +950,6 @@ tests/home/test_gateway.py:
   def slow_models (line 123)
   def test_chat_profile_discovery_has_bounded_fallback (line 135)
   def slow_models (line 139)
-
-tests/home/test_lsp.py:
-  def test_lsp_content_length_framing (line 10)
-
-tests/home/test_models.py:
-  def test_provider_reasoning_content_survives_compilation (line 7)
-
-tests/home/test_packer.py:
-  def test_packer_keeps_protected_blocks_and_order (line 4)
-
-tests/home/test_project_memory.py:
-  def Runtime (line 6)
-  def remember_project_fact (line 7)
-  def test_only_validated_decisions_are_promoted (line 12)
 
 tests/home/test_research.py:
   def _write_jsonl (line 21)
@@ -940,18 +970,6 @@ tests/home/test_research.py:
   def test_worker_output_budget_is_forwarded (line 261)
   def test_policy_off_still_fails_on_known_hard_budget (line 278)
 
-tests/home/test_responses.py:
-  def test_responses_rejects_unsupported_input (line 15)
-  def test_responses_rejects_unsupported_content_part (line 30)
-
-tests/home/test_session_store.py:
-  def test_session_resolution_and_timeline_are_isolated (line 13)
-  def test_session_store_serializes_writes_across_processes (line 26)
-
-tests/home/test_telemetry.py:
-  def test_telemetry_redacts_secret_and_validates_envelope (line 3)
-  def test_telemetry_redacts_nested_secret_values (line 16)
-
 tests/home/test_upstream.py:
   def test_provider_preserves_path_unknown_fields_and_auth (line 12)
   def handler (line 15)
@@ -965,113 +983,159 @@ tests/home/test_workers.py:
   def execute (line 15)
   def test_worker_pool_is_bounded (line 24)
 
-tests/test_city_server.py:
-  def test_code_city_uses_canonical_booster_artifact_directory (line 13)
-  def test_code_city_api_serves_registered_artifact (line 19)
-
 tests/test_cognitive_runtime.py:
   def make_runtime (line 13)
-  def test_impact_analysis_traces_callers_and_callees (line 47)
-  def test_project_memory_recall_filters_structured_facts (line 61)
-  def test_project_memory_rejects_corrupt_json_and_writes_valid_json (line 77)
-  def test_collect_diagnostics_reports_python_syntax_error (line 91)
-  def test_collect_diagnostics_fails_closed_on_external_tool_timeout (line 109)
-  def fake_which (line 115)
-  def fake_run_process (line 120)
-  def test_security_audit_reports_missing_scanners_as_incomplete (line 148)
-  def test_security_audit_keeps_high_findings_failed_when_other_scanner_missing (line 161)
-  def fake_which (line 167)
-  def fake_run_process (line 170)
-  def test_collect_diagnostics_parses_ruff_findings (line 206)
-  def fake_which (line 212)
-  def fake_run_process (line 217)
-  def test_git_intelligence_reads_file_history (line 255)
-
-tests/test_context_provider.py:
-  def FakeMCP (line 6)
-  def __init__ (line 7)
-  def resource (line 11)
-  def register (line 12)
-  def tool (line 18)
-  def register (line 19)
-  def test_repo_map_resource_creates_missing_cache_entry (line 26)
-  def test_artifact_status_reports_canonical_paths (line 44)
-  def test_artifact_resource_and_tool_return_matching_status (line 61)
+  def test_impact_analysis_traces_callers_and_callees (line 42)
+  def test_project_memory_recall_filters_structured_facts (line 56)
+  def test_project_memory_rejects_corrupt_json_and_writes_valid_json (line 72)
+  def test_collect_diagnostics_reports_python_syntax_error (line 86)
+  def test_collect_diagnostics_fails_closed_on_external_tool_timeout (line 104)
+  def fake_which (line 110)
+  def fake_run_process (line 115)
+  def test_security_audit_reports_missing_scanners_as_incomplete (line 143)
+  def test_security_audit_keeps_high_findings_failed_when_other_scanner_missing (line 156)
+  def fake_which (line 162)
+  def fake_run_process (line 165)
+  def test_collect_diagnostics_parses_ruff_findings (line 201)
+  def fake_which (line 207)
+  def fake_run_process (line 212)
+  def test_git_intelligence_reads_file_history (line 249)
 
 tests/test_control.py:
   def write_json (line 18)
   def test_connect_workspace_preserves_other_servers_and_creates_backup (line 23)
-  def test_user_connection_is_portable_unless_repository_is_explicit (line 44)
-  def test_connect_and_disconnect_claude_user_config_on_macos_path (line 77)
-  def test_control_scan_settings_and_cli_connect_are_scoped_to_project (line 106)
-  def test_cli_user_connection_does_not_bind_repository (line 133)
-  def test_launcher_is_generated_for_windows_and_unix_without_touching_path (line 157)
-  def test_runtime_info_prefers_project_virtualenv_over_system_python (line 172)
+  def test_user_connection_is_portable_unless_repository_is_explicit (line 43)
+  def test_connect_and_disconnect_claude_user_config_on_macos_path (line 70)
+  def test_control_scan_settings_and_cli_connect_are_scoped_to_project (line 91)
+  def test_cli_user_connection_does_not_bind_repository (line 118)
+  def test_launcher_is_generated_for_windows_and_unix_without_touching_path (line 142)
+  def test_runtime_info_prefers_project_virtualenv_over_system_python (line 156)
 
-tests/test_hybrid_search.py:
-  def build_index (line 3)
-  def test_hybrid_search_matches_camel_case_identifier_from_snake_case_query (line 36)
-  def test_hybrid_search_removes_deleted_file_from_dense_and_lexical_indexes (line 46)
-  def test_dense_search_keeps_its_existing_result_shape (line 56)
+tests/webmcp/browser/test_browser.py:
+  def BrowserIndexer (line 19)
+  def __init__ (line 20)
+  def find_symbols (line 24)
+  def hybrid_search (line 29)
+  def impact_analysis (line 32)
+  def git_intelligence (line 43)
+  def collect_diagnostics (line 60)
+  def index_health (line 67)
+  def stats (line 74)
+  def write_snapshot_report (line 78)
+  def browser_server (line 83)
+  def chromium (line 140)
+  def open_page (line 155)
+  def test_webmcp_unavailable_keeps_ui_usable (line 163)
+  def test_webmcp_focus_updates_workspace_and_city (line 176)
+  def test_human_city_selection_updates_shared_workspace (line 224)
+  def test_new_human_selection_aborts_old_contextual_tools (line 267)
+  def test_webmcp_search_and_impact_update_shared_state (line 311)
+  def test_webmcp_history_diagnostics_and_related_tests_update_state (line 351)
+  def test_webmcp_snapshot_compare_updates_diff_and_city (line 403)
+  +1 symbols omitted by per-file cap
 
-tests/test_index_jobs.py:
-  def test_index_job_manager_returns_before_slow_worker_and_supports_cancel (line 8)
-  def worker (line 13)
-  def test_index_job_manager_coalesces_duplicate_requests (line 43)
-  def worker (line 48)
+tests/webmcp/test_api.py:
+  def FakeIndexer (line 11)
+  def __init__ (line 12)
+  def find_symbols (line 16)
+  def index_health (line 21)
+  def stats (line 28)
+  def make_client (line 32)
+  def test_status_endpoint (line 53)
+  def test_focus_symbol_success (line 76)
+  def test_symbol_not_found_is_normalized (line 95)
+  def test_invalid_repo_id_is_not_a_filesystem_lookup (line 111)
+  def test_invalid_request_is_normalized (line 122)
+  def test_internal_lookup_error_is_normalized (line 133)
+  def test_search_endpoint_returns_highlights (line 150)
+  def test_impact_endpoint_returns_normalized_graph_summary (line 175)
+  def test_phase2_limits_are_normalized_as_invalid_arguments (line 209)
+  def test_history_endpoint_returns_compact_history (line 226)
+  def test_diagnostics_endpoint_forces_read_only_runtime_mode (line 262)
+  def diagnostics_lookup (line 267)
+  def test_related_tests_endpoint_returns_ranked_paths (line 298)
+  def test_history_requires_path_or_symbol (line 318)
+  +2 symbols omitted by per-file cap
 
-tests/test_indexer.py:
-  def test_index_repo_removes_files_deleted_since_previous_scan (line 7)
-  def fake_index_file (line 17)
+tests/webmcp/test_code_city_api.py:
+  def test_generated_code_city_exposes_programmatic_selection_api (line 15)
+  def test_generated_code_city_escapes_repository_display_values (line 59)
+  def CityIndexer (line 83)
+  def __init__ (line 84)
+  def index_health (line 87)
+  def stats (line 90)
+  def test_city_endpoint_returns_normalized_city_data (line 94)
 
-tests/test_repomap.py:
-  def _write (line 8)
-  def test_architecture_map_keeps_modules_and_caps_giant_file (line 13)
+tests/webmcp/test_demo_mode.py:
+  def write_json (line 16)
+  def write_snapshot (line 21)
+  def make_demo_bundle (line 46)
+  def DemoRegistry (line 135)
+  def __init__ (line 136)
+  def add (line 139)
+  def DemoIndexer (line 144)
+  def __init__ (line 145)
+  def load_state (line 150)
+  def index_health (line 154)
+  def stats (line 161)
+  def symbols_snapshot (line 164)
+  def test_demo_runtime_uses_only_prepared_read_only_state (line 168)
+  def fail_live (line 177)
+  def test_prepared_snapshot_pair_uses_real_parent_blobs (line 240)
 
-tests/test_repository_lifecycle.py:
-  def git (line 8)
-  def test_repository_registry_survives_a_new_process_view (line 19)
-  def test_repository_registry_serializes_cross_process_updates (line 54)
-  def test_snapshot_history_is_immutable_and_commit_bound (line 92)
+tests/webmcp/test_facade.py:
+  def FakeIndexer (line 19)
+  def __init__ (line 20)
+  def find_symbols (line 27)
+  def index_health (line 31)
+  def stats (line 38)
+  def make_facade (line 42)
+  def test_focus_symbol_normalizes_existing_indexer_location (line 50)
+  def test_focus_symbol_uses_leaf_fallback_for_existing_unqualified_indexer_symbols (line 74)
+  def test_focus_symbol_normalizes_not_found (line 90)
+  def test_focus_symbol_rejects_match_outside_allowlisted_root (line 100)
+  def test_focus_symbol_reports_active_index_as_not_ready (line 111)
+  def test_search_reuses_hybrid_results_and_normalizes_files (line 126)
+  def test_search_normalizes_index_not_ready_error (line 153)
+  def test_impact_reuses_cognitive_runtime_and_normalizes_paths (line 168)
+  def impact_lookup (line 179)
+  def test_impact_rejects_path_traversal_target (line 220)
+  def test_explain_history_normalizes_existing_git_intelligence (line 233)
+  def history_lookup (line 238)
+  def test_show_diagnostics_is_read_only_and_normalizes_findings (line 279)
+  def diagnostics_lookup (line 284)
+  +5 symbols omitted by per-file cap
 
-tests/test_repository_scanner.py:
-  def write_source (line 9)
-  def test_scanner_respects_ignore_rules_depth_and_size_budgets (line 16)
-  def test_cli_expand_writes_map_report_and_persistent_scan_config (line 40)
-  def test_repo_map_and_indexer_reuse_the_saved_scan_budget (line 58)
+tests/webmcp/test_security.py:
+  def test_allowlist_resolves_only_known_logical_ids (line 18)
+  def test_relative_path_cannot_escape_repository_root (line 26)
+  def test_absolute_relative_path_is_rejected (line 33)
+  def test_unsafe_repo_id_is_rejected_before_mapping (line 40)
+  def Indexer (line 45)
+  def __init__ (line 46)
+  def find_symbols (line 49)
+  def index_health (line 52)
+  def stats (line 55)
+  def test_security_settings_fail_closed_above_public_limits (line 59)
+  def test_rate_limit_is_normalized_by_the_web_api (line 66)
+  def test_operation_timeout_is_normalized_without_releasing_worker_slot_early (line 87)
+  def slow_lookup (line 90)
+  def test_concurrency_limit_rejects_when_all_slots_are_busy (line 115)
+  def run (line 116)
+  def slow (line 125)
 
-tests/test_runtime_hardening.py:
-  def test_full_index_delegates_to_single_repo_indexing (line 7)
-  def fake_index_repo (line 12)
-  def test_code_city_port_zero_logs_actual_bound_port (line 23)
-  def FakeHTTPServer (line 29)
-  def __init__ (line 30)
-  def serve_forever (line 35)
-  def shutdown (line 38)
-
-tests/test_server_index_jobs.py:
-  def test_server_index_job_is_background_and_waitable (line 10)
-  def fake_build_generation (line 23)
-
-tests/test_server_scope.py:
-  def test_workspace_bound_server_does_not_import_unrelated_registry_repositories (line 10)
-  def test_search_does_not_return_silent_empty_results_while_indexing (line 23)
-  def EmptyIndexer (line 24)
-  def stats (line 27)
-
-tests/test_skill_installer.py:
-  def test_bundled_skills_are_discoverable (line 3)
-
-tests/test_visualizer.py:
-  def test_code_city_layout_is_compact_and_html_autoframes (line 5)
-
-tests/test_watcher.py:
-  def FakeIndexer (line 6)
-  def __init__ (line 7)
-  def index_file (line 10)
-  def FakeObserver (line 14)
-  def __init__ (line 15)
-  def schedule (line 18)
-  def file_event (line 22)
-  def test_watcher_respects_repository_scanner_ignore_rules (line 26)
-  def test_watcher_schedules_a_repository_only_once (line 44)
+tests/webmcp/test_snapshots.py:
+  def Indexer (line 16)
+  def __init__ (line 17)
+  def index_health (line 20)
+  def stats (line 23)
+  def write_report (line 27)
+  def content_hash (line 35)
+  def test_compare_snapshots_uses_real_immutable_snapshot_store (line 39)
+  def test_compare_snapshots_detects_same_size_content_change (line 87)
+  def test_legacy_snapshot_manifest_is_reported_as_unverified (line 111)
+  def test_compare_snapshots_rejects_unknown_snapshot (line 135)
+  def test_snapshot_list_and_compare_api_use_logical_ids (line 150)
+  def Store (line 160)
+  def list_snapshots (line 161)
+  def latest (line 164)

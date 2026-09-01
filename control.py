@@ -79,9 +79,11 @@ def vscode_user_config_path(
     user_home = _user_home(home)
     system = _platform_name(platform_name)
     if system.startswith("win"):
-        app_data = Path(os.environ["APPDATA"]) if home is None and os.environ.get(
-            "APPDATA"
-        ) else user_home / "AppData" / "Roaming"
+        app_data = (
+            Path(os.environ["APPDATA"])
+            if home is None and os.environ.get("APPDATA")
+            else user_home / "AppData" / "Roaming"
+        )
         return app_data / "Code" / "User" / "mcp.json"
     if system == "darwin":
         return user_home / "Library" / "Application Support" / "Code" / "User" / "mcp.json"
@@ -96,17 +98,15 @@ def claude_user_config_path(
     user_home = _user_home(home)
     system = _platform_name(platform_name)
     if system.startswith("win"):
-        app_data = Path(os.environ["APPDATA"]) if home is None and os.environ.get(
-            "APPDATA"
-        ) else user_home / "AppData" / "Roaming"
+        app_data = (
+            Path(os.environ["APPDATA"])
+            if home is None and os.environ.get("APPDATA")
+            else user_home / "AppData" / "Roaming"
+        )
         return app_data / "Claude" / "claude_desktop_config.json"
     if system == "darwin":
         return (
-            user_home
-            / "Library"
-            / "Application Support"
-            / "Claude"
-            / "claude_desktop_config.json"
+            user_home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
         )
     return user_home / ".config" / "Claude" / "claude_desktop_config.json"
 
@@ -124,12 +124,10 @@ def resolve_connection_target(
     normalized_scope = scope.lower()
     if normalized_client not in SUPPORTED_CLIENTS:
         available = ", ".join(SUPPORTED_CLIENTS)
-        raise ControlError(
-            f"Unsupported client '{client}'. Available clients: {available}.")
+        raise ControlError(f"Unsupported client '{client}'. Available clients: {available}.")
     if normalized_scope not in SUPPORTED_SCOPES:
         available = ", ".join(SUPPORTED_SCOPES)
-        raise ControlError(
-            f"Unsupported scope '{scope}'. Available scopes: {available}.")
+        raise ControlError(f"Unsupported scope '{scope}'. Available scopes: {available}.")
 
     project_path = resolve_project(project)
     if normalized_client == "vscode":
@@ -172,8 +170,7 @@ def _read_json_object(path: Path) -> dict[str, Any]:
     except OSError as exc:
         raise ControlError(f"Cannot read {path}: {exc}") from exc
     if not isinstance(value, dict):
-        raise ControlError(
-            f"Cannot update {path}: the root JSON value must be an object.")
+        raise ControlError(f"Cannot update {path}: the root JSON value must be an object.")
     return cast(dict[str, Any], value)
 
 
@@ -220,8 +217,7 @@ def build_server_definition(
     runtime = runtime_info()
     server = Path(runtime["server"])
     if not server.is_file():
-        raise ControlError(
-            f"Booster server entry point was not found: {server}")
+        raise ControlError(f"Booster server entry point was not found: {server}")
 
     if bind_repository:
         if project is None:
@@ -262,9 +258,7 @@ def connect(
     config = _read_json_object(target.config_path)
     servers = _server_store(config, target)
     should_bind_repository = (
-        target.scope == "workspace"
-        if bind_repository is None
-        else bind_repository
+        target.scope == "workspace" if bind_repository is None else bind_repository
     )
     definition = build_server_definition(
         target.client,
@@ -391,9 +385,8 @@ def connection_status(
         result["command"] = server_definition.get("command")
         result["server"] = (server_definition.get("args") or [None])[0]
         environment = server_definition.get("env")
-        result["repository_bound"] = (
-            isinstance(environment, dict)
-            and bool(cast(dict[str, Any], environment).get("REPOS"))
+        result["repository_bound"] = isinstance(environment, dict) and bool(
+            cast(dict[str, Any], environment).get("REPOS")
         )
     return result
 
@@ -423,8 +416,7 @@ def update_scan_settings(
 ) -> dict[str, Any]:
     """Сохраняет bounded scan policy, используемую CLI и MCP индексатором."""
     project_path = resolve_project(project)
-    config = ScanConfig.for_profile(
-        profile) if profile else ScanConfig.load(project_path)
+    config = ScanConfig.for_profile(profile) if profile else ScanConfig.load(project_path)
     config = config.with_overrides(
         include_dependencies=include_dependencies,
         max_depth=max_depth,
@@ -456,13 +448,10 @@ def doctor(project: str | Path) -> dict[str, Any]:
     """Выполняет быстрые локальные проверки запуска без изменения файлов."""
     project_path = resolve_project(project)
     runtime = runtime_info()
-    packages = ("fastmcp", "mcp", "rank_bm25",
-                "faiss", "sentence_transformers")
+    packages = ("fastmcp", "mcp", "rank_bm25", "faiss", "sentence_transformers")
     checks: list[dict[str, object]] = [
-        {"name": "python", "ok": Path(
-            runtime["python"]).is_file(), "value": runtime["python"]},
-        {"name": "server", "ok": Path(
-            runtime["server"]).is_file(), "value": runtime["server"]},
+        {"name": "python", "ok": Path(runtime["python"]).is_file(), "value": runtime["python"]},
+        {"name": "server", "ok": Path(runtime["server"]).is_file(), "value": runtime["server"]},
     ]
     checks.extend(
         {
@@ -494,8 +483,7 @@ def launcher_path(
     platform_name: str | None = None,
 ) -> Path:
     """Возвращает путь команды `booster` для целевой ОС."""
-    filename = "booster.cmd" if _platform_name(
-        platform_name).startswith("win") else "booster"
+    filename = "booster.cmd" if _platform_name(platform_name).startswith("win") else "booster"
     return user_bin_path(home, platform_name) / filename
 
 
@@ -506,7 +494,7 @@ def _launcher_content(platform_name: str | None = None) -> str:
     return (
         "#!/usr/bin/env sh\n"
         f"# {LAUNCHER_MARKER}\n"
-        f"exec {shlex.quote(python_path)} -m cli \"$@\"\n"
+        f'exec {shlex.quote(python_path)} -m cli "$@"\n'
     )
 
 

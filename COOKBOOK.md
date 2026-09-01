@@ -439,6 +439,91 @@ When `booster_mcp` starts, these skills are automatically synced into the agent'
 
 ---
 
+## Recipe 13: Prepare a WebMCP Demo Bundle
+
+Prepare the demo once from the repository root. Indexing and embedding work are
+build-time operations; the resulting demo process loads the same `RepoIndexer`
+state and does not repeat them on the first HTTP request.
+
+```bash
+booster web prepare-demo --project .
+booster web --mode demo --project .
+```
+
+For container deployment:
+
+```bash
+docker build -f Dockerfile.observatory -t booster-observatory .
+docker run --rm -p 8000:8000 booster-observatory
+```
+
+Open `http://127.0.0.1:8000/`. The bundle contains `manifest.json`, `city.json`,
+`architecture.json`, `diagnostics.json`, `history.json`, `snapshots.json`,
+`code_city.html`, and portable JSON+FAISS index state. History and snapshot
+comparison data are prepared from real repository evidence, and the browser
+runtime is read-only.
+
+## Recipe 14: Run the Observatory Agent Workflow
+
+Use the native WebMCP tools in this order when explaining a repository change:
+
+```text
+booster_search_code(query="repository indexing")
+booster_focus_symbol(symbol="RepoIndexer.full_index")
+booster_trace_impact(target="RepoIndexer.full_index", max_depth=3)
+booster_find_related_tests(target="RepoIndexer.full_index")
+```
+
+The result is visible in one page: matching buildings highlight, the target is
+focused, the impact panel shows callers/callees/tests, and Agent Activity records
+the action. A human can click another building; the page then registers
+`booster_analyze_selected_file` and `booster_history_of_selected_file` for that
+selection.
+
+## Recipe 15: Inspect Evidence and Snapshots
+
+History, diagnostics, architecture, and snapshots are read-only actions over
+existing Booster artifacts and runtime capabilities:
+
+```text
+booster_explain_history(path="cognitive_runtime.py")
+booster_show_diagnostics(paths=["cognitive_runtime.py"])
+booster_inspect_architecture(focus="cognitive_runtime.py")
+booster_compare_snapshots(from="snapshot-a", to="snapshot-b")
+```
+
+Snapshot comparison uses immutable snapshot IDs and classifies files as added,
+removed, changed, or stable. It never accepts an arbitrary snapshot filesystem
+path from the browser.
+
+## Recipe 16: Verify the Public Boundary
+
+Run automated checks before publishing:
+
+```bash
+uv run pytest -q
+uv run pytest tests/webmcp/browser/test_browser.py -q
+node --experimental-default-type=module --test tests/webmcp/browser/webmcp_modules.test.mjs
+uv run ruff check .
+uv build --wheel
+uv sync --locked --extra security
+uv run bandit -r booster_web indexer.py vector_index.py repository_lifecycle.py watcher.py city_server.py -q
+```
+
+The gateway is same-origin and read-only. It allowlists logical repository IDs,
+checks repository containment, limits analysis concurrency to four operations,
+times out operations after ten seconds, and applies a per-client rate limit. It
+does not expose shell commands, validation commands, mutation, cloning, or
+arbitrary processes. Finally open the URL in ChatGPT's in-app browser and Chrome
+with WebMCP enabled; fake `document.modelContext` tests are not a replacement
+for that real-browser check.
+
+The `Share state` control preserves only safe `repo_id`, relative file, mode, and
+snapshot IDs in the URL. It is suitable for reproducing a view without leaking a
+local repository root.
+
+---
+
 ## 🎓 Summary: Agent Etiquette Rules
 
 1. **Never read project files blindly (via `find` + `cat` tools).** Always request `get_repo_map()` first.

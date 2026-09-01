@@ -1,9 +1,10 @@
 import hashlib
+import json
 import threading
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from chunker import semantic_chunks
 from embedder import Embedder
@@ -139,6 +140,7 @@ class RepoIndexer:
         *,
         cancel: Callable[[], bool] | None = None,
         progress: Callable[[str], None] | None = None,
+        pending_chunks: list[tuple[str, str]] | None = None,
     ) -> int:
         path = Path(path).expanduser().resolve()
         parser = self.router.get(path)
@@ -167,10 +169,15 @@ class RepoIndexer:
             progress("graph")
 
         chunks: list[str] = semantic_chunks(file_symbols, code_str)
-        for chunk in chunks:
+        if pending_chunks is not None:
+            pending_chunks.extend((path_str, chunk) for chunk in chunks)
+            return len(chunks)
+        embed_many = getattr(self.embedder, "embed_many", None)
+        vectors = embed_many(chunks) if callable(embed_many) and chunks else None
+        for index, chunk in enumerate(chunks):
             if cancel is not None and cancel():
                 raise IndexCancelled("indexing cancelled")
-            vec = self.embedder.embed(chunk)
+            vec = vectors[index] if vectors is not None else self.embedder.embed(chunk)
             vector.add(vec, {"file": path_str, "chunk": chunk})
         if progress is not None:
             progress("embed")
@@ -220,6 +227,7 @@ class RepoIndexer:
 
         symbols, graphs, vector = self._staging_state(repo_path)
         total = len(scan_result.files)
+        pending_chunks: list[tuple[str, str]] = []
         for position, file_path in enumerate(scan_result.files, start=1):
             if cancel is not None and cancel():
                 raise IndexCancelled("indexing cancelled")
@@ -231,10 +239,27 @@ class RepoIndexer:
                 graphs,
                 symbols,
                 cancel=cancel,
-                progress=lambda phase, current=position: progress(phase, current, total)
-                if progress is not None
-                else None,
+                progress=lambda phase, current=position: (
+                    progress(phase, current, total) if progress is not None else None
+                ),
+                pending_chunks=pending_chunks,
             )
+
+        embed_many = getattr(self.embedder, "embed_many", None)
+        batch_size = 128
+        for batch_start in range(0, len(pending_chunks), batch_size):
+            if cancel is not None and cancel():
+                raise IndexCancelled("indexing cancelled")
+            batch = pending_chunks[batch_start : batch_start + batch_size]
+            texts = [chunk for _file_path, chunk in batch]
+            if callable(embed_many):
+                vectors = embed_many(texts)
+            else:
+                vectors = [self.embedder.embed(text) for text in texts]
+            for (file_path, chunk), vector_value in zip(batch, vectors):
+                vector.add(vector_value, {"file": file_path, "chunk": chunk})
+        if pending_chunks and progress is not None:
+            progress("embed", total, total)
 
         manifest_payload = repr(sorted(scan_result.file_manifest.items())).encode("utf-8")
         generation_id = hashlib.sha256(
@@ -369,6 +394,172 @@ class RepoIndexer:
     def index_health(self) -> dict[str, Any]:
         with self._operation_lock():
             return dict(self.generation_metadata)
+
+    def save_state(self, directory: str | Path, repository: str | Path) -> dict[str, Any]:
+        """Save this indexer's current ready state as portable non-executable data."""
+        target = Path(directory).expanduser().resolve()
+        root = Path(repository).expanduser().resolve()
+        target.mkdir(parents=True, exist_ok=True)
+
+        def relative_path(value: Any) -> str:
+            path = Path(str(value))
+            try:
+                return path.resolve().relative_to(root).as_posix()
+            except ValueError:
+                return str(value)
+
+        with self._operation_lock():
+            symbols = {}
+            for file_path, file_symbols in self.symbols.items():
+                portable_file = relative_path(file_path)
+                if not Path(file_path).resolve().is_relative_to(root):
+                    continue
+                symbols[portable_file] = []
+                for symbol in file_symbols:
+                    item = dict(symbol)
+                    if "file" in item:
+                        item["file"] = portable_file
+                    symbols[portable_file].append(item)
+            graphs = cast(dict[str, Any], self.graphs.export_state())
+            generation_metadata = dict(self.generation_metadata)
+            generation_metadata["repository"] = None
+            generation_metadata["source_manifest"] = {
+                relative_path(file_path): dict(value)
+                for file_path, value in generation_metadata.get("source_manifest", {}).items()
+                if isinstance(value, dict)
+            }
+            payload = {
+                "version": 1,
+                "repository": None,
+                "generation_id": self.generation_id,
+                "generation_metadata": generation_metadata,
+                "symbols": symbols,
+                "graphs": {
+                    "call_graph": {
+                        str(key): sorted(value) for key, value in graphs["call_graph"].items()
+                    },
+                    "import_graph": {
+                        relative_path(key): list(value)
+                        for key, value in graphs["import_graph"].items()
+                    },
+                    "file_calls": {
+                        relative_path(key): [list(pair) for pair in value]
+                        for key, value in graphs["file_calls"].items()
+                    },
+                    "file_imports": {
+                        relative_path(key): list(value)
+                        for key, value in graphs["file_imports"].items()
+                    },
+                },
+            }
+            vector = self.vector.clone()
+            for file_path in list(vector.file_ids):
+                if not Path(file_path).resolve().is_relative_to(root):
+                    vector.remove_file(file_path)
+            vector.save(target / "vector", root=root)
+        (target / "state.json").write_text(
+            json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+        )
+        return {
+            "version": 1,
+            "generation_id": self.generation_id,
+            "repository": str(root),
+            "files": len(symbols),
+        }
+
+    def load_state(self, directory: str | Path, repository: str | Path) -> dict[str, Any]:
+        """Load a prepared state into this same RepoIndexer instance."""
+        target = Path(directory).expanduser().resolve()
+        root = Path(repository).expanduser().resolve()
+        try:
+            payload = json.loads((target / "state.json").read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("Invalid prebuilt repository state") from exc
+        if not isinstance(payload, dict) or payload.get("version") != 1:
+            raise ValueError("Unsupported prebuilt repository state version")
+        generation_id = payload.get("generation_id")
+        if not isinstance(generation_id, str) or not generation_id:
+            raise ValueError("Prebuilt repository state has no generation")
+        raw_symbols = payload.get("symbols")
+        raw_graphs = payload.get("graphs")
+        if not isinstance(raw_symbols, dict) or not isinstance(raw_graphs, dict):
+            raise ValueError("Invalid prebuilt repository state payload")
+
+        symbols: dict[str, list[dict[str, Any]]] = {}
+        for raw_file, raw_file_symbols in raw_symbols.items():
+            if not isinstance(raw_file, str) or not isinstance(raw_file_symbols, list):
+                raise ValueError("Invalid prebuilt symbol state")
+            file_path = (root / raw_file).resolve()
+            if not file_path.is_relative_to(root):
+                raise ValueError("Prebuilt symbol state escapes repository")
+            normalized_symbols = []
+            for raw_symbol in raw_file_symbols:
+                if not isinstance(raw_symbol, dict):
+                    raise ValueError("Invalid prebuilt symbol entry")
+                item = dict(raw_symbol)
+                item["file"] = str(file_path)
+                normalized_symbols.append(item)
+            symbols[str(file_path)] = normalized_symbols
+
+        raw_call_graph = raw_graphs.get("call_graph")
+        raw_import_graph = raw_graphs.get("import_graph")
+        if not isinstance(raw_call_graph, dict) or not isinstance(raw_import_graph, dict):
+            raise ValueError("Invalid prebuilt graph state")
+        graphs = Graphs()
+        graphs.call_graph = {
+            str(key): {str(value) for value in values}
+            for key, values in raw_call_graph.items()
+            if isinstance(values, list)
+        }
+        graphs.import_graph = {}
+        for raw_file, values in raw_import_graph.items():
+            file_path = (root / str(raw_file)).resolve()
+            if not file_path.is_relative_to(root) or not isinstance(values, list):
+                raise ValueError("Prebuilt import graph escapes repository")
+            graphs.import_graph[str(file_path)] = [str(value) for value in values]
+        raw_file_calls = raw_graphs.get("file_calls", {})
+        raw_file_imports = raw_graphs.get("file_imports", {})
+        if not isinstance(raw_file_calls, dict) or not isinstance(raw_file_imports, dict):
+            raise ValueError("Invalid prebuilt graph file state")
+        graphs.file_calls = {}
+        for raw_file, pairs in raw_file_calls.items():
+            file_path = (root / str(raw_file)).resolve()
+            if not file_path.is_relative_to(root) or not isinstance(pairs, list):
+                raise ValueError("Prebuilt file call graph escapes repository")
+            graphs.file_calls[str(file_path)] = [
+                (str(pair[0]), str(pair[1]))
+                for pair in pairs
+                if isinstance(pair, list) and len(pair) == 2
+            ]
+        graphs.file_imports = {}
+        for raw_file, values in raw_file_imports.items():
+            file_path = (root / str(raw_file)).resolve()
+            if not file_path.is_relative_to(root) or not isinstance(values, list):
+                raise ValueError("Prebuilt file import graph escapes repository")
+            graphs.file_imports[str(file_path)] = {str(value) for value in values}
+
+        vector = VectorIndex.load(target / "vector", root=root)
+        for file_path in vector.file_ids:
+            if not Path(file_path).resolve().is_relative_to(root):
+                raise ValueError("Prebuilt vector state escapes repository")
+        for metadata in vector.meta.values():
+            file_path = metadata.get("file") if isinstance(metadata, dict) else None
+            if file_path is not None and not Path(str(file_path)).resolve().is_relative_to(root):
+                raise ValueError("Prebuilt vector metadata escapes repository")
+        metadata = payload.get("generation_metadata")
+        if not isinstance(metadata, dict):
+            metadata = {}
+        metadata = dict(metadata)
+        metadata["repository"] = str(root)
+        metadata["generation_id"] = generation_id
+        metadata["ready"] = True
+        with self._operation_lock():
+            self.symbols = symbols
+            self.graphs = graphs
+            self.vector = vector
+            self.generation_id = generation_id
+            self.generation_metadata = metadata
+        return self.index_health()
 
     def mark_stale(self, reason: str, path: str | None = None) -> dict[str, Any]:
         """Помечает ready generation stale до завершения следующего rebuild."""

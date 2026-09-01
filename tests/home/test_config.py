@@ -37,9 +37,7 @@ def test_invalid_context_budget_is_rejected() -> None:
 
 
 def test_redacted_config_removes_endpoint_query_secret() -> None:
-    config = HomeConfig(
-        upstream={"base_url": "http://example.test/v1?api_key=query-secret"}
-    )
+    config = HomeConfig(upstream={"base_url": "http://example.test/v1?api_key=query-secret"})
 
     assert config.redacted()["upstream"]["base_url"] == "http://example.test/v1"
 

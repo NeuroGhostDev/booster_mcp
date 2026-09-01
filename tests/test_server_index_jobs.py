@@ -35,9 +35,7 @@ def test_server_index_job_is_background_and_waitable(tmp_path, monkeypatch) -> N
     monkeypatch.setattr(
         server,
         "RepositorySnapshotStore",
-        lambda value: SimpleNamespace(
-            capture=lambda **kwargs: {"snapshot_id": "snapshot-test"}
-        ),
+        lambda value: SimpleNamespace(capture=lambda **kwargs: {"snapshot_id": "snapshot-test"}),
     )
     monkeypatch.setattr(
         server.repository_registry,

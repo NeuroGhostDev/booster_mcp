@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_at_utc": "2026-08-23T11:07:21.579664+00:00",
-  "repository": "D:\\workSpace\\booster_mcp",
+  "generated_at_utc": "2026-09-01T13:41:21.330345+00:00",
+  "repository": "C:\\Projects\\Booster_MCP\\booster_mcp",
   "profile": "balanced",
   "limits": {
     "max_depth": 12,
@@ -12,614 +12,742 @@
   },
   "include_dependencies": false,
   "summary": {
-    "directories_scanned": 30,
-    "files_inspected": 177,
-    "source_files_selected": 149,
-    "selected_bytes": 1101085,
-    "inventory_files": 149
+    "directories_scanned": 34,
+    "files_inspected": 211,
+    "source_files_selected": 181,
+    "selected_bytes": 1365749,
+    "inventory_files": 181
   },
   "file_manifest": {
     "AGENTS.md": {
       "size_bytes": 2955,
-      "mtime_ns": 1787483115043398400
+      "mtime_ns": 1787764184982480000
     },
     "CHANGELOG.md": {
       "size_bytes": 9440,
-      "mtime_ns": 1787475883978335500
+      "mtime_ns": 1787764184982480000
     },
     "chunker.py": {
-      "size_bytes": 427,
-      "mtime_ns": 1784370816870304300
+      "size_bytes": 429,
+      "mtime_ns": 1787916657322236200
     },
     "city_server.py": {
-      "size_bytes": 40187,
-      "mtime_ns": 1787398696322663700
+      "size_bytes": 40703,
+      "mtime_ns": 1787916658217650300
     },
     "cli.py": {
-      "size_bytes": 37119,
-      "mtime_ns": 1787213231185511900
-    },
-    "code_city.html": {
-      "size_bytes": 176058,
-      "mtime_ns": 1787409462707940800
+      "size_bytes": 38235,
+      "mtime_ns": 1787916658639961600
     },
     "cognitive_runtime.py": {
-      "size_bytes": 57211,
-      "mtime_ns": 1787219118219658700
+      "size_bytes": 55134,
+      "mtime_ns": 1787916659183741800
     },
     "context7_bridge.py": {
-      "size_bytes": 2699,
-      "mtime_ns": 1787327329742063500
+      "size_bytes": 2666,
+      "mtime_ns": 1787916657690644500
     },
     "context_provider.py": {
       "size_bytes": 7777,
-      "mtime_ns": 1787399079407223600
+      "mtime_ns": 1787764185091809500
     },
     "CONTRIBUTING.md": {
       "size_bytes": 3410,
-      "mtime_ns": 1787483159680498900
+      "mtime_ns": 1787764184984489900
     },
     "control.py": {
-      "size_bytes": 20088,
-      "mtime_ns": 1787326733352456000
+      "size_bytes": 19417,
+      "mtime_ns": 1787916658309011400
     },
     "COOKBOOK.md": {
-      "size_bytes": 17801,
-      "mtime_ns": 1787475947744679900
+      "size_bytes": 21068,
+      "mtime_ns": 1787916378958077100
     },
     "dsa.json": {
       "size_bytes": 0,
-      "mtime_ns": 1787070917825424500
+      "mtime_ns": 1787764185096597200
     },
     "embedder.py": {
-      "size_bytes": 717,
-      "mtime_ns": 1787129764752924100
+      "size_bytes": 807,
+      "mtime_ns": 1787920226963549600
     },
     "file_lock.py": {
       "size_bytes": 1134,
-      "mtime_ns": 1787213190930449700
+      "mtime_ns": 1787764185098598400
     },
     "flipchart.py": {
-      "size_bytes": 10320,
-      "mtime_ns": 1784370817928019600
+      "size_bytes": 10103,
+      "mtime_ns": 1787916657700161300
+    },
+    "game1.html": {
+      "size_bytes": 30991,
+      "mtime_ns": 1787936731983162300
+    },
+    "gamegemini.html": {
+      "size_bytes": 16317,
+      "mtime_ns": 1787936998032988700
+    },
+    "gameNemotron.html": {
+      "size_bytes": 10463,
+      "mtime_ns": 1788258640854062100
+    },
+    "gameQwen.html": {
+      "size_bytes": 26933,
+      "mtime_ns": 1787939014768291900
     },
     "graphs.py": {
-      "size_bytes": 2731,
-      "mtime_ns": 1787398040710153600
+      "size_bytes": 3204,
+      "mtime_ns": 1787916657563317800
+    },
+    "hzgame.html": {
+      "size_bytes": 12607,
+      "mtime_ns": 1788258914843212500
     },
     "indexer.py": {
-      "size_bytes": 15011,
-      "mtime_ns": 1787398525761915800
+      "size_bytes": 24683,
+      "mtime_ns": 1787920949811923900
     },
     "indexing_jobs.py": {
       "size_bytes": 10597,
-      "mtime_ns": 1787479652322751300
+      "mtime_ns": 1787764185116737100
     },
     "install.ps1": {
       "size_bytes": 5410,
-      "mtime_ns": 1784198929666066200
+      "mtime_ns": 1787764185116737100
     },
     "install.sh": {
       "size_bytes": 4062,
-      "mtime_ns": 1784198929369611200
+      "mtime_ns": 1787764185118745200
     },
     "MANIFEST.in": {
-      "size_bytes": 209,
-      "mtime_ns": 1787145809313639300
+      "size_bytes": 270,
+      "mtime_ns": 1787810380377983300
     },
     "MARKETPLACE.md": {
       "size_bytes": 7578,
-      "mtime_ns": 1787475968231099700
+      "mtime_ns": 1787764184988139300
     },
     "parser_router.py": {
-      "size_bytes": 715,
-      "mtime_ns": 1784370816935305800
+      "size_bytes": 716,
+      "mtime_ns": 1787916657644160000
     },
     "pyproject.toml": {
-      "size_bytes": 2869,
-      "mtime_ns": 1787399002641922600
+      "size_bytes": 3038,
+      "mtime_ns": 1787860264631159200
     },
     "README.md": {
-      "size_bytes": 29514,
-      "mtime_ns": 1787483115040415400
+      "size_bytes": 33465,
+      "mtime_ns": 1787916378910008000
     },
     "README.ru.md": {
-      "size_bytes": 6519,
-      "mtime_ns": 1787483134614241500
+      "size_bytes": 9661,
+      "mtime_ns": 1787916378925778200
     },
     "README.zh-CN.md": {
-      "size_bytes": 5416,
-      "mtime_ns": 1787483134638363300
+      "size_bytes": 7601,
+      "mtime_ns": 1787863099299943100
     },
     "RECOMENDET_PROMPT.md": {
-      "size_bytes": 40875,
-      "mtime_ns": 1787146945517789800
+      "size_bytes": 41789,
+      "mtime_ns": 1787863361758597200
     },
     "repomap.py": {
-      "size_bytes": 18241,
-      "mtime_ns": 1787398440665147900
+      "size_bytes": 18385,
+      "mtime_ns": 1787916658444223200
     },
     "repository_lifecycle.py": {
-      "size_bytes": 12639,
-      "mtime_ns": 1787398348259342100
+      "size_bytes": 12767,
+      "mtime_ns": 1787915246469872800
     },
     "repository_scanner.py": {
-      "size_bytes": 17050,
-      "mtime_ns": 1787398696314161400
+      "size_bytes": 17079,
+      "mtime_ns": 1787917464805108100
     },
     "requirements.txt": {
-      "size_bytes": 284,
-      "mtime_ns": 1787125370734976800
+      "size_bytes": 298,
+      "mtime_ns": 1787764185124511600
     },
     "server.py": {
-      "size_bytes": 29953,
-      "mtime_ns": 1787399079335263500
+      "size_bytes": 30367,
+      "mtime_ns": 1787924872319770800
     },
     "skill_installer.py": {
-      "size_bytes": 3648,
-      "mtime_ns": 1784370817105056900
+      "size_bytes": 3503,
+      "mtime_ns": 1787916657867675800
     },
     "toolkit.py": {
-      "size_bytes": 27326,
-      "mtime_ns": 1787327329719925300
+      "size_bytes": 27117,
+      "mtime_ns": 1787916658845994300
     },
     "vector_index.py": {
-      "size_bytes": 7473,
-      "mtime_ns": 1787398040711198500
+      "size_bytes": 11888,
+      "mtime_ns": 1787834465875058900
     },
     "visualizer.py": {
-      "size_bytes": 39132,
-      "mtime_ns": 1787327404435333500
+      "size_bytes": 64275,
+      "mtime_ns": 1787916314260415100
     },
     "watcher.py": {
-      "size_bytes": 5109,
-      "mtime_ns": 1787398390115967200
+      "size_bytes": 5262,
+      "mtime_ns": 1787836921091114000
     },
     "algocheck/Booster LeetCode check.md": {
       "size_bytes": 7198,
-      "mtime_ns": 1787477783193813800
+      "mtime_ns": 1787764184992663300
     },
     "assets/booster-pipeline.svg": {
       "size_bytes": 5499,
-      "mtime_ns": 1787132196575392700
+      "mtime_ns": 1787764185020480300
     },
     "assets/home-runtime.svg": {
       "size_bytes": 4543,
-      "mtime_ns": 1787132196575928500
+      "mtime_ns": 1787764185026503600
     },
     "benchmarks/home_context_benchmark.py": {
       "size_bytes": 4967,
-      "mtime_ns": 1787126183528729700
+      "mtime_ns": 1787764185028578500
     },
     "booster_home/__init__.py": {
       "size_bytes": 694,
-      "mtime_ns": 1787125638028277200
+      "mtime_ns": 1787764185030837400
     },
     "booster_home/app.py": {
       "size_bytes": 1487,
-      "mtime_ns": 1787125638033276200
+      "mtime_ns": 1787764185042885100
     },
     "booster_home/config.py": {
       "size_bytes": 16579,
-      "mtime_ns": 1787213250595118600
+      "mtime_ns": 1787764185043884300
     },
     "booster_home/delegation.py": {
       "size_bytes": 1310,
-      "mtime_ns": 1787124842144765700
+      "mtime_ns": 1787764185054227100
     },
     "booster_home/mcp.py": {
       "size_bytes": 13603,
-      "mtime_ns": 1787131297537561000
+      "mtime_ns": 1787764185055226000
     },
     "booster_home/models.py": {
       "size_bytes": 8337,
-      "mtime_ns": 1787126571366840400
+      "mtime_ns": 1787764185067674700
     },
     "booster_home/routing.py": {
       "size_bytes": 1487,
-      "mtime_ns": 1787124445488945100
+      "mtime_ns": 1787764185071689500
     },
     "booster_home/runtime.py": {
-      "size_bytes": 12356,
-      "mtime_ns": 1787157606418119800
+      "size_bytes": 12298,
+      "mtime_ns": 1787916657921010200
+    },
+    "booster_web/__init__.py": {
+      "size_bytes": 191,
+      "mtime_ns": 1787810088329322100
+    },
+    "booster_web/api.py": {
+      "size_bytes": 10555,
+      "mtime_ns": 1787914234437235000
+    },
+    "booster_web/app.py": {
+      "size_bytes": 7930,
+      "mtime_ns": 1787916657715341000
+    },
+    "booster_web/cache.py": {
+      "size_bytes": 2404,
+      "mtime_ns": 1787834133705875200
+    },
+    "booster_web/demo.py": {
+      "size_bytes": 18137,
+      "mtime_ns": 1787923301693932500
+    },
+    "booster_web/facade.py": {
+      "size_bytes": 52967,
+      "mtime_ns": 1787916601812954700
+    },
+    "booster_web/models.py": {
+      "size_bytes": 11843,
+      "mtime_ns": 1787914083635722200
+    },
+    "booster_web/security.py": {
+      "size_bytes": 9971,
+      "mtime_ns": 1787917790889924000
     },
     "skills/__init__.py": {
       "size_bytes": 68,
-      "mtime_ns": 1787145809326390000
+      "mtime_ns": 1787764185127404900
     },
     "tests/test_city_server.py": {
       "size_bytes": 1801,
-      "mtime_ns": 1787328028363078600
+      "mtime_ns": 1787764185175012700
     },
     "tests/test_cognitive_runtime.py": {
-      "size_bytes": 9536,
-      "mtime_ns": 1787219170059541300
+      "size_bytes": 9208,
+      "mtime_ns": 1787916658274108200
     },
     "tests/test_context_provider.py": {
-      "size_bytes": 2517,
-      "mtime_ns": 1784191416744018000
+      "size_bytes": 2438,
+      "mtime_ns": 1787764185177135400
     },
     "tests/test_control.py": {
-      "size_bytes": 5999,
-      "mtime_ns": 1787327000995893800
+      "size_bytes": 5716,
+      "mtime_ns": 1787916658299336400
     },
     "tests/test_hybrid_search.py": {
-      "size_bytes": 1746,
-      "mtime_ns": 1784185443996493900
+      "size_bytes": 1679,
+      "mtime_ns": 1787764185179143100
     },
     "tests/test_index_jobs.py": {
-      "size_bytes": 2276,
-      "mtime_ns": 1787398582994912000
+      "size_bytes": 2233,
+      "mtime_ns": 1787916658102260300
     },
     "tests/test_indexer.py": {
       "size_bytes": 964,
-      "mtime_ns": 1787327001021178900
+      "mtime_ns": 1787764185179143100
+    },
+    "tests/test_prebuilt_state.py": {
+      "size_bytes": 2102,
+      "mtime_ns": 1787834464638462800
     },
     "tests/test_repomap.py": {
       "size_bytes": 1777,
-      "mtime_ns": 1787398583004396500
+      "mtime_ns": 1787764185181152100
     },
     "tests/test_repository_lifecycle.py": {
       "size_bytes": 5017,
-      "mtime_ns": 1787219170033817700
+      "mtime_ns": 1787764185181152100
     },
     "tests/test_repository_scanner.py": {
-      "size_bytes": 3070,
-      "mtime_ns": 1784191418111750900
+      "size_bytes": 3117,
+      "mtime_ns": 1787916658219659000
     },
     "tests/test_runtime_hardening.py": {
-      "size_bytes": 1311,
-      "mtime_ns": 1784370816593418000
+      "size_bytes": 1263,
+      "mtime_ns": 1787764185183163000
     },
     "tests/test_server_index_jobs.py": {
-      "size_bytes": 2178,
-      "mtime_ns": 1787398621551860400
+      "size_bytes": 2156,
+      "mtime_ns": 1787916658181827700
     },
     "tests/test_server_scope.py": {
       "size_bytes": 1097,
-      "mtime_ns": 1787328293486286600
+      "mtime_ns": 1787764185187182200
     },
     "tests/test_skill_installer.py": {
       "size_bytes": 244,
-      "mtime_ns": 1787145809327459300
+      "mtime_ns": 1787764185189191400
     },
     "tests/test_visualizer.py": {
       "size_bytes": 1329,
-      "mtime_ns": 1787132566554870100
+      "mtime_ns": 1787764185189191400
     },
     "tests/test_watcher.py": {
-      "size_bytes": 1602,
-      "mtime_ns": 1787327001018145700
+      "size_bytes": 1563,
+      "mtime_ns": 1787916658223674500
     },
     "docs/API.md": {
-      "size_bytes": 5007,
-      "mtime_ns": 1787476030246874800
+      "size_bytes": 6769,
+      "mtime_ns": 1787916378955437200
     },
     "docs/ARCHITECTURE.md": {
-      "size_bytes": 5040,
-      "mtime_ns": 1787476030231381800
+      "size_bytes": 6404,
+      "mtime_ns": 1787916378956492800
     },
     "docs/RELEASE.md": {
       "size_bytes": 3919,
-      "mtime_ns": 1787477537456415200
+      "mtime_ns": 1787764185096597200
     },
     "booster_home/api/__init__.py": {
       "size_bytes": 117,
-      "mtime_ns": 1787125207772373600
+      "mtime_ns": 1787764185037663100
     },
     "booster_home/api/gateway.py": {
-      "size_bytes": 16985,
-      "mtime_ns": 1787213231171215800
+      "size_bytes": 16959,
+      "mtime_ns": 1787916658027657500
     },
     "booster_home/api/models.py": {
       "size_bytes": 3407,
-      "mtime_ns": 1787157261182136000
+      "mtime_ns": 1787764185040886500
     },
     "booster_home/api/streaming.py": {
       "size_bytes": 820,
-      "mtime_ns": 1787125207801371200
+      "mtime_ns": 1787764185041884300
     },
     "booster_home/adapters/__init__.py": {
       "size_bytes": 769,
-      "mtime_ns": 1787124966333265000
+      "mtime_ns": 1787764185030837400
     },
     "booster_home/adapters/booster.py": {
       "size_bytes": 4292,
-      "mtime_ns": 1787125632306389900
+      "mtime_ns": 1787764185032848100
     },
     "booster_home/adapters/diagnostics.py": {
       "size_bytes": 2329,
-      "mtime_ns": 1787125632306389900
+      "mtime_ns": 1787764185032848100
     },
     "booster_home/adapters/lsp.py": {
       "size_bytes": 11065,
-      "mtime_ns": 1787126825711043000
+      "mtime_ns": 1787764185034860000
     },
     "booster_home/adapters/project_memory.py": {
       "size_bytes": 2560,
-      "mtime_ns": 1787125632306389900
+      "mtime_ns": 1787764185034860000
     },
     "booster_home/adapters/repomap.py": {
       "size_bytes": 621,
-      "mtime_ns": 1787124966352343300
+      "mtime_ns": 1787764185034860000
     },
     "booster_home/context/__init__.py": {
       "size_bytes": 953,
-      "mtime_ns": 1787126834209278500
+      "mtime_ns": 1787764185044885400
     },
     "booster_home/context/budget.py": {
       "size_bytes": 5826,
-      "mtime_ns": 1787126722600453100
+      "mtime_ns": 1787764185045884300
     },
     "booster_home/context/classifier.py": {
       "size_bytes": 3923,
-      "mtime_ns": 1787126729968345300
+      "mtime_ns": 1787764185046884400
     },
     "booster_home/context/compiler.py": {
-      "size_bytes": 15592,
-      "mtime_ns": 1787157130439167900
+      "size_bytes": 15544,
+      "mtime_ns": 1787916657768777200
     },
     "booster_home/context/deterministic.py": {
       "size_bytes": 3704,
-      "mtime_ns": 1787125638033276200
+      "mtime_ns": 1787764185047884000
     },
     "booster_home/context/diagnostic.py": {
       "size_bytes": 4597,
-      "mtime_ns": 1787127144061183500
+      "mtime_ns": 1787764185048883400
     },
     "booster_home/context/packer.py": {
       "size_bytes": 5223,
-      "mtime_ns": 1787126738498873400
+      "mtime_ns": 1787764185049883200
     },
     "booster_home/context/policy.py": {
       "size_bytes": 1477,
-      "mtime_ns": 1787126225586996900
+      "mtime_ns": 1787764185049883200
     },
     "booster_home/context/relevance.py": {
       "size_bytes": 1646,
-      "mtime_ns": 1787125638030277800
+      "mtime_ns": 1787764185051401000
     },
     "booster_home/context/semantic.py": {
       "size_bytes": 2269,
-      "mtime_ns": 1787125638031279300
+      "mtime_ns": 1787764185053226200
     },
     "booster_home/context/tokenizer.py": {
       "size_bytes": 2151,
-      "mtime_ns": 1787124751589959000
+      "mtime_ns": 1787764185053226200
     },
     "booster_home/memory/__init__.py": {
       "size_bytes": 555,
-      "mtime_ns": 1787124594011440400
+      "mtime_ns": 1787764185056226500
     },
     "booster_home/memory/artifact_store.py": {
       "size_bytes": 9656,
-      "mtime_ns": 1787131139957693000
+      "mtime_ns": 1787764185062622900
     },
     "booster_home/memory/models.py": {
       "size_bytes": 2411,
-      "mtime_ns": 1787127124733817800
+      "mtime_ns": 1787764185063622200
     },
     "booster_home/memory/pager.py": {
       "size_bytes": 1770,
-      "mtime_ns": 1787125638027278600
+      "mtime_ns": 1787764185064622000
     },
     "booster_home/memory/session_store.py": {
       "size_bytes": 9872,
-      "mtime_ns": 1787213190949424600
+      "mtime_ns": 1787764185065621400
     },
     "booster_home/research/__init__.py": {
       "size_bytes": 136,
-      "mtime_ns": 1787129157317367500
+      "mtime_ns": 1787764185067674700
     },
     "booster_home/research/analysis.py": {
       "size_bytes": 11164,
-      "mtime_ns": 1787130983085477000
+      "mtime_ns": 1787764185069681800
     },
     "booster_home/research/models.py": {
       "size_bytes": 3448,
-      "mtime_ns": 1787130952375712600
+      "mtime_ns": 1787764185069681800
     },
     "booster_home/research/service.py": {
       "size_bytes": 44949,
-      "mtime_ns": 1787131297525863000
+      "mtime_ns": 1787764185071689500
     },
     "booster_home/research/store.py": {
       "size_bytes": 11581,
-      "mtime_ns": 1787130952375712600
+      "mtime_ns": 1787764185071689500
     },
     "booster_home/telemetry/__init__.py": {
       "size_bytes": 400,
-      "mtime_ns": 1787127083238959000
+      "mtime_ns": 1787764185073695900
     },
     "booster_home/telemetry/events.py": {
       "size_bytes": 1621,
-      "mtime_ns": 1787157080412930700
+      "mtime_ns": 1787764185075702700
     },
     "booster_home/telemetry/logging.py": {
       "size_bytes": 2560,
-      "mtime_ns": 1787127052246729600
+      "mtime_ns": 1787764185075702700
     },
     "booster_home/telemetry/metrics.py": {
       "size_bytes": 1745,
-      "mtime_ns": 1787125638025277800
+      "mtime_ns": 1787764185075702700
     },
     "booster_home/upstream/__init__.py": {
       "size_bytes": 327,
-      "mtime_ns": 1787125632308462100
+      "mtime_ns": 1787764185077710600
     },
     "booster_home/upstream/client.py": {
       "size_bytes": 232,
-      "mtime_ns": 1787125978142466200
+      "mtime_ns": 1787764185077710600
     },
     "booster_home/upstream/discovery.py": {
       "size_bytes": 3857,
-      "mtime_ns": 1787157606417121900
+      "mtime_ns": 1787764185079721400
     },
     "booster_home/upstream/models.py": {
-      "size_bytes": 2320,
-      "mtime_ns": 1787125632307454400
+      "size_bytes": 2328,
+      "mtime_ns": 1787916657338736000
     },
     "booster_home/upstream/provider.py": {
       "size_bytes": 7370,
-      "mtime_ns": 1787125632313000100
+      "mtime_ns": 1787764185081469900
     },
     "booster_home/workers/__init__.py": {
       "size_bytes": 393,
-      "mtime_ns": 1787124842087006400
+      "mtime_ns": 1787764185082984200
     },
     "booster_home/workers/cache.py": {
       "size_bytes": 1256,
-      "mtime_ns": 1787125638025277800
+      "mtime_ns": 1787764185082984200
     },
     "booster_home/workers/client.py": {
       "size_bytes": 5451,
-      "mtime_ns": 1787128951390051100
+      "mtime_ns": 1787764185083918300
     },
     "booster_home/workers/pool.py": {
       "size_bytes": 2231,
-      "mtime_ns": 1787125638034276900
+      "mtime_ns": 1787764185084993900
     },
     "booster_home/workers/prompts.py": {
       "size_bytes": 1032,
-      "mtime_ns": 1787125638029276900
+      "mtime_ns": 1787764185085991600
     },
     "booster_home/workers/schemas.py": {
       "size_bytes": 1750,
-      "mtime_ns": 1787125632325006800
+      "mtime_ns": 1787764185085991600
+    },
+    "booster_web/static/api-client.js": {
+      "size_bytes": 3539,
+      "mtime_ns": 1787834756017574000
+    },
+    "booster_web/static/app.css": {
+      "size_bytes": 4164,
+      "mtime_ns": 1787859775617966600
+    },
+    "booster_web/static/app.js": {
+      "size_bytes": 20285,
+      "mtime_ns": 1787916504695452500
+    },
+    "booster_web/static/city-adapter.js": {
+      "size_bytes": 5607,
+      "mtime_ns": 1787916089697742500
+    },
+    "booster_web/static/contextual-tools.js": {
+      "size_bytes": 6640,
+      "mtime_ns": 1787914846807907700
+    },
+    "booster_web/static/index.html": {
+      "size_bytes": 5943,
+      "mtime_ns": 1787916504676100700
+    },
+    "booster_web/static/url-state.js": {
+      "size_bytes": 2183,
+      "mtime_ns": 1787860498259930700
+    },
+    "booster_web/static/webmcp-registry.js": {
+      "size_bytes": 2513,
+      "mtime_ns": 1787916484217485100
+    },
+    "booster_web/static/webmcp-tools.js": {
+      "size_bytes": 21870,
+      "mtime_ns": 1787914907584889700
+    },
+    "booster_web/static/workspace-store.js": {
+      "size_bytes": 15107,
+      "mtime_ns": 1787916459936116800
     },
     "skills/booster-architecture-map/SKILL.md": {
       "size_bytes": 2721,
-      "mtime_ns": 1787476123491335900
+      "mtime_ns": 1787764185128757200
     },
     "skills/booster-bug-hunt/SKILL.md": {
-      "size_bytes": 1663,
-      "mtime_ns": 1784366975261951100
+      "size_bytes": 1614,
+      "mtime_ns": 1787764185128757200
     },
     "skills/booster-cognitive-runtime/SKILL.md": {
-      "size_bytes": 2455,
-      "mtime_ns": 1784367394131217300
+      "size_bytes": 2404,
+      "mtime_ns": 1787764185130768800
     },
     "skills/booster-context-inject/SKILL.md": {
       "size_bytes": 2389,
-      "mtime_ns": 1773333830520474500
+      "mtime_ns": 1787764185132781300
     },
     "skills/booster-deep-dive/SKILL.md": {
-      "size_bytes": 1537,
-      "mtime_ns": 1784366975270698800
+      "size_bytes": 1493,
+      "mtime_ns": 1787764185132781300
     },
     "skills/booster-feature-add/SKILL.md": {
-      "size_bytes": 2307,
-      "mtime_ns": 1787146931197471500
+      "size_bytes": 2267,
+      "mtime_ns": 1787764185134791300
     },
     "skills/booster-flipchart/SKILL.md": {
       "size_bytes": 2323,
-      "mtime_ns": 1773337512886565000
+      "mtime_ns": 1787764185136542400
     },
     "skills/booster-mcp-workflow/SKILL.md": {
-      "size_bytes": 6282,
-      "mtime_ns": 1787476123488326100
+      "size_bytes": 6223,
+      "mtime_ns": 1787764185138418500
     },
     "skills/booster-onboard/SKILL.md": {
-      "size_bytes": 2389,
-      "mtime_ns": 1784191416547582500
+      "size_bytes": 2337,
+      "mtime_ns": 1787764185139995000
     },
     "skills/booster-project-memory/SKILL.md": {
       "size_bytes": 2748,
-      "mtime_ns": 1784366975269900700
+      "mtime_ns": 1787764185141075600
     },
     "skills/booster-refactor/SKILL.md": {
-      "size_bytes": 1524,
-      "mtime_ns": 1784366975270698800
+      "size_bytes": 1483,
+      "mtime_ns": 1787764185142667000
     },
     "skills/booster-review/SKILL.md": {
-      "size_bytes": 1487,
-      "mtime_ns": 1784366975278911600
+      "size_bytes": 1443,
+      "mtime_ns": 1787764185143728700
     },
     "tests/home/__init__.py": {
       "size_bytes": 39,
-      "mtime_ns": 1787125451212895300
+      "mtime_ns": 1787764185145995600
     },
     "tests/home/conftest.py": {
       "size_bytes": 2331,
-      "mtime_ns": 1787125632323005400
+      "mtime_ns": 1787764185147055200
     },
     "tests/home/test_artifact_store.py": {
       "size_bytes": 1538,
-      "mtime_ns": 1787131150468524800
+      "mtime_ns": 1787764185148138000
     },
     "tests/home/test_budget.py": {
       "size_bytes": 926,
-      "mtime_ns": 1787125632316999800
+      "mtime_ns": 1787764185148732300
     },
     "tests/home/test_compiler.py": {
       "size_bytes": 2177,
-      "mtime_ns": 1787125992079830900
+      "mtime_ns": 1787764185149784100
     },
     "tests/home/test_config.py": {
-      "size_bytes": 2065,
-      "mtime_ns": 1787219169975355700
+      "size_bytes": 2051,
+      "mtime_ns": 1787916657926018800
     },
     "tests/home/test_delegation.py": {
       "size_bytes": 671,
-      "mtime_ns": 1787125992079099500
+      "mtime_ns": 1787764185164901900
     },
     "tests/home/test_deterministic.py": {
       "size_bytes": 718,
-      "mtime_ns": 1787125451270017900
+      "mtime_ns": 1787764185165457400
     },
     "tests/home/test_diagnostic_lifecycle.py": {
       "size_bytes": 649,
-      "mtime_ns": 1787125928219987800
+      "mtime_ns": 1787764185165983100
     },
     "tests/home/test_gateway.py": {
       "size_bytes": 5748,
-      "mtime_ns": 1787219170003457300
+      "mtime_ns": 1787764185167288200
     },
     "tests/home/test_lsp.py": {
       "size_bytes": 467,
-      "mtime_ns": 1787125451383051200
+      "mtime_ns": 1787764185168076600
     },
     "tests/home/test_models.py": {
       "size_bytes": 735,
-      "mtime_ns": 1787126582620480200
+      "mtime_ns": 1787764185168603300
     },
     "tests/home/test_packer.py": {
       "size_bytes": 1107,
-      "mtime_ns": 1787125632321006800
+      "mtime_ns": 1787764185169657000
     },
     "tests/home/test_project_memory.py": {
       "size_bytes": 839,
-      "mtime_ns": 1787127135417597300
+      "mtime_ns": 1787764185170187800
     },
     "tests/home/test_research.py": {
       "size_bytes": 10689,
-      "mtime_ns": 1787130741924576900
+      "mtime_ns": 1787764185171239200
     },
     "tests/home/test_responses.py": {
       "size_bytes": 1944,
-      "mtime_ns": 1787157204540245200
+      "mtime_ns": 1787764185172400000
     },
     "tests/home/test_session_store.py": {
       "size_bytes": 2111,
-      "mtime_ns": 1787157753817163900
+      "mtime_ns": 1787764185173005300
     },
     "tests/home/test_telemetry.py": {
       "size_bytes": 921,
-      "mtime_ns": 1787157204537055800
+      "mtime_ns": 1787764185173005300
     },
     "tests/home/test_upstream.py": {
       "size_bytes": 2013,
-      "mtime_ns": 1787126080884989800
+      "mtime_ns": 1787764185173005300
     },
     "tests/home/test_workers.py": {
       "size_bytes": 897,
-      "mtime_ns": 1787125451369540300
+      "mtime_ns": 1787764185175012700
+    },
+    "tests/webmcp/__init__.py": {
+      "size_bytes": 45,
+      "mtime_ns": 1787810491885568700
+    },
+    "tests/webmcp/test_api.py": {
+      "size_bytes": 11664,
+      "mtime_ns": 1787835319624066800
+    },
+    "tests/webmcp/test_code_city_api.py": {
+      "size_bytes": 4447,
+      "mtime_ns": 1787916220302667900
+    },
+    "tests/webmcp/test_demo_mode.py": {
+      "size_bytes": 9825,
+      "mtime_ns": 1787916658490777000
+    },
+    "tests/webmcp/test_facade.py": {
+      "size_bytes": 13993,
+      "mtime_ns": 1787835582738468800
+    },
+    "tests/webmcp/test_security.py": {
+      "size_bytes": 4121,
+      "mtime_ns": 1787917804232723300
+    },
+    "tests/webmcp/test_snapshots.py": {
+      "size_bytes": 6972,
+      "mtime_ns": 1787916425835248300
+    },
+    "tests/webmcp/browser/test_browser.py": {
+      "size_bytes": 16642,
+      "mtime_ns": 1787916459967687000
+    },
+    "tests/webmcp/browser/webmcp_modules.test.mjs": {
+      "size_bytes": 17358,
+      "mtime_ns": 1787916459966648600
     }
   },
   "skipped": {
-    "ignored_directory": 23,
-    "ignored_file": 4,
-    "unsupported_file": 24
+    "ignored_directory": 26,
+    "ignored_file": 5,
+    "unsupported_file": 25
   },
   "limits_reached": [],
   "sample_files": [
@@ -628,7 +756,6 @@
     "chunker.py",
     "city_server.py",
     "cli.py",
-    "code_city.html",
     "cognitive_runtime.py",
     "context7_bridge.py",
     "context_provider.py",
@@ -639,7 +766,12 @@
     "embedder.py",
     "file_lock.py",
     "flipchart.py",
+    "game1.html",
+    "gamegemini.html",
+    "gameNemotron.html",
+    "gameQwen.html",
     "graphs.py",
+    "hzgame.html",
     "indexer.py",
     "indexing_jobs.py",
     "install.ps1",
@@ -668,10 +800,6 @@
     "benchmarks/home_context_benchmark.py",
     "booster_home/__init__.py",
     "booster_home/app.py",
-    "booster_home/config.py",
-    "booster_home/delegation.py",
-    "booster_home/mcp.py",
-    "booster_home/models.py",
-    "booster_home/routing.py"
+    "booster_home/config.py"
   ]
 }

@@ -34,8 +34,7 @@ def test_connect_workspace_preserves_other_servers_and_creates_backup(tmp_path):
     booster = config["servers"]["boosterLocal"]
     assert booster["type"] == "stdio"
     assert booster["env"]["REPOS"] == str(tmp_path)
-    assert json.loads(Path(result["backup_path"]).read_text(
-        encoding="utf-8")) == original
+    assert json.loads(Path(result["backup_path"]).read_text(encoding="utf-8")) == original
 
     second_result = connect("vscode", "workspace", tmp_path)
     assert second_result["updated"] is False
@@ -47,14 +46,9 @@ def test_user_connection_is_portable_unless_repository_is_explicit(tmp_path):
     project = tmp_path / "project"
     project.mkdir()
 
-    portable = connect(
-        "vscode", "user", project, home=home, platform_name="win32"
-    )
-    target = resolve_connection_target(
-        "vscode", "user", project, home=home, platform_name="win32"
-    )
-    servers = json.loads(target.config_path.read_text(
-        encoding="utf-8"))["servers"]
+    portable = connect("vscode", "user", project, home=home, platform_name="win32")
+    target = resolve_connection_target("vscode", "user", project, home=home, platform_name="win32")
+    servers = json.loads(target.config_path.read_text(encoding="utf-8"))["servers"]
 
     assert portable["repository_bound"] is False
     assert servers["Booster"]["env"] == {"CITY_PORT": "0"}
@@ -70,8 +64,7 @@ def test_user_connection_is_portable_unless_repository_is_explicit(tmp_path):
         platform_name="win32",
     )
     assert bound["repository_bound"] is True
-    servers = json.loads(target.config_path.read_text(
-        encoding="utf-8"))["servers"]
+    servers = json.loads(target.config_path.read_text(encoding="utf-8"))["servers"]
     assert servers["BoosterProject"]["env"]["REPOS"] == str(project)
 
 
@@ -80,28 +73,20 @@ def test_connect_and_disconnect_claude_user_config_on_macos_path(tmp_path):
     project = tmp_path / "project"
     project.mkdir()
 
-    target = resolve_connection_target(
-        "claude", "user", project, home=home, platform_name="darwin"
-    )
+    target = resolve_connection_target("claude", "user", project, home=home, platform_name="darwin")
     assert target.config_path == (
-        home / "Library" / "Application Support" /
-        "Claude" / "claude_desktop_config.json"
+        home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
     )
 
-    connected = connect(
-        "claude", "user", project, home=home, platform_name="darwin"
-    )
+    connected = connect("claude", "user", project, home=home, platform_name="darwin")
     config = json.loads(target.config_path.read_text(encoding="utf-8"))
     assert connected["updated"] is True
     assert "Booster" in config["mcpServers"]
     assert "type" not in config["mcpServers"]["Booster"]
 
-    disconnected = disconnect(
-        "claude", "user", project, home=home, platform_name="darwin"
-    )
+    disconnected = disconnect("claude", "user", project, home=home, platform_name="darwin")
     assert disconnected["updated"] is True
-    assert "Booster" not in json.loads(
-        target.config_path.read_text(encoding="utf-8"))["mcpServers"]
+    assert "Booster" not in json.loads(target.config_path.read_text(encoding="utf-8"))["mcpServers"]
 
 
 def test_control_scan_settings_and_cli_connect_are_scoped_to_project(tmp_path, capsys):
@@ -163,8 +148,7 @@ def test_launcher_is_generated_for_windows_and_unix_without_touching_path(tmp_pa
     if os.name != "nt":
         assert unix_path.stat().st_mode & 0o111
 
-    windows = install_launcher(
-        home=tmp_path / "windows-home", platform_name="win32")
+    windows = install_launcher(home=tmp_path / "windows-home", platform_name="win32")
     windows_path = Path(windows["launcher_path"])
     assert windows_path.name == "booster.cmd"
     assert LAUNCHER_MARKER in windows_path.read_text(encoding="utf-8")

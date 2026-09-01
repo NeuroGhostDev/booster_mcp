@@ -23,8 +23,7 @@ from typing import Any, Optional, cast
 
 from repository_scanner import RepositoryScanner
 
-SOURCE_EXTENSIONS = {".py", ".js", ".jsx",
-                     ".ts", ".tsx", ".rs", ".go", ".java"}
+SOURCE_EXTENSIONS = {".py", ".js", ".jsx", ".ts", ".tsx", ".rs", ".go", ".java"}
 PYTHON_EXTENSIONS = {".py"}
 TYPESCRIPT_EXTENSIONS = {".ts", ".tsx", ".js", ".jsx"}
 RUST_EXTENSIONS = {".rs"}
@@ -60,8 +59,7 @@ class CognitiveRuntime:
         elif self.repos:
             repo_path = Path(self.repos[0]).expanduser().resolve()
         else:
-            raise ValueError(
-                "Нет добавленных репозиториев. Используйте add_repo().")
+            raise ValueError("Нет добавленных репозиториев. Используйте add_repo().")
 
         if not repo_path.exists() or not repo_path.is_dir():
             raise ValueError(f"Репозиторий не найден: {repo_path}")
@@ -211,8 +209,7 @@ class CognitiveRuntime:
 
         max_depth = max(1, min(max_depth, 5))
         all_symbol_records = self._symbol_records()
-        internal_symbol_names = {record["name"]
-                                 for record in all_symbol_records}
+        internal_symbol_names = {record["name"] for record in all_symbol_records}
         matches = [
             record
             for record in all_symbol_records
@@ -291,8 +288,7 @@ class CognitiveRuntime:
         for file_path, imports in import_graph.items():
             for import_text in imports:
                 if target_lower in str(import_text).lower():
-                    import_hits.append(
-                        {"file": file_path, "import": import_text})
+                    import_hits.append({"file": file_path, "import": import_text})
 
         affected_files: list[str] = sorted(
             {
@@ -343,8 +339,7 @@ class CognitiveRuntime:
     ) -> list[str]:
         test_candidates: list[str] = []
         target_tokens = {name.lower() for name in target_names}
-        affected_stems = {Path(file_path).stem.lower()
-                          for file_path in affected_files}
+        affected_stems = {Path(file_path).stem.lower() for file_path in affected_files}
 
         symbols_by_file = cast(
             dict[str, list[dict[str, Any]]],
@@ -415,8 +410,7 @@ class CognitiveRuntime:
             "--pretty=format:%H%x1f%an%x1f%ad%x1f%s",
             *rel_args,
         ]
-        log_result = self._run_process(
-            log_command, repo_path, timeout_seconds=30)
+        log_result = self._run_process(log_command, repo_path, timeout_seconds=30)
         commits = self._parse_git_log(log_result.get("stdout", ""))
 
         blame = []
@@ -555,10 +549,8 @@ class CognitiveRuntime:
             return {"error": str(exc)}
 
         memory = self._load_memory(repo_path)
-        facts = cast(list[dict[str, Any]], memory.setdefault(
-            "_booster_project_facts", []))
-        fact_id = hashlib.sha1(
-            f"{category}:{fact}".encode("utf-8")).hexdigest()[:12]
+        facts = cast(list[dict[str, Any]], memory.setdefault("_booster_project_facts", []))
+        fact_id = hashlib.sha1(f"{category}:{fact}".encode("utf-8")).hexdigest()[:12]
         normalized_confidence = max(0.0, min(float(confidence), 1.0))
         payload: dict[str, Any] = {
             "id": fact_id,
@@ -593,19 +585,16 @@ class CognitiveRuntime:
             return {"error": str(exc)}
 
         memory = self._load_memory(repo_path)
-        facts = cast(list[dict[str, Any]], list(
-            memory.get("_booster_project_facts", [])))
+        facts = cast(list[dict[str, Any]], list(memory.get("_booster_project_facts", [])))
         requested_categories = set(categories or [])
         query_tokens = set(re.findall(r"[A-Za-zА-Яа-я0-9_]+", query or ""))
-        query_tokens = {token.lower()
-                        for token in query_tokens if len(token) > 2}
+        query_tokens = {token.lower() for token in query_tokens if len(token) > 2}
 
         scored_facts: list[tuple[float, dict[str, Any]]] = []
         for fact in facts:
             if requested_categories and fact.get("category") not in requested_categories:
                 continue
-            haystack = f"{fact.get('category', '')} {fact.get('fact', '')}".lower(
-            )
+            haystack = f"{fact.get('category', '')} {fact.get('fact', '')}".lower()
             score = float(fact.get("confidence", 0.5))
             if query_tokens:
                 score += sum(1 for token in query_tokens if token in haystack)
@@ -616,8 +605,7 @@ class CognitiveRuntime:
         selected_facts: list[dict[str, Any]] = [
             fact for _, fact in scored_facts[: max(1, min(limit, 100))]
         ]
-        legacy_keys = [key for key in memory.keys(
-        ) if not key.startswith("_booster_")]
+        legacy_keys = [key for key in memory.keys() if not key.startswith("_booster_")]
 
         return {
             "repo": str(repo_path),
@@ -625,8 +613,7 @@ class CognitiveRuntime:
             "facts": selected_facts,
             "legacy_keys": legacy_keys,
             "context": "\n".join(
-                f"- [{fact.get('category')}] {fact.get('fact')}"
-                for fact in selected_facts
+                f"- [{fact.get('category')}] {fact.get('fact')}" for fact in selected_facts
             ),
         }
 
@@ -645,14 +632,12 @@ class CognitiveRuntime:
             return {"error": str(exc)}
 
         target_paths = self._resolve_paths(paths, repo_path)
-        source_paths = [
-            path for path in target_paths if path.suffix in SOURCE_EXTENSIONS]
+        source_paths = [path for path in target_paths if path.suffix in SOURCE_EXTENSIONS]
         findings: list[dict[str, Any]] = []
         commands: list[dict[str, Any]] = []
         skipped_tools: list[dict[str, str]] = []
 
-        python_paths = [
-            path for path in source_paths if path.suffix in PYTHON_EXTENSIONS]
+        python_paths = [path for path in source_paths if path.suffix in PYTHON_EXTENSIONS]
         for path in python_paths:
             command, finding = self._compile_python_syntax(path)
             commands.append(command)
@@ -743,9 +728,7 @@ class CognitiveRuntime:
                     "status": "error",
                     "error": f"Не удалось определить файлы для security audit: {exc}",
                 }
-        source_paths = [
-            path for path in target_paths if path.suffix.lower() in SOURCE_EXTENSIONS
-        ]
+        source_paths = [path for path in target_paths if path.suffix.lower() in SOURCE_EXTENSIONS]
         bounded_timeout = max(1, min(int(timeout_seconds), 300))
         commands: list[dict[str, Any]] = []
         skipped_tools: list[dict[str, str]] = []
@@ -892,8 +875,7 @@ class CognitiveRuntime:
     def _parse_py_compile_error(self, path: Path, stderr: str) -> dict[str, Any]:
         line_match = re.search(r'File "[^"]+", line (\d+)', stderr)
         line = int(line_match.group(1)) if line_match else None
-        message = stderr.strip().splitlines(
-        )[-1] if stderr.strip() else "Python syntax error"
+        message = stderr.strip().splitlines()[-1] if stderr.strip() else "Python syntax error"
         return {
             "source": "py_compile",
             "severity": "error",
@@ -914,18 +896,14 @@ class CognitiveRuntime:
             return []
         pyright = shutil.which("pyright")
         if not pyright:
-            skipped_tools.append(
-                {"tool": "pyright", "reason": "binary_not_found"})
+            skipped_tools.append({"tool": "pyright", "reason": "binary_not_found"})
             return []
 
-        command = [pyright, "--outputjson", *
-                   [str(path) for path in python_paths]]
-        result = self._run_process(
-            command, repo_path, timeout_seconds=timeout_seconds)
+        command = [pyright, "--outputjson", *[str(path) for path in python_paths]]
+        result = self._run_process(command, repo_path, timeout_seconds=timeout_seconds)
         commands.append(self._summarize_command("pyright", result))
         try:
-            payload = cast(dict[str, Any], json.loads(
-                result.get("stdout", "") or "{}"))
+            payload = cast(dict[str, Any], json.loads(result.get("stdout", "") or "{}"))
         except json.JSONDecodeError:
             return [self._command_failure_finding("pyright", result)]
 
@@ -959,8 +937,7 @@ class CognitiveRuntime:
             return []
         command_prefix = self._tool_command("ruff", "ruff")
         if not command_prefix:
-            skipped_tools.append(
-                {"tool": "ruff", "reason": "binary_or_module_not_found"})
+            skipped_tools.append({"tool": "ruff", "reason": "binary_or_module_not_found"})
             return []
 
         command = [
@@ -970,8 +947,7 @@ class CognitiveRuntime:
             "json",
             *[str(path) for path in python_paths],
         ]
-        result = self._run_process(
-            command, repo_path, timeout_seconds=timeout_seconds)
+        result = self._run_process(command, repo_path, timeout_seconds=timeout_seconds)
         commands.append(self._summarize_command("ruff", result))
         findings = self._parse_ruff(result.get("stdout", ""))
         if not findings and self._command_failed(result):
@@ -1017,8 +993,7 @@ class CognitiveRuntime:
             skipped_tools.append({"tool": "tsc", "reason": "binary_not_found"})
             return []
         if not (repo_path / "tsconfig.json").exists():
-            skipped_tools.append(
-                {"tool": "tsc", "reason": "tsconfig_not_found"})
+            skipped_tools.append({"tool": "tsc", "reason": "tsconfig_not_found"})
             return []
 
         result = self._run_process(
@@ -1027,11 +1002,9 @@ class CognitiveRuntime:
             timeout_seconds=timeout_seconds,
         )
         commands.append(self._summarize_command("tsc", result))
-        output = "\n".join(
-            [result.get("stdout", ""), result.get("stderr", "")])
+        output = "\n".join([result.get("stdout", ""), result.get("stderr", "")])
         findings: list[dict[str, Any]] = []
-        pattern = re.compile(
-            r"(.+)\((\d+),(\d+)\): (error|warning) (TS\d+): (.+)")
+        pattern = re.compile(r"(.+)\((\d+),(\d+)\): (error|warning) (TS\d+): (.+)")
         for line in output.splitlines():
             match = pattern.match(line.strip())
             if not match:
@@ -1064,12 +1037,10 @@ class CognitiveRuntime:
             return []
         cargo = shutil.which("cargo")
         if not cargo:
-            skipped_tools.append(
-                {"tool": "cargo check", "reason": "binary_not_found"})
+            skipped_tools.append({"tool": "cargo check", "reason": "binary_not_found"})
             return []
         if not (repo_path / "Cargo.toml").exists():
-            skipped_tools.append(
-                {"tool": "cargo check", "reason": "Cargo.toml_not_found"})
+            skipped_tools.append({"tool": "cargo check", "reason": "Cargo.toml_not_found"})
             return []
 
         result = self._run_process(
@@ -1088,8 +1059,7 @@ class CognitiveRuntime:
                 continue
             message = cast(dict[str, Any], payload.get("message", {}))
             spans = cast(list[dict[str, Any]], message.get("spans") or [{}])
-            primary = next(
-                (span for span in spans if span.get("is_primary")), spans[0])
+            primary = next((span for span in spans if span.get("is_primary")), spans[0])
             file_name = str(primary.get("file_name", ""))
             findings.append(
                 {
@@ -1103,8 +1073,7 @@ class CognitiveRuntime:
                 }
             )
         if not findings and self._command_failed(result):
-            findings.append(self._command_failure_finding(
-                "cargo check", result))
+            findings.append(self._command_failure_finding("cargo check", result))
         return findings
 
     def _collect_security(
@@ -1116,39 +1085,30 @@ class CognitiveRuntime:
         timeout_seconds: int,
     ) -> list[dict[str, Any]]:
         findings: list[dict[str, Any]] = []
-        python_paths = [
-            path for path in source_paths if path.suffix in PYTHON_EXTENSIONS]
+        python_paths = [path for path in source_paths if path.suffix in PYTHON_EXTENSIONS]
         bandit = shutil.which("bandit")
         if python_paths and bandit:
-            command = [bandit, "-q", "-f", "json", *
-                       [str(path) for path in python_paths]]
-            result = self._run_process(
-                command, repo_path, timeout_seconds=timeout_seconds)
+            command = [bandit, "-q", "-f", "json", *[str(path) for path in python_paths]]
+            result = self._run_process(command, repo_path, timeout_seconds=timeout_seconds)
             commands.append(self._summarize_command("bandit", result))
             parsed = self._parse_bandit(result.get("stdout", ""))
             findings.extend(parsed)
             if not parsed and self._command_failed(result):
-                findings.append(
-                    self._command_failure_finding("bandit", result))
+                findings.append(self._command_failure_finding("bandit", result))
         elif python_paths:
-            skipped_tools.append(
-                {"tool": "bandit", "reason": "binary_not_found"})
+            skipped_tools.append({"tool": "bandit", "reason": "binary_not_found"})
 
         semgrep = shutil.which("semgrep")
         if semgrep:
-            command = [semgrep, "--config=auto", "--json",
-                       *[str(path) for path in source_paths]]
-            result = self._run_process(
-                command, repo_path, timeout_seconds=timeout_seconds)
+            command = [semgrep, "--config=auto", "--json", *[str(path) for path in source_paths]]
+            result = self._run_process(command, repo_path, timeout_seconds=timeout_seconds)
             commands.append(self._summarize_command("semgrep", result))
             parsed = self._parse_semgrep(result.get("stdout", ""))
             findings.extend(parsed)
             if not parsed and self._command_failed(result):
-                findings.append(
-                    self._command_failure_finding("semgrep", result))
+                findings.append(self._command_failure_finding("semgrep", result))
         elif source_paths:
-            skipped_tools.append(
-                {"tool": "semgrep", "reason": "binary_not_found"})
+            skipped_tools.append({"tool": "semgrep", "reason": "binary_not_found"})
         return findings
 
     def _parse_bandit(self, stdout: str) -> list[dict[str, Any]]:
@@ -1198,8 +1158,7 @@ class CognitiveRuntime:
             counts[str(finding.get("severity", "unknown")).lower()] += 1
 
         failing_levels = {"error", "critical", "high", "fatal"}
-        status = "failed" if any(counts[level]
-                                 for level in failing_levels) else "passed"
+        status = "failed" if any(counts[level] for level in failing_levels) else "passed"
         return {"status": status, "total": len(findings), "by_severity": dict(counts)}
 
     def preflight_analysis(
@@ -1219,8 +1178,7 @@ class CognitiveRuntime:
         resolved_target = target or self._infer_target_from_task(task)
         memory = self.project_memory_recall(query=task, repo=str(repo_path))
         impact = (
-            self.impact_analysis(
-                resolved_target, repo=str(repo_path), max_depth=2)
+            self.impact_analysis(resolved_target, repo=str(repo_path), max_depth=2)
             if resolved_target
             else {"warning": "Целевой символ не определен"}
         )
@@ -1332,8 +1290,7 @@ class CognitiveRuntime:
             timeout_seconds=timeout_seconds,
         )
         selected_commands = (
-            commands if commands is not None else self._default_validation_commands(
-                repo_path)
+            commands if commands is not None else self._default_validation_commands(repo_path)
         )
         command_results: list[dict[str, Any]] = []
         for command in selected_commands:

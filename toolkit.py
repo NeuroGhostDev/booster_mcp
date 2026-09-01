@@ -2,6 +2,7 @@
 Toolkit MCP — расширенные инструменты для работы со сложными проектами
 Grep, чтение с контекстом, git diff, запуск команд, анализ ошибок, конфиги, память, дубликаты
 """
+
 # ruff: noqa: E501
 # pyright: reportUnknownParameterType=false, reportMissingParameterType=false, reportMissingTypeArgument=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 import hashlib
@@ -29,8 +30,7 @@ class CodeToolkit:
         return dict(self.indexer.symbols)
 
     def _get_repo_memory_file(self, repo: str) -> Path:
-        p = Path(repo).expanduser().resolve() / \
-            ".agents" / "booster" / "memory.json"
+        p = Path(repo).expanduser().resolve() / ".agents" / "booster" / "memory.json"
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
 
@@ -51,8 +51,13 @@ class CodeToolkit:
 
     # === 1. Grep-поиск ===
 
-    def code_grep(self, pattern: str, file_pattern: str = "*",
-                  ignore_case: bool = True, max_results: int = 100) -> list[dict]:
+    def code_grep(
+        self,
+        pattern: str,
+        file_pattern: str = "*",
+        ignore_case: bool = True,
+        max_results: int = 100,
+    ) -> list[dict]:
         """Регулярный поиск по всем файлам проектов"""
         flags = re.IGNORECASE if ignore_case else 0
         try:
@@ -79,12 +84,14 @@ class CodeToolkit:
                     for line_num, line in enumerate(lines, 1):
                         matches = regex.findall(line)
                         if matches:
-                            results.append({
-                                "file": str(file),
-                                "line": line_num,
-                                "content": line.strip()[:200],
-                                "matches": matches[:5]
-                            })
+                            results.append(
+                                {
+                                    "file": str(file),
+                                    "line": line_num,
+                                    "content": line.strip()[:200],
+                                    "matches": matches[:5],
+                                }
+                            )
                             if len(results) >= max_results:
                                 return results
                 except Exception:
@@ -94,8 +101,7 @@ class CodeToolkit:
 
     # === 2. Чтение с контекстом ===
 
-    def read_with_context(self, file: str, line: int,
-                          context: int = 20) -> dict:
+    def read_with_context(self, file: str, line: int, context: int = 20) -> dict:
         """Читает файл с ±N строк вокруг указанной"""
         file_path = Path(file)
         if not file_path.exists():
@@ -120,10 +126,9 @@ class CodeToolkit:
                 "context_start": start + 1,
                 "context_end": end,
                 "lines": [
-                    {"num": i + start + 1, "content": line}
-                    for i, line in enumerate(context_lines)
+                    {"num": i + start + 1, "content": line} for i, line in enumerate(context_lines)
                 ],
-                "total_lines": len(lines)
+                "total_lines": len(lines),
             }
         except Exception as e:
             return {"error": f"Ошибка чтения: {e}"}
@@ -145,18 +150,14 @@ class CodeToolkit:
                 "start": start,
                 "end": min(end, len(lines)),
                 "total_lines": len(lines),
-                "lines": [
-                    {"num": i + start, "content": line}
-                    for i, line in enumerate(selected)
-                ]
+                "lines": [{"num": i + start, "content": line} for i, line in enumerate(selected)],
             }
         except Exception as e:
             return {"error": f"Ошибка чтения: {e}"}
 
     # === 3. Git diff ===
 
-    def git_diff(self, path: str, commit: str = "HEAD",
-                 staged: bool = False) -> dict:
+    def git_diff(self, path: str, commit: str = "HEAD", staged: bool = False) -> dict:
         """Показывает изменения в файле/репозитории"""
         path_obj = Path(path)
         if not path_obj.exists():
@@ -184,15 +185,14 @@ class CodeToolkit:
                 rel_path = path_obj.relative_to(git_root)
                 cmd.extend(["--", str(rel_path)])
 
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
             return {
                 "path": str(path),
                 "commit": commit,
                 "staged": staged,
                 "diff": result.stdout,
-                "error": result.stderr if result.returncode != 0 else None
+                "error": result.stderr if result.returncode != 0 else None,
             }
         except subprocess.TimeoutExpired:
             return {"error": "Таймаут git diff"}
@@ -218,17 +218,18 @@ class CodeToolkit:
                 rel_path = path_obj.relative_to(git_root)
                 cmd.extend(["--", str(rel_path)])
 
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
             commits = []
             for line in result.stdout.strip().split("\n"):
                 if line:
                     parts = line.split(" ", 1)
-                    commits.append({
-                        "hash": parts[0] if parts else "",
-                        "message": parts[1] if len(parts) > 1 else ""
-                    })
+                    commits.append(
+                        {
+                            "hash": parts[0] if parts else "",
+                            "message": parts[1] if len(parts) > 1 else "",
+                        }
+                    )
 
             return {"commits": commits}
         except Exception as e:
@@ -236,11 +237,11 @@ class CodeToolkit:
 
     # === 4. Запуск команд ===
 
-    def run_command(self, cmd: str, cwd: str | None = None,
-                    timeout: int = 30000, shell: bool = True) -> dict:
+    def run_command(
+        self, cmd: str, cwd: str | None = None, timeout: int = 30000, shell: bool = True
+    ) -> dict:
         """Выполняет команду в песочнице"""
-        work_dir = Path(cwd) if cwd else Path(
-            self.repos[0]) if self.repos else Path.home()
+        work_dir = Path(cwd) if cwd else Path(self.repos[0]) if self.repos else Path.home()
 
         if not work_dir.exists():
             return {"error": f"Директория не найдена: {work_dir}"}
@@ -253,7 +254,7 @@ class CodeToolkit:
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                env={**os.environ, "PYTHONIOENCODING": "utf-8"}
+                env={**os.environ, "PYTHONIOENCODING": "utf-8"},
             )
 
             return {
@@ -261,7 +262,7 @@ class CodeToolkit:
                 "cwd": str(work_dir),
                 "returncode": result.returncode,
                 "stdout": result.stdout[:50000],  # Ограничение вывода
-                "stderr": result.stderr[:50000]
+                "stderr": result.stderr[:50000],
             }
         except subprocess.TimeoutExpired:
             return {"error": f"Таймаут команды ({timeout}мс)"}
@@ -270,13 +271,17 @@ class CodeToolkit:
 
     # === 5. Анализ ошибок ===
 
-    def analyze_error(self, error_text: str,
-                      symbols: Optional[list[str]] = None) -> dict:
+    def analyze_error(self, error_text: str, symbols: Optional[list[str]] = None) -> dict:
         """Ищет в коде потенциальные причины ошибки"""
         # Извлекаем ключевые слова из ошибки
-        keywords = re.findall(r'\b[A-Za-z_][A-Za-z0-9_]+\b', error_text)
-        keywords = [k for k in keywords if len(k) > 2 and k.lower() not in
-                    ['the', 'and', 'for', 'not', 'with', 'from', 'import', 'error', 'exception']]
+        keywords = re.findall(r"\b[A-Za-z_][A-Za-z0-9_]+\b", error_text)
+        keywords = [
+            k
+            for k in keywords
+            if len(k) > 2
+            and k.lower()
+            not in ["the", "and", "for", "not", "with", "from", "import", "error", "exception"]
+        ]
 
         # Ищем совпадения в символах
         matching_symbols = []
@@ -285,11 +290,9 @@ class CodeToolkit:
                 sym_name = sym.get("name", "")
                 for kw in keywords:
                     if kw.lower() in sym_name.lower():
-                        matching_symbols.append({
-                            "symbol": sym_name,
-                            "file": file_path,
-                            "line": sym.get("start", 0)
-                        })
+                        matching_symbols.append(
+                            {"symbol": sym_name, "file": file_path, "line": sym.get("start", 0)}
+                        )
 
         # Ищем текст ошибки в коде
         grep_results = []
@@ -310,7 +313,7 @@ class CodeToolkit:
             "keywords": keywords[:10],
             "matching_symbols": matching_symbols[:20],
             "code_matches": grep_results[:20],
-            "semantic_matches": semantic_results[:10]
+            "semantic_matches": semantic_results[:10],
         }
 
     # === 6. Поиск конфигов ===
@@ -329,19 +332,44 @@ class CodeToolkit:
 
         config_patterns = [
             # Файлы
-            ".env", ".env.local", ".env.production", ".env.development",
-            ".envrc", ".dockerenv",
-            "config.json", "config.yaml", "config.yml", "config.toml",
-            "settings.json", "settings.yaml", "settings.toml",
-            "settings.py", "config.py", "local_settings.py",
-            "docker-compose.yml", "docker-compose.yaml",
-            "Dockerfile", "Containerfile",
-            "pyproject.toml", "setup.py", "setup.cfg",
-            "package.json", "tsconfig.json", "webpack.config.js",
-            "Cargo.toml", "go.mod", "pom.xml", "build.gradle",
-            ".gitignore", ".dockerignore",
+            ".env",
+            ".env.local",
+            ".env.production",
+            ".env.development",
+            ".envrc",
+            ".dockerenv",
+            "config.json",
+            "config.yaml",
+            "config.yml",
+            "config.toml",
+            "settings.json",
+            "settings.yaml",
+            "settings.toml",
+            "settings.py",
+            "config.py",
+            "local_settings.py",
+            "docker-compose.yml",
+            "docker-compose.yaml",
+            "Dockerfile",
+            "Containerfile",
+            "pyproject.toml",
+            "setup.py",
+            "setup.cfg",
+            "package.json",
+            "tsconfig.json",
+            "webpack.config.js",
+            "Cargo.toml",
+            "go.mod",
+            "pom.xml",
+            "build.gradle",
+            ".gitignore",
+            ".dockerignore",
             # Расширения
-            "*.env", "*.ini", "*.cfg", "*.conf", "*.properties"
+            "*.env",
+            "*.ini",
+            "*.cfg",
+            "*.conf",
+            "*.properties",
         ]
 
         configs = []
@@ -379,16 +407,13 @@ class CodeToolkit:
             else:
                 grouped["other"].append(cfg)
 
-        return {
-            "repo": str(repo),
-            "total": len(configs),
-            "configs": dict(grouped)
-        }
+        return {"repo": str(repo), "total": len(configs), "configs": dict(grouped)}
 
     # === 7. Долгосрочная память ===
 
-    def project_memory(self, action: str, key: str,
-                       value: str | None = None, repo: str | None = None) -> dict:
+    def project_memory(
+        self, action: str, key: str, value: str | None = None, repo: str | None = None
+    ) -> dict:
         """Сохраняет/читает инсайты о проекте между сессиями"""
         if not repo and self.repos:
             repo = self.repos[0]
@@ -399,18 +424,11 @@ class CodeToolkit:
         repo_memory = self._load_repo_memory(repo)
 
         if action == "get":
-            return {
-                "key": key,
-                "value": repo_memory.get(key),
-                "repo": repo
-            }
+            return {"key": key, "value": repo_memory.get(key), "repo": repo}
         elif action == "set":
             if value is None:
                 return {"error": "Требуется value для set"}
-            repo_memory[key] = {
-                "value": value,
-                "updated": str(Path.home())
-            }
+            repo_memory[key] = {"value": value, "updated": str(Path.home())}
             self._save_repo_memory(repo, repo_memory)
             return {"key": key, "value": value, "repo": repo}
         elif action == "delete":
@@ -419,11 +437,7 @@ class CodeToolkit:
                 self._save_repo_memory(repo, repo_memory)
             return {"deleted": key, "repo": repo}
         elif action == "list":
-            return {
-                "repo": repo,
-                "keys": list(repo_memory.keys()),
-                "count": len(repo_memory)
-            }
+            return {"repo": repo, "keys": list(repo_memory.keys()), "count": len(repo_memory)}
         elif action == "clear":
             self._save_repo_memory(repo, {})
             return {"cleared": repo}
@@ -434,6 +448,7 @@ class CodeToolkit:
 
     def compare_symbols(self, symbol: str, file1: str, file2: str) -> dict:
         """Сравнивает реализацию символа в двух файлах"""
+
         def extract_symbol_content(file_path: str, sym_name: str) -> Optional[str]:
             path = Path(file_path)
             if not path.exists():
@@ -461,13 +476,15 @@ class CodeToolkit:
         if not content2:
             return {"error": f"Символ '{symbol}' не найден в {file2}"}
 
-        diff = list(unified_diff(
-            content1.split("\n"),
-            content2.split("\n"),
-            fromfile=file1,
-            tofile=file2,
-            lineterm=""
-        ))
+        diff = list(
+            unified_diff(
+                content1.split("\n"),
+                content2.split("\n"),
+                fromfile=file1,
+                tofile=file2,
+                lineterm="",
+            )
+        )
 
         return {
             "symbol": symbol,
@@ -475,25 +492,23 @@ class CodeToolkit:
             "file2": file2,
             "diff": "\n".join(diff),
             "lines1": len(content1.split("\n")),
-            "lines2": len(content2.split("\n"))
+            "lines2": len(content2.split("\n")),
         }
 
     # === 9. Поиск дубликатов ===
 
-    def find_duplicates(self, min_lines: int = 5,
-                        max_results: int = 50) -> list[dict]:
+    def find_duplicates(self, min_lines: int = 5, max_results: int = 50) -> list[dict]:
         """Ищет похожие блоки кода"""
         # Хэш для каждого блока N строк
         block_hashes = defaultdict(list)
 
         for file_path, _syms in self._symbols_snapshot().items():
             try:
-                content = Path(file_path).read_text(
-                    encoding="utf-8", errors="ignore")
+                content = Path(file_path).read_text(encoding="utf-8", errors="ignore")
                 lines = content.split("\n")
 
                 for i in range(len(lines) - min_lines + 1):
-                    block = "\n".join(lines[i:i + min_lines])
+                    block = "\n".join(lines[i : i + min_lines])
                     # Нормализация: убираем лишние пробелы
                     normalized = "\n".join(
                         line.strip() for line in block.split("\n") if line.strip()
@@ -503,11 +518,9 @@ class CodeToolkit:
                         continue
 
                     block_hash = hashlib.md5(normalized.encode()).hexdigest()
-                    block_hashes[block_hash].append({
-                        "file": file_path,
-                        "start_line": i,
-                        "content": block[:200]
-                    })
+                    block_hashes[block_hash].append(
+                        {"file": file_path, "start_line": i, "content": block[:200]}
+                    )
             except Exception:
                 continue
 
@@ -518,11 +531,9 @@ class CodeToolkit:
                 # Проверяем, что блоки из разных файлов или разных мест
                 unique_files = set(b["file"] for b in blocks)
                 if len(unique_files) > 1 or len(blocks) > 1:
-                    duplicates.append({
-                        "hash": hash_val,
-                        "min_lines": min_lines,
-                        "occurrences": blocks[:10]
-                    })
+                    duplicates.append(
+                        {"hash": hash_val, "min_lines": min_lines, "occurrences": blocks[:10]}
+                    )
 
                     if len(duplicates) >= max_results:
                         break
@@ -533,55 +544,54 @@ class CodeToolkit:
 
     from typing import Optional
 
-    def external_deps(self, symbol: Optional[str] = None,
-                      file: Optional[str] = None) -> dict:
+    def external_deps(self, symbol: Optional[str] = None, file: Optional[str] = None) -> dict:
         """Находит внешние API, БД, очереди, которые использует код"""
         external_patterns = {
             "http_calls": [
-                r'requests\.(get|post|put|delete|patch)\s*\(',
-                r'httpx\.(get|post|put|delete|patch)\s*\(',
-                r'urllib\.request\.',
-                r'fetch\s*\(',
-                r'axios\.(get|post|put|delete)\s*\(',
+                r"requests\.(get|post|put|delete|patch)\s*\(",
+                r"httpx\.(get|post|put|delete|patch)\s*\(",
+                r"urllib\.request\.",
+                r"fetch\s*\(",
+                r"axios\.(get|post|put|delete)\s*\(",
             ],
             "database": [
-                r'\.execute\s*\(',
-                r'\.query\s*\(',
-                r'\.find\s*\(',
-                r'\.insert\s*\(',
-                r'\.update\s*\(',
-                r'\.delete\s*\(',
-                r'SELECT|INSERT|UPDATE|DELETE|CREATE|DROP',
+                r"\.execute\s*\(",
+                r"\.query\s*\(",
+                r"\.find\s*\(",
+                r"\.insert\s*\(",
+                r"\.update\s*\(",
+                r"\.delete\s*\(",
+                r"SELECT|INSERT|UPDATE|DELETE|CREATE|DROP",
             ],
             "redis": [
-                r'redis\.',
-                r'\.set\s*\(',
-                r'\.get\s*\(',
-                r'\.expire\s*\(',
+                r"redis\.",
+                r"\.set\s*\(",
+                r"\.get\s*\(",
+                r"\.expire\s*\(",
             ],
             "kafka_rabbit": [
-                r'kafka\.',
-                r'pika\.',
-                r'rabbitmq\.',
-                r'\.publish\s*\(',
-                r'\.consume\s*\(',
+                r"kafka\.",
+                r"pika\.",
+                r"rabbitmq\.",
+                r"\.publish\s*\(",
+                r"\.consume\s*\(",
             ],
             "file_io": [
                 r'open\s*\([^)]+,\s*["\'][wb]+\s*["\']',
-                r'\.write\s*\(',
-                r'\.read\s*\(',
-                r'os\.path\.',
-                r'Path\s*\(',
+                r"\.write\s*\(",
+                r"\.read\s*\(",
+                r"os\.path\.",
+                r"Path\s*\(",
             ],
             "subprocess": [
-                r'subprocess\.',
-                r'os\.system\s*\(',
-                r'os\.popen\s*\(',
+                r"subprocess\.",
+                r"os\.system\s*\(",
+                r"os\.popen\s*\(",
             ],
             "logging": [
-                r'logger\.(info|debug|warning|error|critical)\s*\(',
-                r'logging\.(info|debug|warning|error|critical)\s*\(',
-                r'print\s*\(',
+                r"logger\.(info|debug|warning|error|critical)\s*\(",
+                r"logging\.(info|debug|warning|error|critical)\s*\(",
+                r"print\s*\(",
             ],
         }
 
@@ -604,29 +614,22 @@ class CodeToolkit:
 
         for file_path in files_to_search[:100]:  # Ограничение
             try:
-                content = Path(file_path).read_text(
-                    encoding="utf-8", errors="ignore")
+                content = Path(file_path).read_text(encoding="utf-8", errors="ignore")
 
                 for category, patterns in external_patterns.items():
                     for pattern in patterns:
                         matches = re.findall(pattern, content, re.IGNORECASE)
                         if matches:
-                            results[category].append({
-                                "file": file_path,
-                                "pattern": pattern,
-                                "matches": len(matches)
-                            })
+                            results[category].append(
+                                {"file": file_path, "pattern": pattern, "matches": len(matches)}
+                            )
             except Exception:
                 continue
 
         # Фильтруем пустые категории
         results = {k: v for k, v in results.items() if v}
 
-        return {
-            "symbol": symbol,
-            "file": file,
-            "external_dependencies": results
-        }
+        return {"symbol": symbol, "file": file, "external_dependencies": results}
 
 
 def setup_toolkit_tools(mcp: Any, indexer: Any, repos: list[str]) -> "CodeToolkit":
@@ -634,8 +637,9 @@ def setup_toolkit_tools(mcp: Any, indexer: Any, repos: list[str]) -> "CodeToolki
     toolkit = CodeToolkit(indexer, repos)
 
     @mcp.tool()
-    def code_grep(pattern: str, file_pattern: str = "*",
-                  ignore_case: bool = True, max_results: int = 100):
+    def code_grep(
+        pattern: str, file_pattern: str = "*", ignore_case: bool = True, max_results: int = 100
+    ):
         """Регулярный поиск по всем файлам проектов"""
         return toolkit.code_grep(pattern, file_pattern, ignore_case, max_results)
 

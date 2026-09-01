@@ -15,12 +15,9 @@ def make_runtime(tmp_path: Path) -> CognitiveRuntime:
     controller = tmp_path / "controller.py"
     service = tmp_path / "service.py"
     repository = tmp_path / "repository.py"
-    controller.write_text(
-        "def controller():\n    return service()\n", encoding="utf-8")
-    service.write_text(
-        "def service():\n    return repository()\n", encoding="utf-8")
-    repository.write_text(
-        "def repository():\n    return 1\n", encoding="utf-8")
+    controller.write_text("def controller():\n    return service()\n", encoding="utf-8")
+    service.write_text("def service():\n    return repository()\n", encoding="utf-8")
+    repository.write_text("def repository():\n    return 1\n", encoding="utf-8")
 
     graphs: Any = Graphs()
     graphs.add_call(str(controller), "controller", "service")
@@ -32,13 +29,11 @@ def make_runtime(tmp_path: Path) -> CognitiveRuntime:
         graphs=graphs,
         symbols={
             str(controller): [
-                {"name": "controller", "start": 0,
-                    "end": 1, "file": str(controller)}
+                {"name": "controller", "start": 0, "end": 1, "file": str(controller)}
             ],
             str(service): [{"name": "service", "start": 0, "end": 1, "file": str(service)}],
             str(repository): [
-                {"name": "repository", "start": 0,
-                    "end": 1, "file": str(repository)}
+                {"name": "repository", "start": 0, "end": 1, "file": str(repository)}
             ],
         },
     )
@@ -245,8 +240,7 @@ def test_collect_diagnostics_parses_ruff_findings(
         run_external=True,
     )
 
-    ruff_findings = [finding for finding in result["findings"]
-                     if finding["source"] == "ruff"]
+    ruff_findings = [finding for finding in result["findings"] if finding["source"] == "ruff"]
     assert result["summary"]["status"] == "failed"
     assert ruff_findings[0]["severity"] == "error"
     assert ruff_findings[0]["rule"] == "F821"
@@ -255,10 +249,8 @@ def test_collect_diagnostics_parses_ruff_findings(
 @pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
 def test_git_intelligence_reads_file_history(tmp_path: Path):
     runtime = make_runtime(tmp_path)
-    subprocess.run(["git", "init"], cwd=tmp_path,
-                   check=True, capture_output=True)
-    subprocess.run(["git", "add", "."], cwd=tmp_path,
-                   check=True, capture_output=True)
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
         [
             "git",

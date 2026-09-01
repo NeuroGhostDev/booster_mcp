@@ -23,15 +23,13 @@ def test_index_job_manager_returns_before_slow_worker_and_supports_cancel() -> N
         manager.finish(repo, job_id, "completed")
 
     started_at = time.perf_counter()
-    job, was_started = manager.start(
-        "repo", reason="test", task_id=None, worker=worker
-    )
+    job, was_started = manager.start("repo", reason="test", task_id=None, worker=worker)
     elapsed = time.perf_counter() - started_at
 
     assert was_started is True
     assert elapsed < 0.25
     assert started.wait(1)
-    assert manager.get(job_id=job["job_id"]) ["phase"] == "embed"
+    assert manager.get(job_id=job["job_id"])["phase"] == "embed"
 
     cancelled = manager.cancel(str(job["job_id"]))
     assert cancelled is not None
@@ -51,12 +49,8 @@ def test_index_job_manager_coalesces_duplicate_requests() -> None:
         release.wait(1)
         manager.finish(repo, job_id, "completed")
 
-    first, first_started = manager.start(
-        "repo", reason="first", task_id=None, worker=worker
-    )
-    second, second_started = manager.start(
-        "repo", reason="second", task_id="task-2", worker=worker
-    )
+    first, first_started = manager.start("repo", reason="first", task_id=None, worker=worker)
+    second, second_started = manager.start("repo", reason="second", task_id="task-2", worker=worker)
 
     assert first_started is True
     assert second_started is False

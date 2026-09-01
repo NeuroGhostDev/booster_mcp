@@ -109,6 +109,101 @@ The core server provides:
 - `booster control`, a cross-platform control surface for MCP clients, scan
   settings, diagnostics, and launcher management.
 
+## Booster Observatory / WebMCP
+
+Booster Observatory is the read-only browser surface for the same Booster
+repository world model. It connects the existing `RepoIndexer`, graphs, git
+intelligence, diagnostics, snapshots, and Code City to a human workspace and a
+native WebMCP agent without adding a second index or an MCP proxy.
+
+### Run Locally
+
+```bash
+booster web --project .
+```
+
+The gateway is same-origin and read-only. For a browser-ready bundle that does
+not reindex or download an embedding model at startup:
+
+```bash
+booster web prepare-demo --project .
+booster web --mode demo --project .
+```
+
+For a container build, use [`Dockerfile.observatory`](Dockerfile.observatory).
+It prepares the bundle during the image build and starts only the read-only demo
+gateway at runtime.
+
+The prepared `demo/` bundle contains the manifest, portable Code City, bounded
+architecture, precomputed diagnostics and history, real immutable snapshots, and
+a JSON+FAISS state loaded into the existing `RepoIndexer`. When the source has a
+real parent commit, the bundle also includes a deterministic baseline/current
+snapshot pair; no history or diff evidence is fabricated.
+
+### WebMCP Tools
+
+The page registers these read-only tools when `document.modelContext` exists:
+
+```text
+booster_inspect_architecture
+booster_search_code
+booster_focus_symbol
+booster_trace_impact
+booster_explain_history
+booster_show_diagnostics
+booster_find_related_tests
+booster_compare_snapshots
+```
+
+After a human selects a building, contextual tools are registered for that
+selected file. A new selection aborts the old context and registers a fresh one.
+If WebMCP is unavailable, the Code City and normal UI continue to work.
+The Share state control encodes only the allowlisted repository ID, relative file,
+mode, and snapshot IDs in the URL; no local root path is serialized.
+
+### Shared State and Security
+
+Human clicks and agent actions update one browser Workspace Store. Agent results
+are rendered with `textContent`, repository IDs resolve through an allowlist,
+and repository-relative paths are containment-checked. The public gateway has
+no shell, mutation, cloning, arbitrary process, wildcard CORS, or client-supplied
+validation-command surface. It applies four concurrent analysis slots, a ten
+second operation deadline, and a per-client sliding-window rate limit.
+Read-only search, impact, history, and snapshot comparisons are cached only for
+their current `generation_id`; a new generation clears browser highlights and
+stale analysis before the city reloads.
+
+### API and Verification
+
+Read-only endpoints include `/api/v1/status`, `/api/v1/search`,
+`/api/v1/symbol/focus`, `/api/v1/impact`, `/api/v1/history`,
+`/api/v1/diagnostics`, `/api/v1/related-tests`, `/api/v1/snapshots`,
+`/api/v1/snapshots/compare`, and `/api/v1/architecture`.
+
+```bash
+uv run pytest -q
+uv run pytest tests/webmcp/browser/test_browser.py -q
+node --experimental-default-type=module --test tests/webmcp/browser/webmcp_modules.test.mjs
+uv run ruff check .
+uv build --wheel
+uv sync --locked --extra security
+uv run bandit -r booster_web indexer.py vector_index.py repository_lifecycle.py watcher.py city_server.py -q
+```
+
+For the final WebMCP check, open the running URL in ChatGPT's in-app browser or
+in Chrome with WebMCP enabled. Confirm that the agent sees the tools, invokes
+`booster_focus_symbol`, and that the selected building and Agent Activity change.
+Fake `document.modelContext` tests validate automation only and do not replace
+this real-browser check.
+
+### Existing vs Challenge Additions
+
+Existing before the WebMCP Challenge: the Booster MCP server, repository
+indexing, graphs, Cognitive Runtime, git intelligence, diagnostics, snapshots,
+and the Code City renderer. Built for the WebMCP Challenge: `booster_web/`, the
+same-origin facade/API, Workspace Store, native registry, browser tools, demo
+bundle preparation, and browser integration tests.
+
 ### Booster Home Runtime
 
 Home is an optional local data plane. It keeps the MCP control plane intact and
@@ -718,7 +813,7 @@ booster expand --profile deep
 uv lock --check
 uv run python -m pytest tests -q
 uv run ruff check .
-uv run python -m compileall -q booster_home indexing_jobs.py server.py
+uv run python -m compileall -q booster_home booster_web indexing_jobs.py server.py vector_index.py
 uv build
 ```
 

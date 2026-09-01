@@ -147,3 +147,51 @@ complete.
 - known hard-budget violations fail closed;
 - binary checkpoints are metadata-only and are never read into model context;
 - API keys and auth tokens are redacted from logs, telemetry, status, and errors.
+
+## Booster Observatory Read-only API
+
+The Observatory gateway is same-origin and accepts logical `repo_id` values from
+its allowlist. It never accepts a repository root path from the browser.
+
+```text
+GET  /api/v1/status
+POST /api/v1/architecture
+POST /api/v1/search
+POST /api/v1/symbol/focus
+POST /api/v1/impact
+POST /api/v1/history
+POST /api/v1/diagnostics
+POST /api/v1/related-tests
+GET  /api/v1/snapshots
+POST /api/v1/snapshots/compare
+GET  /api/v1/city
+GET  /api/v1/city/html
+```
+
+`GET /api/v1/city` returns normalized `buildings`, `connections`, `districts`,
+and `metrics` data. `GET /api/v1/city/html` serves the interactive Code City
+artifact.
+
+Operation responses use `{ok, request_id, repo, result, ui, meta}`. Errors are
+normalized to `REPO_NOT_FOUND`, `SYMBOL_NOT_FOUND`, `FILE_NOT_FOUND`,
+`SNAPSHOT_NOT_FOUND`, `INDEX_NOT_READY`, `INVALID_ARGUMENT`, `RATE_LIMITED`,
+`TIMEOUT`, or `INTERNAL_ERROR`; tracebacks are never returned.
+
+The gateway applies four concurrent analysis slots, a ten-second deadline, and a
+per-client sliding-window rate limit. Search, impact, history, and snapshot
+comparison results are cached only under the current `(repo_id, generation_id,
+operation, normalized_args)` key. A generation change invalidates stale browser
+state and causes Code City to reload.
+
+## Demo Build
+
+```bash
+booster web prepare-demo --project .
+booster web --mode demo --project .
+```
+
+`prepare-demo` may perform the expensive build-time indexing, history collection,
+and snapshot materialization from real repository evidence. Demo startup loads
+the prepared state into the existing indexer, consumes prepared diagnostics and
+history, and does not reindex, invoke Git, or download an embedding model.
+Browser-facing demo actions remain read-only.

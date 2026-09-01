@@ -143,6 +143,26 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Print a machine-readable summary.",
     )
 
+    web = subcommands.add_parser(
+        "web",
+        help="Run the read-only Booster Observatory web gateway.",
+        description="Serve the browser workspace over the shared Booster runtime.",
+    )
+    web.add_argument("--project", default=".", help="Known repository directory.")
+    web.add_argument("--host", default="127.0.0.1", help="Bind address.")
+    web.add_argument("--port", type=_positive_integer, default=8000, help="Bind port.")
+    web.add_argument("--mode", choices=("local", "demo"), default="local")
+    web.add_argument("--demo-dir", default=None, help="Prepared demo bundle directory.")
+    web_subcommands = web.add_subparsers(dest="web_command")
+    prepare_demo = web_subcommands.add_parser(
+        "prepare-demo", help="Build a portable read-only Observatory demo bundle."
+    )
+    prepare_demo.add_argument("--project", default=".", help="Repository to prepare.")
+    prepare_demo.add_argument("--demo-dir", default=None, help="Output demo directory.")
+    prepare_demo.add_argument(
+        "--timeout-seconds", type=float, default=900, help="Maximum indexing time."
+    )
+
     control = subcommands.add_parser(
         "control",
         help="Connect MCP clients and manage Booster settings.",
@@ -413,6 +433,37 @@ def _expand(arguments: argparse.Namespace) -> int:
             print("  No supported source definitions were found.", file=sys.stderr)
 
     return 0 if map_content else 1
+
+
+def _web(arguments: argparse.Namespace) -> int:
+    """Runs the same-origin read-only Observatory gateway."""
+    try:
+        if arguments.web_command == "prepare-demo":
+            from booster_web.demo import prepare_demo
+
+            result = prepare_demo(
+                arguments.project,
+                demo_dir=arguments.demo_dir,
+                timeout_seconds=arguments.timeout_seconds,
+            )
+            _print_json(result)
+            return 0
+
+        import uvicorn
+
+        from booster_web.app import create_app
+
+        application = create_app(
+            project=arguments.project,
+            mode=arguments.mode,
+            demo_dir=arguments.demo_dir,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    uvicorn.run(application, host=arguments.host, port=arguments.port)
+    return 0
 
 
 def _print_json(value: object) -> None:
@@ -733,9 +784,7 @@ def _home_status(config, as_json: bool) -> int:
     from booster_home.telemetry.logging import redact_endpoint
 
     auth_headers = (
-        {"Authorization": f"Bearer {config.home.auth_token}"}
-        if config.home.auth_token
-        else {}
+        {"Authorization": f"Bearer {config.home.auth_token}"} if config.home.auth_token else {}
     )
 
     payload = {
@@ -929,6 +978,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = parser.parse_args(argv)
     if arguments.command in {"expand", "expance"}:
         return _expand(arguments)
+    if arguments.command == "web":
+        return _web(arguments)
     if arguments.command == "control":
         return _control(arguments)
     if arguments.command == "home":

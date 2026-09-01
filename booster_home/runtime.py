@@ -216,10 +216,7 @@ class HomeRuntime:
                     self.discovery.list_models(),
                     timeout=min(10.0, self.config.upstream.read_timeout),
                 )
-                models = [
-                    redact_mapping(item.model_dump(mode="json"))
-                    for item in model_list.data
-                ]
+                models = [redact_mapping(item.model_dump(mode="json")) for item in model_list.data]
             except Exception:
                 models = []
         sessions = await self.session_store.list_sessions()

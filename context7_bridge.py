@@ -30,17 +30,15 @@ def setup_context7_bridge(mcp: Any, indexer: Any) -> None:
 
         # 2. Формируем список потенциальных библиотек
         libraries = []
-        if set(['.js', '.jsx', '.ts', '.tsx']) & exts:
-            libraries.extend(
-                ["react", "next.js", "typescript", "node.js", "express"])
-        if '.py' in exts:
-            libraries.extend(
-                ["fastapi", "django", "pytest", "pydantic", "sqlalchemy"])
-        if '.go' in exts:
+        if set([".js", ".jsx", ".ts", ".tsx"]) & exts:
+            libraries.extend(["react", "next.js", "typescript", "node.js", "express"])
+        if ".py" in exts:
+            libraries.extend(["fastapi", "django", "pytest", "pydantic", "sqlalchemy"])
+        if ".go" in exts:
             libraries.extend(["go", "gin", "gorm"])
-        if '.rs' in exts:
+        if ".rs" in exts:
             libraries.extend(["rust", "tokio", "serde"])
-        if '.java' in exts:
+        if ".java" in exts:
             libraries.extend(["java", "spring boot"])
 
         # Убираем дубликаты
@@ -55,5 +53,5 @@ def setup_context7_bridge(mcp: Any, indexer: Any) -> None:
                 "`[repo_path]/.agents/booster/stack_docs.md`."
             ),
             "recommended_libraries": libraries,
-            "detected_extensions": list(exts)
+            "detected_extensions": list(exts),
         }

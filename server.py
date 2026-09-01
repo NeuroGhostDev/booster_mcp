@@ -67,7 +67,12 @@ def on_index_callback(repo_path: str) -> None:
         # 1. Code City
         viz = CodeCityVisualizer(indexer)
         city_output = str(base_dir / "code_city.html")
-        viz.generate_visualization(repo_path, city_output)
+        city_data = viz.generate_city_layout(repo_path)
+        if "error" not in city_data:
+            viz.generate_html(city_data, city_output)
+            (base_dir / "city.json").write_text(
+                json.dumps(city_data, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
 
         # 2. Repo Map
         rm = RepoMap(root=repo_path, indexer=indexer)
@@ -203,21 +208,21 @@ def _registry_records_for_repos(repos: list[str]) -> list[dict[str, Any]]:
 
 
 def _index_state() -> dict[str, Any]:
-    stats = indexer.stats() if hasattr(indexer, "stats") else {
-        "files_indexed": len(indexer.symbols),
-        "vectors_in_faiss": indexer.vector.index.ntotal,
-    }
+    stats = (
+        indexer.stats()
+        if hasattr(indexer, "stats")
+        else {
+            "files_indexed": len(indexer.symbols),
+            "vectors_in_faiss": indexer.vector.index.ntotal,
+        }
+    )
     jobs = _index_jobs_snapshot()
     active = {
         repo: job
         for repo, job in jobs.items()
         if job.get("status") in {"queued", "running", "cancelling"}
     }
-    failed = {
-        repo: job
-        for repo, job in jobs.items()
-        if job.get("status") == "failed"
-    }
+    failed = {repo: job for repo, job in jobs.items() if job.get("status") == "failed"}
     return {"stats": stats, "jobs": jobs, "active": active, "failed": failed}
 
 
@@ -238,6 +243,7 @@ def _require_search_ready() -> None:
 def _ensure_watch_started() -> None:
     if not indexer.repos:
         return
+
     def on_repository_change(repo: str) -> None:
         if hasattr(indexer, "mark_stale"):
             indexer.mark_stale("filesystem_change", repo)
@@ -287,8 +293,9 @@ def _index_repo_job(repo: str, job_id: str, cancel_event: threading.Event) -> No
         on_index_callback(repo)
         with _index_lock:
             repo_maps[repo] = RepoMap(root=repo)
-            _ensure_watch_started()
             job_context = dict(_index_jobs.get(repo, {}))
+        if job_context.get("reason") != "prepare_demo":
+            _ensure_watch_started()
         snapshot = RepositorySnapshotStore(repo).capture(
             task_id=job_context.get("task_id"),
             reason=job_context.get("reason", "index_complete"),
@@ -368,12 +375,16 @@ def hybrid_search(query: str, k: int = 5) -> list[dict[str, Any]]:
 def find_symbol(name: str) -> dict[str, Any]:
     """Ищет функцию или класс по имени."""
     find_symbols = getattr(indexer, "find_symbols", None)
-    matches = find_symbols(name) if callable(find_symbols) else [
-        sym
-        for file_symbols in indexer.symbols.values()
-        for sym in file_symbols
-        if sym.get("name") == name
-    ]
+    matches = (
+        find_symbols(name)
+        if callable(find_symbols)
+        else [
+            sym
+            for file_symbols in indexer.symbols.values()
+            for sym in file_symbols
+            if sym.get("name") == name
+        ]
+    )
 
     if not matches:
         state = _index_state()
@@ -393,10 +404,14 @@ def find_symbol(name: str) -> dict[str, Any]:
 def repo_stats() -> dict[str, Any]:
     """Возвращает статистику проиндексированного репозитория."""
     repos = _sync_registered_repos()
-    stats = indexer.stats() if hasattr(indexer, "stats") else {
-        "files_indexed": len(indexer.symbols),
-        "vectors_in_faiss": indexer.vector.index.ntotal,
-    }
+    stats = (
+        indexer.stats()
+        if hasattr(indexer, "stats")
+        else {
+            "files_indexed": len(indexer.symbols),
+            "vectors_in_faiss": indexer.vector.index.ntotal,
+        }
+    )
     return {
         "repos": repos,
         **stats,
@@ -619,10 +634,7 @@ def task_complete(
         "accepted": True,
         "task_id": task_id,
         "repos": requested,
-        "indexing": {
-            repo: _index_jobs_snapshot().get(repo, {})
-            for repo in requested
-        },
+        "indexing": {repo: _index_jobs_snapshot().get(repo, {}) for repo in requested},
         "snapshot_policy": "immutable commit-bound history; previous snapshots are preserved",
     }
 
@@ -631,10 +643,14 @@ def task_complete(
 def list_repos() -> dict[str, Any]:
     """Возвращает список всех репозиториев под управлением MCP."""
     repos = _sync_registered_repos()
-    stats = indexer.stats() if hasattr(indexer, "stats") else {
-        "files_indexed": len(indexer.symbols),
-        "vectors_in_faiss": indexer.vector.index.ntotal,
-    }
+    stats = (
+        indexer.stats()
+        if hasattr(indexer, "stats")
+        else {
+            "files_indexed": len(indexer.symbols),
+            "vectors_in_faiss": indexer.vector.index.ntotal,
+        }
+    )
     return {
         "repos": repos,
         "total_files": stats["files_indexed"],

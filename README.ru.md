@@ -129,6 +129,75 @@ generation ID и stale state. Пока строится новая generation, r
 Giant-модули не исключаются, но не могут вытеснить frontend, control plane,
 entrypoints и contracts из bounded architecture map.
 
+## Booster Observatory и WebMCP
+
+Booster Observatory — read-only browser surface над той же repository world
+model. Он переиспользует существующие `RepoIndexer`, graphs, git intelligence,
+diagnostics, snapshots и Code City, не создавая второй индекс и MCP proxy.
+
+Локальный запуск:
+
+```bash
+booster web --project .
+```
+
+Подготовка demo bundle, который стартует без reindex и embedding model:
+
+```bash
+booster web prepare-demo --project .
+booster web --mode demo --project .
+```
+
+Для container deployment используйте [`Dockerfile.observatory`](Dockerfile.observatory):
+bundle создаётся во время image build, а runtime запускает только read-only gateway.
+
+В bundle входят manifest, portable Code City, architecture, precomputed
+diagnostics/history, реальные immutable snapshots и JSON+FAISS state,
+загружаемый в существующий `RepoIndexer`. При наличии настоящего parent commit
+создаётся deterministic baseline/current pair без выдумывания history или diff evidence.
+
+Native read-only tools:
+
+```text
+booster_inspect_architecture
+booster_search_code
+booster_focus_symbol
+booster_trace_impact
+booster_explain_history
+booster_show_diagnostics
+booster_find_related_tests
+booster_compare_snapshots
+```
+
+Human и agent используют один Workspace Store. При смене выбранного файла старый
+contextual controller abort-ится и регистрируется новый. Если WebMCP отсутствует,
+обычный UI и Code City продолжают работать.
+Кнопка Share state кодирует в URL только allowlisted repository ID, relative file,
+mode и snapshot IDs; локальный root path никогда не сериализуется.
+
+Gateway same-origin и read-only: `repo_id` проходит allowlist, paths проверяются
+на containment, repository text выводится через `textContent`. Shell, mutation,
+cloning, arbitrary process, wildcard CORS и client validation commands не
+экспонируются. Есть четыре concurrent analysis slots, timeout 10 секунд и
+sliding-window rate limit. Read-only search/impact/history/snapshot compare
+кэшируются только внутри текущего `generation_id`; новая generation очищает
+устаревшие highlights и analysis.
+
+Проверка:
+
+```bash
+uv run pytest -q
+uv run pytest tests/webmcp/browser/test_browser.py -q
+node --experimental-default-type=module --test tests/webmcp/browser/webmcp_modules.test.mjs
+uv run ruff check .
+uv build --wheel
+uv sync --locked --extra security
+uv run bandit -r booster_web indexer.py vector_index.py repository_lifecycle.py watcher.py city_server.py -q
+```
+
+Automated fake `document.modelContext` не заменяет финальную проверку в ChatGPT
+in-app browser и Chrome с включённым WebMCP.
+
 ## Booster Home и Nemotron
 
 Home — локальный OpenAI-compatible gateway между coding agent и inference
@@ -165,7 +234,7 @@ booster home --base-url http://127.0.0.1:1234/v1 \
 uv lock --check
 uv run python -m pytest tests -q
 uv run ruff check .
-uv run python -m compileall -q booster_home indexing_jobs.py server.py
+uv run python -m compileall -q booster_home booster_web indexing_jobs.py server.py vector_index.py
 uv build
 ```
 

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Booster Observatory</title>
+    <link rel="stylesheet" href="/static/app.css">
+  </head>
+  <body>
+    <header>
+      <h1>Booster Observatory</h1>
+      <div class="status-strip" aria-label="Runtime status">
+        <span>Repo <strong id="repo-id">-</strong></span>
+        <span>Generation <strong id="generation-id">-</strong></span>
+        <span>Commit <strong id="commit-id">-</strong></span>
+        <span>WebMCP <strong id="webmcp-status" data-status="unknown">DETECTING</strong></span>
+        <span>Context <strong id="contextual-status" data-status="idle">IDLE</strong></span>
+        <span>Index <strong id="index-status">UNKNOWN</strong></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel city-panel" aria-labelledby="city-heading">
+        <h2 id="city-heading">Code City</h2>
+        <p id="city-status" class="hint">Waiting for repository status</p>
+        <iframe id="city-frame" title="Booster Code City"></iframe>
+      </section>
+
+      <aside class="panel" aria-labelledby="controls-heading">
+        <h2 id="controls-heading">Workspace</h2>
+        <p class="hint">Human and WebMCP actions share the same selection state.</p>
+        <button id="share-state" type="button">Share state</button>
+        <p id="share-status" class="hint" aria-live="polite"></p>
+        <form id="focus-form">
+          <label for="focus-symbol">Focus symbol</label>
+          <input id="focus-symbol" name="symbol" autocomplete="off" placeholder="full_index">
+          <button type="submit">Focus</button>
+        </form>
+        <form id="search-form">
+          <label for="search-query">Search code</label>
+          <input id="search-query" name="query" autocomplete="off" placeholder="repository indexing">
+          <button type="submit">Search</button>
+        </form>
+        <ol id="search-results" aria-label="Search results"></ol>
+        <form id="impact-form">
+          <label for="impact-target">Trace impact</label>
+          <input id="impact-target" name="target" autocomplete="off" placeholder="RepoIndexer">
+          <label for="impact-depth">Depth</label>
+          <input id="impact-depth" name="max_depth" type="number" min="1" max="4" value="3">
+          <button type="submit">Trace</button>
+        </form>
+        <section aria-labelledby="impact-heading">
+          <h2 id="impact-heading">Impact</h2>
+          <div>Target <strong id="impact-target-value">-</strong></div>
+          <div>Files <strong id="impact-files">0</strong></div>
+          <div>Callers <strong id="impact-callers">0</strong></div>
+          <div>Callees <strong id="impact-callees">0</strong></div>
+          <div>Tests <strong id="impact-tests">0</strong></div>
+        </section>
+        <section aria-labelledby="history-heading">
+          <h2 id="history-heading">History</h2>
+          <form id="history-form">
+            <label for="history-target">File or symbol</label>
+            <input id="history-target" name="target" autocomplete="off" placeholder="indexer.py">
+            <button type="submit">Explain</button>
+          </form>
+          <div>Commits <strong id="history-commits">0</strong></div>
+          <div>Blame <strong id="history-blame">0</strong></div>
+          <p id="history-hint" class="hint">-</p>
+          <ul id="history-list"></ul>
+        </section>
+        <section aria-labelledby="diagnostics-heading">
+          <h2 id="diagnostics-heading">Diagnostics</h2>
+          <form id="diagnostics-form">
+            <label for="diagnostics-paths">Files, comma separated</label>
+            <input id="diagnostics-paths" name="paths" autocomplete="off" placeholder="indexer.py">
+            <button type="submit">Inspect</button>
+          </form>
+          <p id="diagnostics-summary" class="hint">No diagnostics loaded</p>
+          <ul id="diagnostics-list"></ul>
+        </section>
+        <section aria-labelledby="related-tests-heading">
+          <h2 id="related-tests-heading">Related Tests</h2>
+          <form id="related-tests-form">
+            <label for="related-tests-target">Target</label>
+            <input id="related-tests-target" name="target" autocomplete="off" placeholder="full_index">
+            <button type="submit">Find tests</button>
+          </form>
+          <ul id="related-tests-list"></ul>
+        </section>
+        <section aria-labelledby="snapshots-heading">
+          <h2 id="snapshots-heading">Snapshots</h2>
+          <form id="snapshot-form">
+            <label for="snapshot-from">From</label>
+            <input id="snapshot-from" name="from" autocomplete="off" placeholder="snapshot-id">
+            <label for="snapshot-to">To</label>
+            <input id="snapshot-to" name="to" autocomplete="off" placeholder="snapshot-id">
+            <button type="submit">Compare</button>
+          </form>
+          <ul id="snapshot-list"></ul>
+          <p id="snapshot-summary" class="hint">No snapshot comparison loaded</p>
+          <ul id="snapshot-diff"></ul>
+        </section>
+        <section aria-labelledby="architecture-heading">
+          <h2 id="architecture-heading">Architecture</h2>
+          <pre id="architecture-map">No architecture overview loaded</pre>
+        </section>
+        <p id="app-error" role="alert"></p>
+      </aside>
+    </main>
+
+    <footer class="activity" aria-live="polite">
+      <h2>Agent Activity</h2>
+      <span class="activity-label">Tool</span><span id="activity-tool">No agent action</span><span id="activity-state" data-status="idle">idle</span>
+      <span class="activity-label">Symbol</span><span id="activity-symbol">-</span><span></span>
+      <span class="activity-label">Generation</span><span id="activity-generation">-</span><span></span>
+    </footer>
+
+    <script type="module" src="/static/app.js"></script>
+  </body>
+</html>

@@ -6,7 +6,7 @@ import hashlib
 import json
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 import threading
 from datetime import datetime, timezone
@@ -15,6 +15,7 @@ from typing import Any
 
 from file_lock import cross_process_file_lock
 
+# Git is invoked only with fixed, read-only arguments in RepositorySnapshotStore.
 REGISTRY_ENV = "BOOSTER_REPOSITORY_REGISTRY"
 SNAPSHOT_DIRECTORY = "snapshots"
 SNAPSHOT_ARTIFACTS = (
@@ -106,14 +107,13 @@ class RepositoryRegistry:
 
     def list_records(self) -> list[dict[str, Any]]:
         with self._lock:
-            with cross_process_file_lock(self._file_lock_path):
-                if not self.root.is_dir():
-                    return []
-                records = [
-                    record
-                    for path in sorted(self.root.glob("*.json"))
-                    if (record := self._read_record(path)) is not None
-                ]
+            if not self.root.is_dir():
+                return []
+            records = [
+                record
+                for path in sorted(self.root.glob("*.json"))
+                if (record := self._read_record(path)) is not None
+            ]
         return sorted(
             records,
             key=lambda record: (str(record.get("added_at_utc", "")), record["repository"]),
@@ -125,8 +125,7 @@ class RepositoryRegistry:
     def get(self, repo_path: str | Path) -> dict[str, Any] | None:
         normalized = self.normalize(repo_path)
         with self._lock:
-            with cross_process_file_lock(self._file_lock_path):
-                return self._read_record(self._record_path(normalized))
+            return self._read_record(self._record_path(normalized))
 
     def add(self, repo_path: str | Path) -> dict[str, Any]:
         normalized = self.normalize(repo_path)
@@ -171,17 +170,24 @@ class RepositoryRegistry:
 class RepositorySnapshotStore:
     """Keeps generated Booster artifacts immutable and points to the latest one."""
 
-    def __init__(self, repo_path: str | Path) -> None:
+    def __init__(self, repo_path: str | Path, artifacts_dir: str | Path | None = None) -> None:
         self.repo = Path(repo_path).expanduser().resolve()
-        self.artifacts_dir = self.repo / ".agents" / "booster"
+        self.artifacts_dir = (
+            Path(artifacts_dir).expanduser().resolve()
+            if artifacts_dir is not None
+            else self.repo / ".agents" / "booster"
+        )
         self.snapshots_dir = self.artifacts_dir / SNAPSHOT_DIRECTORY
         self._lock = threading.RLock()
         self._file_lock_path = self.artifacts_dir / ".snapshots.lock"
 
     def _git(self, *arguments: str) -> str | None:
+        git_executable = shutil.which("git")
+        if git_executable is None:
+            return None
         try:
-            result = subprocess.run(
-                ["git", "-C", str(self.repo), *arguments],
+            result = subprocess.run(  # nosec B603
+                [git_executable, "-C", str(self.repo), *arguments],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -294,34 +300,34 @@ class RepositorySnapshotStore:
 
     def latest(self) -> dict[str, Any] | None:
         with self._lock:
-            with cross_process_file_lock(self._file_lock_path):
-                path = self.artifacts_dir / "latest.json"
-                try:
-                    value = json.loads(path.read_text(encoding="utf-8"))
-                except (OSError, json.JSONDecodeError):
-                    return None
-                return value if isinstance(value, dict) else None
+            path = self.artifacts_dir / "latest.json"
+            try:
+                value = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                return None
+            return value if isinstance(value, dict) else None
 
     def list_snapshots(self, limit: int = 20) -> list[dict[str, Any]]:
         if limit <= 0:
             return []
         with self._lock:
-            with cross_process_file_lock(self._file_lock_path):
-                records: list[dict[str, Any]] = []
-                for path in sorted(
-                    self.snapshots_dir.glob("*/metadata.json"),
-                    key=lambda item: item.stat().st_mtime,
-                    reverse=True,
-                ):
-                    try:
-                        value = json.loads(path.read_text(encoding="utf-8"))
-                    except (OSError, json.JSONDecodeError):
-                        continue
-                    if isinstance(value, dict):
-                        records.append(value)
-                    if len(records) >= limit:
-                        break
-                return records
+            records: list[dict[str, Any]] = []
+            for path in sorted(
+                self.snapshots_dir.glob("*/metadata.json"),
+                key=lambda item: item.stat().st_mtime,
+                reverse=True,
+            ):
+                try:
+                    value = json.loads(path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    continue
+                if isinstance(value, dict):
+                    value = dict(value)
+                    value["snapshot_dir"] = str(path.parent.resolve())
+                    records.append(value)
+                if len(records) >= limit:
+                    break
+            return records
 
 
 __all__ = ["RepositoryRegistry", "RepositorySnapshotStore"]

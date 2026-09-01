@@ -2,6 +2,7 @@
 Code City Web UI — Веб-интерфейс для управления MCP Code Intelligence.
 Управление репозиториями, визуализация Code City, статистика.
 """
+
 # ruff: noqa: E501
 import json
 import logging
@@ -60,12 +61,24 @@ def ensure_watch_started(idx: RepoIndexer | None = None) -> None:
     watch_started = True
 
 
+def stop_watch() -> None:
+    """Stops the shared watcher for bounded build commands."""
+    global watch_started, watch_handle
+    if watch_handle is None:
+        watch_started = False
+        return
+    observer, _watcher = watch_handle
+    observer.stop()
+    observer.join(timeout=5)
+    watch_handle = None
+    watch_started = False
+
+
 def get_indexer() -> RepoIndexer:
     """Ленивая инициализация indexer (используется при самостоятельном запуске)."""
     global indexer
     if indexer is None:
-        initial_repos = [r.strip() for r in os.getenv(
-            "REPOS", "").split(",") if r.strip()]
+        initial_repos = [r.strip() for r in os.getenv("REPOS", "").split(",") if r.strip()]
         indexer = RepoIndexer(initial_repos)
         if initial_repos:
             indexer.full_index()
@@ -81,27 +94,27 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
     def send_json_response(self, data: Any, status: int = 200) -> None:
         """Отправляет JSON ответ."""
         self.send_response(status)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
-        self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
 
     def send_html_response(self, content: str, status: int = 200) -> None:
         """Отправляет HTML ответ."""
         self.send_response(status)
-        self.send_header('Content-Type', 'text/html; charset=utf-8')
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
-        self.wfile.write(content.encode('utf-8'))
+        self.wfile.write(content.encode("utf-8"))
 
     def do_OPTIONS(self) -> None:
         """CORS preflight."""
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
     def do_GET(self) -> None:
@@ -111,17 +124,17 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         query = parse_qs(parsed.query)
 
         # API endpoints
-        if path == '/api/repos':
+        if path == "/api/repos":
             self.handle_list_repos()
-        elif path == '/api/stats':
+        elif path == "/api/stats":
             self.handle_stats()
-        elif path == '/api/code_city':
-            self.handle_get_code_city(query.get('repo', [None])[0])
-        elif path == '/api/repo_map':
-            self.handle_get_repo_map(query.get('repo', [None])[0])
-        elif path == '/city':
-            self.handle_serve_code_city(query.get('repo', [None])[0])
-        elif path == '/':
+        elif path == "/api/code_city":
+            self.handle_get_code_city(query.get("repo", [None])[0])
+        elif path == "/api/repo_map":
+            self.handle_get_repo_map(query.get("repo", [None])[0])
+        elif path == "/city":
+            self.handle_serve_code_city(query.get("repo", [None])[0])
+        elif path == "/":
             self.handle_index()
         else:
             # Статические файлы
@@ -133,9 +146,8 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         path = parsed.path
 
         # Чтение тела запроса
-        content_length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(content_length).decode(
-            'utf-8') if content_length > 0 else '{}'
+        content_length = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
         try:
             loaded_body: Any = json.loads(body) if body else {}
         except json.JSONDecodeError:
@@ -147,16 +159,16 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
             data = {}
 
         # API endpoints
-        if path == '/api/repos/add':
-            self.handle_add_repo(data.get('path', ''))
-        elif path == '/api/repos/remove':
-            self.handle_remove_repo(data.get('path', ''))
-        elif path == '/api/repos/reindex':
-            self.handle_reindex_repo(data.get('path', ''))
-        elif path == '/api/repos/generate_city':
-            self.handle_generate_city(data.get('repo', ''))
+        if path == "/api/repos/add":
+            self.handle_add_repo(data.get("path", ""))
+        elif path == "/api/repos/remove":
+            self.handle_remove_repo(data.get("path", ""))
+        elif path == "/api/repos/reindex":
+            self.handle_reindex_repo(data.get("path", ""))
+        elif path == "/api/repos/generate_city":
+            self.handle_generate_city(data.get("repo", ""))
         else:
-            self.send_json_response({'error': 'Not found'}, 404)
+            self.send_json_response({"error": "Not found"}, 404)
 
     def handle_index(self) -> None:
         """Главная страница с UI."""
@@ -168,9 +180,9 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         idx = get_indexer()
         stats = idx.stats()
         result: dict[str, Any] = {
-            'repos': list(idx.repos),
-            'total_files': stats['files_indexed'],
-            'total_vectors': stats['vectors_in_faiss'],
+            "repos": list(idx.repos),
+            "total_files": stats["files_indexed"],
+            "total_vectors": stats["vectors_in_faiss"],
         }
         self.send_json_response(result)
 
@@ -180,10 +192,10 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         symbols = idx.symbols_snapshot()
         index_stats = idx.stats()
         stats: dict[str, Any] = {
-            'repos': [],
-            'total_files': index_stats['files_indexed'],
-            'total_vectors': index_stats['vectors_in_faiss'],
-            'total_functions': sum(len(syms) for syms in symbols.values()),
+            "repos": [],
+            "total_files": index_stats["files_indexed"],
+            "total_vectors": index_stats["vectors_in_faiss"],
+            "total_functions": sum(len(syms) for syms in symbols.values()),
         }
 
         # Группировка по репозиториям
@@ -198,11 +210,11 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
 
         for repo, files in repo_files.items():
             repo_stats: dict[str, Any] = {
-                'path': repo,
-                'files': len(files),
-                'has_city': _code_city_path(repo).exists(),
+                "path": repo,
+                "files": len(files),
+                "has_city": _code_city_path(repo).exists(),
             }
-            stats['repos'].append(repo_stats)
+            stats["repos"].append(repo_stats)
 
         self.send_json_response(stats)
 
@@ -210,7 +222,7 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         """Получить Code City для репозитория."""
         idx = get_indexer()
         if not idx.repos:
-            self.send_json_response({'error': 'Нет репозиториев'}, 400)
+            self.send_json_response({"error": "Нет репозиториев"}, 400)
             return
 
         if repo_path is None:
@@ -218,46 +230,45 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         else:
             repo_path = str(Path(repo_path).expanduser().resolve())
             if repo_path not in idx.repos:
-                self.send_json_response({'error': 'Репозиторий не зарегистрирован'}, 404)
+                self.send_json_response({"error": "Репозиторий не зарегистрирован"}, 404)
                 return
 
         city_file = _code_city_path(repo_path)
         if city_file.exists():
-            self.send_json_response({
-                'exists': True,
-                'path': str(city_file),
-                'url': f'/city?repo={quote(str(Path(repo_path).resolve()), safe="")}'
-            })
+            self.send_json_response(
+                {
+                    "exists": True,
+                    "path": str(city_file),
+                    "url": f'/city?repo={quote(str(Path(repo_path).resolve()), safe="")}',
+                }
+            )
         else:
-            self.send_json_response({
-                'exists': False,
-                'message': 'Code City ещё не сгенерирован'
-            })
+            self.send_json_response({"exists": False, "message": "Code City ещё не сгенерирован"})
 
     def handle_serve_code_city(self, repo_path: str | None) -> None:
         """Serves one registered Code City artifact without accepting paths."""
         idx = get_indexer()
         if not repo_path:
-            self.send_json_response({'error': 'Репозиторий не указан'}, 400)
+            self.send_json_response({"error": "Репозиторий не указан"}, 400)
             return
         normalized = str(Path(repo_path).expanduser().resolve())
         if normalized not in idx.repos:
-            self.send_json_response({'error': 'Репозиторий не зарегистрирован'}, 404)
+            self.send_json_response({"error": "Репозиторий не зарегистрирован"}, 404)
             return
         city_file = _code_city_path(normalized)
         if not city_file.is_file():
-            self.send_json_response({'error': 'Code City ещё не сгенерирован'}, 404)
+            self.send_json_response({"error": "Code City ещё не сгенерирован"}, 404)
             return
         try:
-            self.send_html_response(city_file.read_text(encoding='utf-8'))
+            self.send_html_response(city_file.read_text(encoding="utf-8"))
         except OSError as exc:
-            self.send_json_response({'error': str(exc)}, 500)
+            self.send_json_response({"error": str(exc)}, 500)
 
     def handle_get_repo_map(self, repo_path: str | None = None) -> None:
         """Получить текстовую карту репозитория."""
         idx = get_indexer()
         if not idx.repos:
-            self.send_json_response({'error': 'Нет репозиториев'}, 400)
+            self.send_json_response({"error": "Нет репозиториев"}, 400)
             return
 
         if repo_path is None:
@@ -265,7 +276,7 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         else:
             repo_path = str(Path(repo_path).expanduser().resolve())
             if repo_path not in idx.repos:
-                self.send_json_response({'error': 'Репозиторий не зарегистрирован'}, 404)
+                self.send_json_response({"error": "Репозиторий не зарегистрирован"}, 404)
                 return
 
         if repo_path not in repo_maps:
@@ -274,36 +285,30 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         repo_map = repo_maps[repo_path]
         map_content = str(cast(Any, repo_map).get_repo_map())
 
-        self.send_json_response({
-            'repo': repo_path,
-            'map': map_content
-        })
+        self.send_json_response({"repo": repo_path, "map": map_content})
 
     def handle_add_repo(self, repo_path: str) -> None:
         """Добавить репозиторий."""
         if not repo_path:
-            self.send_json_response({'error': 'Путь не указан'}, 400)
+            self.send_json_response({"error": "Путь не указан"}, 400)
             return
 
         idx = get_indexer()
         repo_dir = Path(repo_path).expanduser().resolve()
 
         if not repo_dir.exists():
-            self.send_json_response(
-                {'error': f'Путь не существует: {repo_dir}'}, 404)
+            self.send_json_response({"error": f"Путь не существует: {repo_dir}"}, 404)
             return
 
         if not repo_dir.is_dir():
-            self.send_json_response(
-                {'error': f'Это не директория: {repo_dir}'}, 400)
+            self.send_json_response({"error": f"Это не директория: {repo_dir}"}, 400)
             return
 
         repo_str = str(repo_dir)
         if repo_str in idx.repos:
-            self.send_json_response({
-                'warning': f'Репозиторий уже добавлен: {repo_str}',
-                'repos': idx.repos
-            })
+            self.send_json_response(
+                {"warning": f"Репозиторий уже добавлен: {repo_str}", "repos": idx.repos}
+            )
             return
 
         with idx.operation_lock:
@@ -311,12 +316,14 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         on_change = getattr(idx, "on_repository_change", None)
         if callable(on_change):
             on_change(repo_str)
-            self.send_json_response({
-                "accepted": True,
-                "repository": repo_str,
-                "indexing": True,
-                "repos": list(idx.repos),
-            })
+            self.send_json_response(
+                {
+                    "accepted": True,
+                    "repository": repo_str,
+                    "indexing": True,
+                    "repos": list(idx.repos),
+                }
+            )
             return
         idx.index_repo(repo_str)
 
@@ -335,39 +342,39 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
             city_error = type(exc).__name__
             logger.exception("Code City generation failed for %s", repo_str)
 
-        self.send_json_response({
-            'success': f'Добавлен репозиторий: {repo_str}',
-            'repos': list(idx.repos),
-            'files_indexed': idx.stats()['files_indexed'],
-            'code_city_generated': city_generated,
-            'code_city_error': city_error,
-        })
+        self.send_json_response(
+            {
+                "success": f"Добавлен репозиторий: {repo_str}",
+                "repos": list(idx.repos),
+                "files_indexed": idx.stats()["files_indexed"],
+                "code_city_generated": city_generated,
+                "code_city_error": city_error,
+            }
+        )
 
     def handle_remove_repo(self, repo_path: str) -> None:
         """Удалить репозиторий."""
         if not repo_path:
-            self.send_json_response({'error': 'Путь не указан'}, 400)
+            self.send_json_response({"error": "Путь не указан"}, 400)
             return
 
         idx = get_indexer()
         repo_str = str(Path(repo_path).expanduser().resolve())
 
         if repo_str not in idx.repos:
-            self.send_json_response(
-                {'error': f'Репозиторий не найден: {repo_str}'}, 404)
+            self.send_json_response({"error": f"Репозиторий не найден: {repo_str}"}, 404)
             return
 
         with idx.operation_lock:
             idx.repos.remove(repo_str)
-        self.send_json_response({
-            'success': f'Удалён репозиторий: {repo_str}',
-            'repos': list(idx.repos)
-        })
+        self.send_json_response(
+            {"success": f"Удалён репозиторий: {repo_str}", "repos": list(idx.repos)}
+        )
 
     def handle_reindex_repo(self, repo_path: str) -> None:
         """Переиндексировать репозиторий."""
         if not repo_path:
-            self.send_json_response({'error': 'Путь не указан'}, 400)
+            self.send_json_response({"error": "Путь не указан"}, 400)
             return
 
         idx = get_indexer()
@@ -375,18 +382,19 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         repo_str = str(repo_dir)
 
         if repo_str not in idx.repos:
-            self.send_json_response(
-                {'error': f'Репозиторий не в списке: {repo_str}'}, 404)
+            self.send_json_response({"error": f"Репозиторий не в списке: {repo_str}"}, 404)
             return
 
         on_change = getattr(idx, "on_repository_change", None)
         if callable(on_change):
             on_change(repo_str)
-            self.send_json_response({
-                "accepted": True,
-                "repository": repo_str,
-                "indexing": True,
-            })
+            self.send_json_response(
+                {
+                    "accepted": True,
+                    "repository": repo_str,
+                    "indexing": True,
+                }
+            )
             return
 
         # Legacy standalone Code City mode keeps the synchronous fallback.
@@ -405,19 +413,26 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
             city_error = type(exc).__name__
             logger.exception("Code City regeneration failed for %s", repo_str)
 
-        self.send_json_response({
-            'success': f'Переиндексирован: {repo_str}',
-            'files_in_repo': len([f for f in idx.symbols_snapshot()
-                                 if Path(f).resolve().is_relative_to(repo_dir)]),
-            'code_city_generated': city_generated,
-            'code_city_error': city_error,
-        })
+        self.send_json_response(
+            {
+                "success": f"Переиндексирован: {repo_str}",
+                "files_in_repo": len(
+                    [
+                        f
+                        for f in idx.symbols_snapshot()
+                        if Path(f).resolve().is_relative_to(repo_dir)
+                    ]
+                ),
+                "code_city_generated": city_generated,
+                "code_city_error": city_error,
+            }
+        )
 
     def handle_generate_city(self, repo_path: str) -> None:
         """Сгенерировать Code City."""
         idx = get_indexer()
         if not idx.repos:
-            self.send_json_response({'error': 'Нет репозиториев'}, 400)
+            self.send_json_response({"error": "Нет репозиториев"}, 400)
             return
 
         if not repo_path:
@@ -425,30 +440,31 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         else:
             repo_path = str(Path(repo_path).expanduser().resolve())
             if repo_path not in idx.repos:
-                self.send_json_response({'error': 'Репозиторий не зарегистрирован'}, 404)
+                self.send_json_response({"error": "Репозиторий не зарегистрирован"}, 404)
                 return
 
         try:
             viz = CodeCityVisualizer(idx)
             city_output = str(_code_city_path(repo_path))
-            result = cast(dict[str, Any], viz.generate_visualization(
-                repo_path, city_output))
+            result = cast(dict[str, Any], viz.generate_visualization(repo_path, city_output))
 
-            self.send_json_response({
-                'success': True,
-                'path': city_output,
-                'stats': {
-                    'buildings': result.get('buildings', 0),
-                    'connections': result.get('connections', 0),
-                    'districts': result.get('districts', 0),
+            self.send_json_response(
+                {
+                    "success": True,
+                    "path": city_output,
+                    "stats": {
+                        "buildings": result.get("buildings", 0),
+                        "connections": result.get("connections", 0),
+                        "districts": result.get("districts", 0),
+                    },
                 }
-            })
+            )
         except Exception as e:
-            self.send_json_response({'error': str(e)}, 500)
+            self.send_json_response({"error": str(e)}, 500)
 
     def generate_main_ui(self) -> str:
         """Генерирует главную страницу UI."""
-        return '''<!DOCTYPE html>
+        return """<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -1012,7 +1028,7 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
     </script>
 </body>
 </html>
-'''
+"""
 
     def log_message(self, format: str, *args: Any) -> None:
         """Подавляет логирование."""
@@ -1033,7 +1049,8 @@ def run_server(port: int = 8080, open_browser: bool = True, host: str = "127.0.0
     url = f"http://localhost:{actual_port}"
 
     # Пишем в stderr, чтобы не мешать MCP-протоколу на stdout
-    print(f"""
+    print(
+        f"""
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║   🏙️  Code City MCP Web UI запущен!                      ║
@@ -1049,11 +1066,12 @@ def run_server(port: int = 8080, open_browser: bool = True, host: str = "127.0.0
 ║   Нажми Ctrl+C для остановки                             ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
-    """, file=sys.stderr)
+    """,
+        file=sys.stderr,
+    )
 
     if open_browser:
-        threading.Thread(target=lambda: (
-            time.sleep(1), webbrowser.open(url))).start()
+        threading.Thread(target=lambda: (time.sleep(1), webbrowser.open(url))).start()
 
     try:
         httpd.serve_forever()
@@ -1067,8 +1085,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Code City MCP Web UI")
     parser.add_argument("--port", type=int, default=8080, help="Порт сервера")
-    parser.add_argument("--no-browser", action="store_true",
-                        help="Не открывать браузер автоматически")
+    parser.add_argument(
+        "--no-browser", action="store_true", help="Не открывать браузер автоматически"
+    )
     args = parser.parse_args()
 
     run_server(port=args.port, open_browser=not args.no_browser)

@@ -62,9 +62,9 @@ class ModelInfo(BaseModel):
             supports_streaming=bool(extras.get("supports_streaming", True)),
             supports_json_schema=bool(extras.get("supports_json_schema", False)),
             supports_responses=bool(extras.get("supports_responses", False)),
-            capabilities=set(capabilities)
-            if isinstance(capabilities, list | set | tuple)
-            else set(),
+            capabilities=(
+                set(capabilities) if isinstance(capabilities, list | set | tuple) else set()
+            ),
             source="upstream-metadata",
         )
 

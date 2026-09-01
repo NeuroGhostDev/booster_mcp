@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -19,8 +20,7 @@ def test_scanner_respects_ignore_rules_depth_and_size_budgets(tmp_path):
     write_source(tmp_path, "src/nested/deep.py", "def deep():\n    return 2\n")
     write_source(tmp_path, "src/large.py", "x = '" + "a" * 512 + "'\n")
     write_source(tmp_path, "ignored/skip.py", "def skip():\n    return 3\n")
-    write_source(tmp_path, "node_modules/package/index.js",
-                 "export const ignored = true;\n")
+    write_source(tmp_path, "node_modules/package/index.js", "export const ignored = true;\n")
     (tmp_path / ".boosterignore").write_text("ignored/**\n", encoding="utf-8")
 
     config = ScanConfig.for_profile("quick").with_overrides(
@@ -36,21 +36,22 @@ def test_scanner_respects_ignore_rules_depth_and_size_budgets(tmp_path):
     assert result.skipped["ignored_directory"] >= 2
     assert result.skipped["max_depth"] == 1
     assert result.skipped["max_file_bytes"] == 1
+    assert (
+        result.file_manifest["src/shallow.py"]["sha256"]
+        == hashlib.sha256((tmp_path / "src" / "shallow.py").read_bytes()).hexdigest()
+    )
 
 
 def test_cli_expand_writes_map_report_and_persistent_scan_config(tmp_path, capsys):
-    write_source(tmp_path, "src/sample.py",
-                 "def scan_me():\n    return True\n")
+    write_source(tmp_path, "src/sample.py", "def scan_me():\n    return True\n")
 
-    exit_code = cli_main(
-        ["expance", str(tmp_path), "--profile", "quick", "--json"])
+    exit_code = cli_main(["expance", str(tmp_path), "--profile", "quick", "--json"])
     result = json.loads(capsys.readouterr().out)
 
     assert exit_code == 0
     assert result["command"] == "expand"
     assert result["source_files"] == 1
-    assert Path(result["repo_map"]).read_text(
-        encoding="utf-8").find("scan_me") >= 0
+    assert Path(result["repo_map"]).read_text(encoding="utf-8").find("scan_me") >= 0
     assert Path(result["scan_report"]).is_file()
     assert Path(result["scan_config"]).is_file()
     assert ScanConfig.load(tmp_path).profile == "quick"

@@ -30,8 +30,7 @@ def test_watcher_respects_repository_scanner_ignore_rules(tmp_path: Path):
     source_file.parent.mkdir(parents=True)
     ignored_file.parent.mkdir(parents=True)
     source_file.write_text("def app():\n    return True\n", encoding="utf-8")
-    ignored_file.write_text(
-        "def dependency():\n    return True\n", encoding="utf-8")
+    ignored_file.write_text("def dependency():\n    return True\n", encoding="utf-8")
 
     indexer = FakeIndexer()
     watcher = RepoWatcher(indexer, [str(tmp_path)])

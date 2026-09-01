@@ -1560,6 +1560,67 @@ Security
 
 Не выполнять разрушительные операции без необходимости.
 
+# BOOSTER OBSERVATORY WEBMCP CONTRACT
+
+This repository contains a read-only Booster Observatory browser surface for the
+OpenAI WebMCP Challenge. Treat it as an additional application surface over the
+existing Booster world model, never as a second index or generic MCP proxy.
+
+The supported native tools are:
+
+```text
+booster_inspect_architecture
+booster_search_code
+booster_focus_symbol
+booster_trace_impact
+booster_explain_history
+booster_show_diagnostics
+booster_find_related_tests
+booster_compare_snapshots
+```
+
+Selected-file contextual tools are registered after human selection:
+
+```text
+booster_analyze_selected_file
+booster_history_of_selected_file
+```
+
+Hard web boundary rules:
+
+- call `document.modelContext.registerTool` directly when available;
+- keep human and agent actions in one Workspace Store;
+- use `BoosterFacade` and existing `RepoIndexer`, graphs, git intelligence,
+  diagnostics, snapshots, and RepoMap capabilities;
+- accept only logical `repo_id` and validated repository-relative paths;
+- keep the gateway same-origin and read-only;
+- never expose shell, arbitrary process, validation commands, repository mutation,
+  cloning, Git mutation, memory mutation, or wildcard CORS;
+- keep public operations bounded by four concurrent analysis slots, ten seconds,
+  search/impact/history/diagnostics limits, and per-client rate limiting;
+- render repository-derived text with `textContent`, never `innerHTML`;
+- invalidate browser analysis state when `generation_id` changes;
+- return compact tool results and log only call metadata, not source or secrets.
+
+Demo preparation and launch:
+
+```bash
+booster web prepare-demo --project .
+booster web --mode demo --project .
+```
+
+Demo mode must load the prepared JSON+FAISS state into the existing
+`RepoIndexer`; it must not reindex or download an embedding model at startup.
+Before submission, run Python, browser, lint, package, and Booster doctor checks,
+then separately verify the real flow in ChatGPT's in-app browser and Chrome with
+WebMCP enabled. Fake `document.modelContext` is automation coverage only.
+Read-only search, impact, history, and snapshot compare caches must be keyed by
+`(repo_id, generation_id, operation, normalized_args)` and invalidated when the
+generation changes. Keep README, Cookbook, architecture/API docs, and this prompt
+consistent whenever the Observatory contract changes. Shareable URL state may
+contain only safe `repo_id`, repository-relative `file`, mode, and snapshot IDs;
+never serialize a local root or arbitrary filesystem path.
+
 # OUTPUT STYLE
 
 Перед сложной реализацией дать компактный план.

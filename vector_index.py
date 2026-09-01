@@ -1,5 +1,7 @@
+import json
 import re
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Any
 
 import faiss
@@ -7,8 +9,7 @@ import numpy as np
 from rank_bm25 import BM25Okapi
 
 _WORD_PATTERN = re.compile(r"[^\W_]+(?:_[^\W_]+)*", re.UNICODE)
-_CAMEL_CASE_BOUNDARY = re.compile(
-    r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+_CAMEL_CASE_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
 
 
 class VectorIndex:
@@ -56,8 +57,7 @@ class VectorIndex:
 
         self._bm25_ids = sorted(self._lexical_documents)
         if self._bm25_ids:
-            corpus = [self._lexical_documents[doc_id]
-                      for doc_id in self._bm25_ids]
+            corpus = [self._lexical_documents[doc_id] for doc_id in self._bm25_ids]
             self._bm25 = BM25Okapi(corpus)
         else:
             self._bm25 = None
@@ -155,8 +155,7 @@ class VectorIndex:
                     score = float(lexical_scores[position])
                     if score <= 0:
                         break
-                    add_rank(self._bm25_ids[int(position)],
-                             "lexical", rank, score)
+                    add_rank(self._bm25_ids[int(position)], "lexical", rank, score)
 
         ranked = sorted(
             fused.items(),
@@ -194,3 +193,102 @@ class VectorIndex:
         cloned._bm25_ids = list(self._bm25_ids)
         cloned._bm25_dirty = True
         return cloned
+
+    def save(self, directory: str | Path, root: str | Path | None = None) -> None:
+        """Persist the existing vector/lexical state without executable data."""
+        target = Path(directory).expanduser().resolve()
+        target.mkdir(parents=True, exist_ok=True)
+        repository_root = Path(root).expanduser().resolve() if root is not None else None
+
+        def portable_path(value: Any) -> str:
+            path = Path(str(value))
+            if repository_root is not None and path.is_absolute():
+                try:
+                    return path.relative_to(repository_root).as_posix()
+                except ValueError:
+                    return str(path)
+            return str(value)
+
+        meta = {}
+        for identifier, value in self.meta.items():
+            item = dict(value)
+            if "file" in item:
+                item["file"] = portable_path(item["file"])
+            meta[str(identifier)] = item
+        faiss.write_index(self.index, str(target / "index.faiss"))
+        payload = {
+            "version": 1,
+            "dim": self.dim,
+            "next_id": self.next_id,
+            "meta": meta,
+            "file_ids": {
+                portable_path(file_path): identifiers
+                for file_path, identifiers in self.file_ids.items()
+            },
+            "lexical_documents": {
+                str(identifier): tokens for identifier, tokens in self._lexical_documents.items()
+            },
+        }
+        (target / "metadata.json").write_text(
+            json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+        )
+
+    @classmethod
+    def load(cls, directory: str | Path, root: str | Path | None = None) -> "VectorIndex":
+        """Load JSON metadata and FAISS state produced by :meth:`save`."""
+        target = Path(directory).expanduser().resolve()
+        try:
+            payload = json.loads((target / "metadata.json").read_text(encoding="utf-8"))
+            loaded_index = faiss.read_index(str(target / "index.faiss"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, RuntimeError) as exc:
+            raise ValueError("Invalid prebuilt vector index") from exc
+        if not isinstance(payload, dict) or payload.get("version") != 1:
+            raise ValueError("Unsupported prebuilt vector index version")
+        dim = payload.get("dim")
+        if not isinstance(dim, int) or dim <= 0:
+            raise ValueError("Invalid prebuilt vector index dimension")
+        if loaded_index.d != dim:
+            raise ValueError("Prebuilt vector index dimension mismatch")
+        result = cls(dim=dim)
+        result.index = loaded_index
+        result.base_index = getattr(loaded_index, "index", loaded_index)
+        raw_meta = payload.get("meta")
+        raw_file_ids = payload.get("file_ids")
+        raw_lexical = payload.get("lexical_documents")
+        if (
+            not isinstance(raw_meta, dict)
+            or not isinstance(raw_file_ids, dict)
+            or not isinstance(raw_lexical, dict)
+        ):
+            raise ValueError("Invalid prebuilt vector index metadata")
+        repository_root = Path(root).expanduser().resolve() if root is not None else None
+
+        def absolute_path(value: Any) -> str:
+            path = Path(str(value))
+            if repository_root is not None and not path.is_absolute():
+                return str((repository_root / path).resolve())
+            return str(path)
+
+        result.meta = {}
+        for identifier, value in raw_meta.items():
+            if not isinstance(value, dict):
+                raise ValueError("Invalid prebuilt vector metadata entry")
+            item = dict(value)
+            if "file" in item:
+                item["file"] = absolute_path(item["file"])
+            result.meta[int(identifier)] = item
+        result.file_ids = {
+            absolute_path(file_path): [int(identifier) for identifier in identifiers]
+            for file_path, identifiers in raw_file_ids.items()
+            if isinstance(identifiers, list)
+        }
+        result._lexical_documents = {
+            int(identifier): [str(token) for token in tokens]
+            for identifier, tokens in raw_lexical.items()
+            if isinstance(tokens, list)
+        }
+        result.next_id = int(payload.get("next_id", max(result.meta, default=-1) + 1))
+        result._bm25 = None
+        result._bm25_ids = []
+        result._bm25_dirty = True
+        return result

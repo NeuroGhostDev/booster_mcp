@@ -30,8 +30,7 @@ def install_bundled_skills(
     По умолчанию синхронизирует содержимое в ~/.agents/skills.
     """
     skill_names = list_bundled_skills()
-    destination_root = Path(target_dir).expanduser(
-    ) if target_dir else DEFAULT_TARGET_DIR
+    destination_root = Path(target_dir).expanduser() if target_dir else DEFAULT_TARGET_DIR
     destination_root.mkdir(parents=True, exist_ok=True)
 
     installed: list[str] = []
@@ -58,9 +57,7 @@ def install_bundled_skills(
 
             source_text = source_file.read_text(encoding="utf-8")
             destination_text = (
-                destination_file.read_text(encoding="utf-8")
-                if destination_file.exists()
-                else None
+                destination_file.read_text(encoding="utf-8") if destination_file.exists() else None
             )
 
             if destination_text == source_text:

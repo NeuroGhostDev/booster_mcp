@@ -18,5 +18,8 @@ class Embedder:
         return self.model
 
     def embed(self, text: str) -> Any:
+        return self.embed_many([text])[0]
+
+    def embed_many(self, texts: list[str]) -> Any:
         model = cast(Any, self._ensure_model())
-        return model.encode([text], convert_to_numpy=True)[0]
+        return model.encode(texts, convert_to_numpy=True)

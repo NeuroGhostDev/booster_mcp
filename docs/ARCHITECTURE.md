@@ -96,6 +96,29 @@ Compression is not data loss. Any evicted raw block must be persisted and hash
 verified before the request can continue. A known hard-budget violation fails
 closed.
 
+### Observatory Browser Request
+
+```text
+same-origin browser
+  -> WebMCP registry / browser Workspace Store
+  -> read-only FastAPI route
+  -> WebRequestGuard (rate, concurrency, deadline)
+  -> BoosterFacade
+  -> existing RepoIndexer / Cognitive Runtime / snapshots
+  -> compact result + shared Code City state
+```
+
+`booster_web/` is an adapter, not another repository intelligence layer. The
+facade resolves only allowlisted logical `repo_id` values. Search, impact,
+history, diagnostics, snapshot comparison, and architecture inspection reuse the
+existing services. Demo mode loads portable JSON+FAISS state into the same
+`RepoIndexer` instead of indexing or loading an embedding model at request time.
+
+The browser registry registers eight global read-only tools. A selected building
+adds two zero-input contextual tools; a new selection aborts the old controller
+and registers a fresh context. Generation changes clear highlights and stale
+analysis before reloading Code City.
+
 ## Generated Artifacts
 
 Generated repository artifacts belong under the project-local
@@ -110,6 +133,12 @@ Generated repository artifacts belong under the project-local
 - `scan_report.json`;
 - immutable snapshots under `snapshots/`;
 - runtime sessions and compressed raw artifacts.
+
+The portable `demo/` bundle contains a manifest, Code City JSON/HTML,
+architecture, precomputed diagnostics/history projections, immutable snapshot
+metadata, and the serialized state consumed by `RepoIndexer.load_state`.
+`Dockerfile.observatory` keeps Git available only during build-time evidence
+materialization, removes it before runtime, and launches `booster web --mode demo`.
 
 `repo_map_architecture.md` is the bounded context-facing macro map. It reserves
 coverage for top-level modules and architectural roles such as entrypoints,

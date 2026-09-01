@@ -51,7 +51,11 @@ class RepoWatcher(FileSystemEventHandler):
         if repo_path is None:
             return False
 
-        relative = path.resolve().relative_to(repo_path).as_posix()
+        try:
+            relative = path.resolve().relative_to(repo_path).as_posix()
+        except ValueError:
+            # Windows may surface a transient atomic-write path with a \\?\ prefix.
+            return False
         rules = self.repo_rules[repo_path]
         parts = Path(relative).parts
         parent_parts = parts[:-1]

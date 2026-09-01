@@ -264,14 +264,12 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
         except RuntimeError as exc:
             return JSONResponse(
                 status_code=503, content=_error_payload(str(exc), code="runtime_unavailable")
-        )
+            )
         response_input = compiled_payload.get("messages", messages_to_responses_input(messages))
         payload = request.upstream_payload(response_input)
         compiled_messages = compiled_payload.get("messages")
         if not isinstance(compiled_messages, list):
-            compiled_messages = [
-                message.model_dump(exclude_none=True) for message in messages
-            ]
+            compiled_messages = [message.model_dump(exclude_none=True) for message in messages]
         if request.stream:
             try:
                 responses_stream = getattr(runtime.provider, "responses_stream", None)

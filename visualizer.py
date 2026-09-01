@@ -6,6 +6,7 @@ Code City 3D - Визуализация архитектуры проекта в
 import json
 import math
 from collections import defaultdict
+from html import escape
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -397,18 +398,45 @@ class CodeCityVisualizer:
                             )
                         break
 
-        # Связи из графа вызовов (межфайловые)
-        # Это более сложная логика, упростим
-        pass
+        # Связи из существующего индекса вызовов между известными символами.
+        symbol_to_files = defaultdict(set)
+        symbols_snapshot = getattr(self.indexer, "symbols_snapshot", None)
+        symbols = symbols_snapshot() if callable(symbols_snapshot) else self.indexer.symbols
+        if isinstance(symbols, dict):
+            for file, records in symbols.items():
+                if not isinstance(records, list):
+                    continue
+                for record in records:
+                    if isinstance(record, dict) and isinstance(record.get("name"), str):
+                        symbol_to_files[record["name"]].add(file)
+
+        file_calls = getattr(self.indexer.graphs, "file_calls", {})
+        for caller_file, pairs in file_calls.items():
+            source_id = file_to_building.get(caller_file)
+            if source_id is None or not isinstance(pairs, list):
+                continue
+            for pair in pairs:
+                if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+                    continue
+                target_files = sorted(symbol_to_files.get(pair[1], set()))
+                if not target_files:
+                    continue
+                target_id = file_to_building.get(target_files[0])
+                if target_id is not None and source_id != target_id:
+                    self.connections.append(
+                        {"source": source_id, "target": target_id, "type": "call"}
+                    )
 
     def generate_html(self, city_data: Dict, output_path: str = "code_city.html"):
         """Генерирует HTML файл с 3D визуализацией."""
+        repo_name = escape(Path(city_data.get("repo", "")).name, quote=True)
+        city_json = json.dumps(city_data).replace("</", "<\\/")
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code City 3D - {Path(city_data.get("repo", "")).name}</title>
+    <title>Code City 3D - {repo_name}</title>
     <style>
         * {{
             margin: 0;
@@ -569,7 +597,7 @@ class CodeCityVisualizer:
 
     <div id="info-panel" class="glass-panel">
         <h2>System Status</h2>
-        <div class="stat"><span class="stat-label">Sector:</span><span class="stat-value" id="stat-repo">{Path(city_data.get("repo", "")).name}</span></div>
+        <div class="stat"><span class="stat-label">Sector:</span><span class="stat-value" id="stat-repo">{repo_name}</span></div>
         <div class="stat"><span class="stat-label">Nodes:</span><span class="stat-value" id="stat-files">{city_data.get("metrics", {}).get("files", 0)}</span></div>
         <div class="stat"><span class="stat-label">Lines:</span><span class="stat-value" id="stat-lines">{city_data.get("metrics", {}).get("lines", 0):,}</span></div>
         <div class="stat"><span class="stat-label">Functions:</span><span class="stat-value" id="stat-functions">{city_data.get("metrics", {}).get("functions", 0)}</span></div>
@@ -625,7 +653,7 @@ class CodeCityVisualizer:
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
     <script>
-        const cityData = {json.dumps(city_data)};
+        const cityData = {city_json};
 
         // Scene setup
         const scene = new THREE.Scene();
@@ -684,6 +712,11 @@ class CodeCityVisualizer:
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.maxPolarAngle = Math.PI / 2 - 0.1;
+        controls.target.set(cityCenterX, 0, cityCenterZ);
+        controls.update();
+        const initialCameraPosition = camera.position.clone();
+        const initialCameraTarget = controls.target.clone();
+        const initialViewSize = viewSize;
 
         // Lights
         const ambientLight = new THREE.AmbientLight(0x111122, 2.0);
@@ -742,7 +775,7 @@ class CodeCityVisualizer:
                 edgesMaterials.set(b.color, edgeMat);
             }}
             
-            const edgeLines = new THREE.LineSegments(edges, edgeMat);
+            const edgeLines = new THREE.LineSegments(edges, edgeMat.clone());
             building.add(edgeLines);
             building.userData.outline = edgeLines;
 
@@ -794,6 +827,14 @@ class CodeCityVisualizer:
                     opacity: 0.3
                 }});
                 const line = new THREE.Line(geometry, material);
+                line.userData = {{
+                    ...conn,
+                    sourceFile: source.userData.file,
+                    targetFile: target.userData.file,
+                    phase: connectionLines.length,
+                    highlighted: false,
+                    baseOpacity: 0.3
+                }};
                 scene.add(line);
                 connectionLines.push(line);
             }}
@@ -803,6 +844,492 @@ class CodeCityVisualizer:
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         let hoveredBuilding = null;
+        let selectedBuilding = null;
+        let highlightedBuildings = new Set();
+        let impactBuildings = new Set();
+        let impactPrimaryBuildings = new Set();
+        let impactCallerBuildings = new Set();
+        let impactCalleeBuildings = new Set();
+        let impactTestBuildings = new Set();
+        let impactSecondaryBuildings = new Set();
+        let diagnosticBuildings = new Set();
+        let snapshotAddedBuildings = new Set();
+        let snapshotChangedBuildings = new Set();
+        let snapshotStableBuildings = new Set();
+        let snapshotGhosts = [];
+        let cityMode = 'default';
+        let cameraAnimation = null;
+        let snapshotTransition = null;
+
+        function normalizedCityPath(value) {{
+            return String(value || '').replace(/\\\\/g, '/').replace(/^\\.\\//, '');
+        }}
+
+        function matchesBuildingPath(building, path) {{
+            return pathsMatch(building.userData.file, path);
+        }}
+
+        function pathsMatch(left, right) {{
+            const leftPath = normalizedCityPath(left);
+            const rightPath = normalizedCityPath(right);
+            return leftPath === rightPath ||
+                leftPath.endsWith('/' + rightPath) ||
+                rightPath.endsWith('/' + leftPath);
+        }}
+
+        function updateBuildingVisual(building) {{
+            if (!building) return;
+            const outline = building.userData.outline;
+            if (building === selectedBuilding) {{
+                building.material.opacity = 1.0;
+                building.material.emissive.setHex(0x661144);
+                building.material.emissiveIntensity = 0.35;
+                outline.material.color.setStyle('#ff007f');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (snapshotAddedBuildings.has(building)) {{
+                building.material.opacity = 0.95;
+                building.material.emissive.setHex(0x164c32);
+                building.material.emissiveIntensity = 0.3;
+                outline.material.color.setStyle('#4dde8c');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (snapshotChangedBuildings.has(building)) {{
+                building.material.opacity = 0.95;
+                building.material.emissive.setHex(0x66501d);
+                building.material.emissiveIntensity = 0.3;
+                outline.material.color.setStyle('#f2bb65');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (snapshotStableBuildings.has(building)) {{
+                building.material.opacity = 0.18;
+                building.material.emissive.setHex(0x000000);
+                building.material.emissiveIntensity = 0.05;
+                outline.material.color.setStyle('#31505a');
+                outline.material.opacity = 0.25;
+                return;
+            }}
+            if (diagnosticBuildings.has(building)) {{
+                building.material.opacity = 0.95;
+                building.material.emissive.setHex(0x661f2b);
+                building.material.emissiveIntensity = 0.3;
+                outline.material.color.setStyle('#ef7180');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (impactPrimaryBuildings.has(building)) {{
+                building.material.opacity = 1.0;
+                building.material.emissive.setHex(0x661144);
+                building.material.emissiveIntensity = 0.45;
+                outline.material.color.setStyle('#ff007f');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (impactCallerBuildings.has(building)) {{
+                building.material.opacity = 0.95;
+                building.material.emissive.setHex(0x183b66);
+                building.material.emissiveIntensity = 0.3;
+                outline.material.color.setStyle('#6fa8ff');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (impactCalleeBuildings.has(building)) {{
+                building.material.opacity = 0.95;
+                building.material.emissive.setHex(0x422266);
+                building.material.emissiveIntensity = 0.3;
+                outline.material.color.setStyle('#b57cff');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (impactTestBuildings.has(building)) {{
+                building.material.opacity = 0.95;
+                building.material.emissive.setHex(0x164c32);
+                building.material.emissiveIntensity = 0.3;
+                outline.material.color.setStyle('#4dde8c');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (impactSecondaryBuildings.has(building)) {{
+                building.material.opacity = 0.9;
+                building.material.emissive.setHex(0x663311);
+                building.material.emissiveIntensity = 0.3;
+                outline.material.color.setStyle('#f2bb65');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (impactBuildings.size > 0) {{
+                building.material.opacity = 0.16;
+                building.material.emissive.setHex(0x000000);
+                building.material.emissiveIntensity = 0.02;
+                outline.material.color.setStyle('#284047');
+                outline.material.opacity = 0.12;
+                return;
+            }}
+            if (highlightedBuildings.has(building)) {{
+                building.material.opacity = 0.95;
+                building.material.emissive.setHex(0x114c4c);
+                building.material.emissiveIntensity = 0.25;
+                outline.material.color.setStyle('#38d4bd');
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            if (building === hoveredBuilding) {{
+                building.material.opacity = 0.95;
+                building.material.emissive.setHex(0x222233);
+                building.material.emissiveIntensity = 0.2;
+                outline.material.color.lerp(new THREE.Color(0xffffff), 0.5);
+                outline.material.opacity = 1.0;
+                return;
+            }}
+            building.material.opacity = 0.9;
+            building.material.emissive.setHex(0x000000);
+            building.material.emissiveIntensity = 0.08;
+            outline.material.color.setStyle(building.userData.color);
+            outline.material.opacity = 0.8;
+        }}
+
+        function workspacePath(building) {{
+            const repo = normalizedCityPath(cityData.repo);
+            const file = normalizedCityPath(building.userData.file);
+            return repo && file.startsWith(repo + '/') ? file.slice(repo.length + 1) : file;
+        }}
+
+        function setMode(mode) {{
+            cityMode = String(mode || 'default');
+            document.body.dataset.mode = cityMode;
+            return true;
+        }}
+
+        function notifyParentSelection() {{
+            if (window.parent === window) return;
+            window.parent.postMessage({{
+                type: 'booster-city-selection',
+                path: selectedBuilding ? workspacePath(selectedBuilding) : null,
+                symbol: null
+            }}, window.location.origin);
+        }}
+
+        function setSelectedBuilding(building, notify = true) {{
+            if (selectedBuilding === building) {{
+                updateBuildingVisual(building);
+                return;
+            }}
+            const previous = selectedBuilding;
+            selectedBuilding = building;
+            updateBuildingVisual(previous);
+            updateBuildingVisual(selectedBuilding);
+            if (selectedBuilding) showBuildingInfo(selectedBuilding.userData);
+            else hideBuildingInfo();
+            if (notify) notifyParentSelection();
+        }}
+
+        function getSelection() {{
+            if (!selectedBuilding) return null;
+            return {{
+                file: selectedBuilding.userData.file,
+                path: workspacePath(selectedBuilding),
+                symbol: null
+            }};
+        }}
+
+        function selectFile(path, notify = true) {{
+            const building = buildings.find(item => matchesBuildingPath(item, path));
+            if (!building) return false;
+            setSelectedBuilding(building, notify);
+            return true;
+        }}
+
+        function focusFile(path) {{
+            const building = buildings.find(item => matchesBuildingPath(item, path));
+            if (!building) return false;
+            setSelectedBuilding(building, false);
+            const target = building.position.clone();
+            target.y = Math.max(0, building.userData.originalHeight * 0.35);
+            const offset = camera.position.clone().sub(controls.target);
+            const distance = Math.max(offset.length(), citySpan * 0.35, 120);
+            const direction = offset.length() > 0
+                ? offset.normalize()
+                : new THREE.Vector3(1, 0.8, 1).normalize();
+            cameraAnimation = {{
+                fromPosition: camera.position.clone(),
+                fromTarget: controls.target.clone(),
+                toPosition: target.clone().add(direction.multiplyScalar(distance)),
+                toTarget: target,
+                startedAt: performance.now(),
+                duration: 450
+            }};
+            return true;
+        }}
+
+        function fitBuildings(items) {{
+            if (!items.length) return false;
+            const bounds = items.reduce((value, building) => {{
+                value.minX = Math.min(value.minX, building.position.x - building.userData.size.width / 2);
+                value.maxX = Math.max(value.maxX, building.position.x + building.userData.size.width / 2);
+                value.minZ = Math.min(value.minZ, building.position.z - building.userData.size.depth / 2);
+                value.maxZ = Math.max(value.maxZ, building.position.z + building.userData.size.depth / 2);
+                value.maxY = Math.max(value.maxY, building.userData.originalHeight);
+                return value;
+            }}, {{ minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity, maxY: 0 }});
+            const center = new THREE.Vector3(
+                (bounds.minX + bounds.maxX) / 2,
+                Math.max(0, bounds.maxY * 0.35),
+                (bounds.minZ + bounds.maxZ) / 2
+            );
+            const span = Math.max(bounds.maxX - bounds.minX, bounds.maxZ - bounds.minZ, 80);
+            const aspect = window.innerWidth / window.innerHeight;
+            viewSize = Math.max(180, span * 0.8 / Math.min(1, aspect));
+            camera.left = -viewSize * aspect;
+            camera.right = viewSize * aspect;
+            camera.top = viewSize;
+            camera.bottom = -viewSize;
+            camera.updateProjectionMatrix();
+            const offset = camera.position.clone().sub(controls.target);
+            const distance = Math.max(offset.length(), citySpan * 0.2, 120);
+            const direction = offset.length() > 0
+                ? offset.normalize()
+                : new THREE.Vector3(1, 0.8, 1).normalize();
+            cameraAnimation = {{
+                fromPosition: camera.position.clone(),
+                fromTarget: controls.target.clone(),
+                toPosition: center.clone().add(direction.multiplyScalar(distance)),
+                toTarget: center,
+                startedAt: performance.now(),
+                duration: 450
+            }};
+            return true;
+        }}
+
+        function clearSelection() {{
+            setSelectedBuilding(null);
+            return true;
+        }}
+
+        function highlightFiles(paths) {{
+            const requested = Array.isArray(paths) ? paths : [];
+            impactBuildings.clear();
+            impactPrimaryBuildings.clear();
+            impactCallerBuildings.clear();
+            impactCalleeBuildings.clear();
+            impactTestBuildings.clear();
+            impactSecondaryBuildings.clear();
+            diagnosticBuildings.clear();
+            snapshotAddedBuildings.clear();
+            snapshotChangedBuildings.clear();
+            snapshotStableBuildings.clear();
+            snapshotTransition = null;
+            highlightedBuildings = new Set(
+                buildings.filter(building => requested.some(path => matchesBuildingPath(building, path)))
+            );
+            buildings.forEach(updateBuildingVisual);
+            return highlightedBuildings.size;
+        }}
+
+        function highlightConnections(connections) {{
+            const requested = Array.isArray(connections) ? connections : [];
+            let count = 0;
+            connectionLines.forEach(line => {{
+                const active = requested.some(connection =>
+                    (connection.source === line.userData.source &&
+                        connection.target === line.userData.target) ||
+                    (normalizedCityPath(line.userData.sourceFile).endsWith('/' + normalizedCityPath(connection.source)) &&
+                        normalizedCityPath(line.userData.targetFile).endsWith('/' + normalizedCityPath(connection.target)))
+                );
+                line.userData.highlighted = active;
+                line.material.opacity = active ? 0.95 : 0.12;
+                if (active) count += 1;
+            }});
+            return count;
+        }}
+
+        function clearHighlights() {{
+            highlightedBuildings.clear();
+            impactBuildings.clear();
+            impactPrimaryBuildings.clear();
+            impactCallerBuildings.clear();
+            impactCalleeBuildings.clear();
+            impactTestBuildings.clear();
+            impactSecondaryBuildings.clear();
+            diagnosticBuildings.clear();
+            snapshotAddedBuildings.clear();
+            snapshotChangedBuildings.clear();
+            snapshotStableBuildings.clear();
+            snapshotGhosts.forEach(ghost => {{
+                scene.remove(ghost);
+                ghost.geometry.dispose();
+                ghost.material.dispose();
+            }});
+            snapshotGhosts = [];
+            snapshotTransition = null;
+            connectionLines.forEach(line => {{
+                line.userData.highlighted = false;
+                line.material.opacity = line.userData.baseOpacity;
+            }});
+            buildings.forEach(updateBuildingVisual);
+            return true;
+        }}
+
+        function showImpact(result) {{
+            clearHighlights();
+            const requested = Array.isArray(result?.affected_files) ? result.affected_files : [];
+            const affectedBuildings = new Set(
+                buildings.filter(building => requested.some(path => matchesBuildingPath(building, path)))
+            );
+            const targetPath = result?.target_file || null;
+            impactPrimaryBuildings = new Set(
+                buildings.filter(building => targetPath && matchesBuildingPath(building, targetPath))
+            );
+            const callerPaths = [];
+            const calleePaths = [];
+            (Array.isArray(result?.connections) ? result.connections : []).forEach(connection => {{
+                if (targetPath && pathsMatch(connection.target, targetPath)) {{
+                    callerPaths.push(connection.source);
+                }}
+                if (targetPath && pathsMatch(connection.source, targetPath)) {{
+                    calleePaths.push(connection.target);
+                }}
+            }});
+            impactCallerBuildings = new Set(
+                buildings.filter(building => callerPaths.some(path => matchesBuildingPath(building, path)))
+            );
+            impactCalleeBuildings = new Set(
+                buildings.filter(building => calleePaths.some(path => matchesBuildingPath(building, path)))
+            );
+            impactTestBuildings = new Set(
+                buildings.filter(building =>
+                    (Array.isArray(result?.tests) ? result.tests : [])
+                        .some(path => matchesBuildingPath(building, path))
+                )
+            );
+            impactBuildings = new Set([
+                ...affectedBuildings,
+                ...impactPrimaryBuildings,
+                ...impactCallerBuildings,
+                ...impactCalleeBuildings,
+                ...impactTestBuildings,
+            ]);
+            impactSecondaryBuildings = new Set(
+                [...impactBuildings].filter(building =>
+                    !impactPrimaryBuildings.has(building) &&
+                    !impactCallerBuildings.has(building) &&
+                    !impactCalleeBuildings.has(building) &&
+                    !impactTestBuildings.has(building)
+                )
+            );
+            buildings.forEach(updateBuildingVisual);
+            highlightConnections(result?.connections || []);
+            if (targetPath) focusFile(targetPath);
+            fitBuildings([...impactBuildings]);
+            return impactBuildings.size;
+        }}
+
+        function showDiagnostics(result) {{
+            clearHighlights();
+            const findings = Array.isArray(result?.findings) ? result.findings : [];
+            const requested = Array.isArray(result?.affected_files)
+                ? result.affected_files
+                : findings.map(finding => finding.file);
+            diagnosticBuildings = new Set(
+                buildings.filter(building => requested.some(path => matchesBuildingPath(building, path)))
+            );
+            buildings.forEach(updateBuildingVisual);
+            return diagnosticBuildings.size;
+        }}
+
+        function showSnapshotComparison(result) {{
+            clearHighlights();
+            const added = Array.isArray(result?.added) ? result.added : [];
+            const changed = Array.isArray(result?.changed) ? result.changed : [];
+            const stable = Array.isArray(result?.stable) ? result.stable : [];
+            const removed = Array.isArray(result?.removed) ? result.removed : [];
+            snapshotAddedBuildings = new Set(
+                buildings.filter(building => added.some(path => matchesBuildingPath(building, path)))
+            );
+            snapshotChangedBuildings = new Set(
+                buildings.filter(building => changed.some(path => matchesBuildingPath(building, path)))
+            );
+            snapshotStableBuildings = new Set(
+                buildings.filter(building => stable.some(path => matchesBuildingPath(building, path)))
+            );
+            buildings.forEach(updateBuildingVisual);
+            removed.forEach((path, index) => {{
+                const ghost = new THREE.Mesh(
+                    new THREE.BoxGeometry(12, 8, 12),
+                    new THREE.MeshBasicMaterial({{
+                        color: 0xef7180,
+                        transparent: true,
+                        opacity: 0.24,
+                        wireframe: true
+                    }})
+                );
+                const column = index % 8;
+                const row = Math.floor(index / 8);
+                ghost.position.set(
+                    cityCenterX - citySpan * 0.4 + column * 18,
+                    4,
+                    cityCenterZ - citySpan * 0.4 + row * 18
+                );
+                ghost.userData = {{ file: path, snapshotGhost: true }};
+                scene.add(ghost);
+                snapshotGhosts.push(ghost);
+            }});
+            snapshotTransition = {{ startedAt: performance.now(), duration: 500 }};
+            return {{
+                added: snapshotAddedBuildings.size,
+                changed: snapshotChangedBuildings.size,
+                stable: snapshotStableBuildings.size,
+                removed: snapshotGhosts.length
+            }};
+        }}
+
+        function showHistory(result) {{
+            if (!result?.path) return false;
+            clearHighlights();
+            highlightFiles([result.path]);
+            return focusFile(result.path);
+        }}
+
+        function showRelatedTests(paths, targetPath = null) {{
+            clearHighlights();
+            const requested = Array.isArray(paths) ? paths : [];
+            impactTestBuildings = new Set(
+                buildings.filter(building => requested.some(path => matchesBuildingPath(building, path)))
+            );
+            if (targetPath) {{
+                impactPrimaryBuildings = new Set(
+                    buildings.filter(building => matchesBuildingPath(building, targetPath))
+                );
+            }}
+            impactBuildings = new Set([...impactPrimaryBuildings, ...impactTestBuildings]);
+            buildings.forEach(updateBuildingVisual);
+            if (targetPath) focusFile(targetPath);
+            return impactTestBuildings.size;
+        }}
+
+        function resetView() {{
+            clearHighlights();
+            setSelectedBuilding(null);
+            setMode('default');
+            const aspect = window.innerWidth / window.innerHeight;
+            viewSize = initialViewSize;
+            camera.left = -viewSize * aspect;
+            camera.right = viewSize * aspect;
+            camera.top = viewSize;
+            camera.bottom = -viewSize;
+            camera.updateProjectionMatrix();
+            cameraAnimation = {{
+                fromPosition: camera.position.clone(),
+                fromTarget: controls.target.clone(),
+                toPosition: initialCameraPosition.clone(),
+                toTarget: initialCameraTarget.clone(),
+                startedAt: performance.now(),
+                duration: 450
+            }};
+            return true;
+        }}
 
         function onPointerMove(event) {{
             // Calculate mouse position in normalized device coordinates
@@ -819,11 +1346,7 @@ class CodeCityVisualizer:
                     resetHover();
                     hoveredBuilding = building;
                     document.body.style.cursor = 'pointer';
-                    
-                    hoveredBuilding.material.emissive.setHex(0x222233);
-                    hoveredBuilding.userData.outline.material.opacity = 1.0;
-                    hoveredBuilding.userData.outline.material.color.lerp(new THREE.Color(0xffffff), 0.5);
-                    
+                    updateBuildingVisual(hoveredBuilding);
                     showBuildingInfo(hoveredBuilding.userData);
                 }}
             }} else {{
@@ -836,16 +1359,25 @@ class CodeCityVisualizer:
         }}
 
         function resetHover() {{
-            if (hoveredBuilding) {{
-                hoveredBuilding.material.emissive.setHex(0x000000);
-                const c = hoveredBuilding.userData.color;
-                hoveredBuilding.userData.outline.material.color.setStyle(c);
-                hoveredBuilding.userData.outline.material.opacity = 0.8;
-                hoveredBuilding = null;
-            }}
+            const previous = hoveredBuilding;
+            hoveredBuilding = null;
+            updateBuildingVisual(previous);
         }}
 
         window.addEventListener('pointermove', onPointerMove);
+
+        function onPointerDown(event) {{
+            if (event.button !== 0) return;
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(buildingMeshes);
+            if (intersects.length > 0) selectFile(workspacePath(intersects[0].object));
+            else setSelectedBuilding(null);
+        }}
+
+        renderer.domElement.addEventListener('pointerdown', onPointerDown);
 
         // UI Interactions
         function showBuildingInfo(data) {{
@@ -864,6 +1396,24 @@ class CodeCityVisualizer:
         function hideBuildingInfo() {{
             document.getElementById('building-info').style.display = 'none';
         }}
+
+        window.BoosterCity = {{
+            getSelection,
+            setMode,
+            selectFile,
+            focusFile,
+            clearSelection,
+            highlightFiles,
+            highlightConnections,
+            clearHighlights,
+            showImpact,
+            showDiagnostics,
+            showHistory,
+            showRelatedTests,
+            showSnapshotComparison,
+            showSnapshotDiff: showSnapshotComparison,
+            resetView
+        }};
 
         document.getElementById('height-metric').addEventListener('change', (e) => {{
             const metric = e.target.value;
@@ -906,6 +1456,41 @@ class CodeCityVisualizer:
         // Animation Loop
         function animate() {{
             requestAnimationFrame(animate);
+            if (cameraAnimation) {{
+                const elapsed = performance.now() - cameraAnimation.startedAt;
+                const progress = Math.min(1, elapsed / cameraAnimation.duration);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                camera.position.lerpVectors(
+                    cameraAnimation.fromPosition,
+                    cameraAnimation.toPosition,
+                    eased
+                );
+                controls.target.lerpVectors(
+                    cameraAnimation.fromTarget,
+                    cameraAnimation.toTarget,
+                    eased
+                );
+                if (progress >= 1) cameraAnimation = null;
+            }}
+            const animationTime = performance.now();
+            connectionLines.forEach(line => {{
+                const pulse = (Math.sin(animationTime * 0.004 + line.userData.phase) + 1) / 2;
+                line.material.opacity = line.userData.highlighted
+                    ? 0.65 + pulse * 0.3
+                    : cityMode === 'architecture'
+                        ? 0.18 + pulse * 0.1
+                        : line.userData.baseOpacity;
+            }});
+            if (snapshotTransition) {{
+                const progress = Math.min(
+                    1,
+                    (animationTime - snapshotTransition.startedAt) / snapshotTransition.duration
+                );
+                const eased = 1 - Math.pow(1 - progress, 3);
+                buildings.forEach(building => building.scale.setScalar(0.85 + eased * 0.15));
+                snapshotGhosts.forEach(ghost => ghost.material.opacity = eased * 0.24);
+                if (progress >= 1) snapshotTransition = null;
+            }}
             controls.update();
             composer.render();
         }}

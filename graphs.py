@@ -47,25 +47,27 @@ class Graphs:
         with self._lock:
             return {
                 "call_graph": {key: set(value) for key, value in self.call_graph.items()},
-                "import_graph": {
-                    key: list(value) for key, value in self.import_graph.items()
+                "import_graph": {key: list(value) for key, value in self.import_graph.items()},
+            }
+
+    def export_state(self) -> dict[str, object]:
+        """Return the complete JSON-compatible graph state for demo persistence."""
+        with self._lock:
+            return {
+                "call_graph": {key: sorted(value) for key, value in self.call_graph.items()},
+                "import_graph": {key: list(value) for key, value in self.import_graph.items()},
+                "file_calls": {
+                    key: [list(pair) for pair in value] for key, value in self.file_calls.items()
                 },
+                "file_imports": {key: sorted(value) for key, value in self.file_imports.items()},
             }
 
     def clone(self) -> "Graphs":
         """Создаёт независимый graph state для staging generation."""
         cloned = Graphs()
         with self._lock:
-            cloned.call_graph = {
-                key: set(value) for key, value in self.call_graph.items()
-            }
-            cloned.import_graph = {
-                key: list(value) for key, value in self.import_graph.items()
-            }
-            cloned.file_calls = {
-                key: list(value) for key, value in self.file_calls.items()
-            }
-            cloned.file_imports = {
-                key: set(value) for key, value in self.file_imports.items()
-            }
+            cloned.call_graph = {key: set(value) for key, value in self.call_graph.items()}
+            cloned.import_graph = {key: list(value) for key, value in self.import_graph.items()}
+            cloned.file_calls = {key: list(value) for key, value in self.file_calls.items()}
+            cloned.file_imports = {key: set(value) for key, value in self.file_imports.items()}
         return cloned

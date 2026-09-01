@@ -2,6 +2,7 @@
 RepoMap - генерация сжатой карты репозитория в стиле Aider.
 Упрощённая версия для MCP сервера.
 """
+
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -46,10 +47,30 @@ IGNORED_DIRS, IGNORED_FILES, IGNORED_PATTERNS = load_ignore()
 
 # Стандартные игноры (всегда игнорируются)
 STANDARD_IGNORED_DIRS = {
-    ".git", "node_modules", "venv", ".venv", "env", ".env",
-    "__pycache__", ".pytest_cache", ".tox", ".nox", ".mypy_cache",
-    ".ruff_cache", ".idea", ".vscode", ".vs", "bin", "obj",
-    "target", "build", "dist", ".cache", "logs", "tmp", "temp",
+    ".git",
+    "node_modules",
+    "venv",
+    ".venv",
+    "env",
+    ".env",
+    "__pycache__",
+    ".pytest_cache",
+    ".tox",
+    ".nox",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".idea",
+    ".vscode",
+    ".vs",
+    "bin",
+    "obj",
+    "target",
+    "build",
+    "dist",
+    ".cache",
+    "logs",
+    "tmp",
+    "temp",
 }
 
 ARCHITECTURE_CONFIG_NAMES = {
@@ -171,8 +192,7 @@ class RepoMap:
 
     def _collect_all_files(self):
         """Собирает исходники в пределах сохранённого scan budget."""
-        self.last_scan_result = RepositoryScanner(
-            self.root, self.scan_config).scan()
+        self.last_scan_result = RepositoryScanner(self.root, self.scan_config).scan()
         files = [str(path) for path in self.last_scan_result.files]
         known = {Path(path).resolve() for path in files}
         # Configs are architectural evidence even when the parser does not
@@ -185,9 +205,7 @@ class RepoMap:
 
     def _records(self, files=None) -> list[dict[str, Any]]:
         selected_files = (
-            self._collect_all_files()
-            if files is None
-            else [str(path) for path in files]
+            self._collect_all_files() if files is None else [str(path) for path in files]
         )
         records: list[dict[str, Any]] = []
         for file_name in selected_files:
@@ -233,8 +251,7 @@ class RepoMap:
         ):
             roles.add("contract")
         if any(
-            token in path.stem.casefold()
-            for token in ("route", "worker", "bootstrap", "register")
+            token in path.stem.casefold() for token in ("route", "worker", "bootstrap", "register")
         ):
             roles.add("control")
         return roles
@@ -283,9 +300,10 @@ class RepoMap:
             for record in candidates[: max(1, len(by_module))]:
                 cost = estimated_tokens(record)
                 module = record["module"]
-                if record["file"] in selected_ids or sum(
-                    estimated_tokens(item) for item in selected
-                ) + cost > budget_tokens:
+                if (
+                    record["file"] in selected_ids
+                    or sum(estimated_tokens(item) for item in selected) + cost > budget_tokens
+                ):
                     continue
                 if module_tokens[module] + cost > module_budget and selected:
                     continue
@@ -419,14 +437,17 @@ class RepoMap:
             ]:
                 name_node = self._find_name_node(current_node)
                 if name_node:
-                    name = code_bytes[name_node.start_byte:name_node.end_byte].decode(
-                        "utf-8", errors="ignore")
-                    tags.append({
-                        "file": rel_fname,
-                        "name": name,
-                        "line": current_node.start_point[0],
-                        "kind": "def"
-                    })
+                    name = code_bytes[name_node.start_byte : name_node.end_byte].decode(
+                        "utf-8", errors="ignore"
+                    )
+                    tags.append(
+                        {
+                            "file": rel_fname,
+                            "name": name,
+                            "line": current_node.start_point[0],
+                            "kind": "def",
+                        }
+                    )
 
             # Добавляем детей в стек
             for child in reversed(current_node.children):

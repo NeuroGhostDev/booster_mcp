@@ -2,6 +2,7 @@
 Flipchart MCP — флипчарт для дебага сложных систем
 Генерирует Mermaid-диаграммы, трассировку вызовов и заметки
 """
+
 from collections import deque
 from pathlib import Path
 from typing import Any, Optional
@@ -34,8 +35,7 @@ class Flipchart:
                     if isinstance(call, str)
                     else call.get("name", call.get("symbol", "unknown"))
                 )
-                edges.append(
-                    f"    {self._safe_id(current)} --> {self._safe_id(target)}")
+                edges.append(f"    {self._safe_id(current)} --> {self._safe_id(target)}")
                 queue.append((target, depth + 1))
 
         mermaid = ["graph LR"]
@@ -53,8 +53,7 @@ class Flipchart:
         file_id = self._safe_id(Path(file_path).name)
         for imp in imports:
             imp_path = imp.get("path", imp.get("module", "unknown"))
-            imp_id = self._safe_id(
-                Path(imp_path).name if imp_path else "unknown")
+            imp_id = self._safe_id(Path(imp_path).name if imp_path else "unknown")
             mermaid.append(f"    {file_id} --> {imp_id}")
 
         return "\n".join(mermaid)
@@ -71,8 +70,7 @@ class Flipchart:
             callee = self._safe_id(step.get("callee", "unknown"))
             participants.add(caller)
             participants.add(callee)
-            messages.append(
-                f"    {caller}->>{callee}: {step.get('method', '')}")
+            messages.append(f"    {caller}->>{callee}: {step.get('method', '')}")
 
         mermaid = ["sequenceDiagram"]
         for p in sorted(participants):
@@ -94,12 +92,9 @@ class Flipchart:
             visited.add(current)
 
             if caller:
-                trace.append({
-                    "caller": caller,
-                    "callee": current,
-                    "method": current,
-                    "depth": depth
-                })
+                trace.append(
+                    {"caller": caller, "callee": current, "method": current, "depth": depth}
+                )
 
             calls = self.indexer.graphs.calls(current)
             for call in reversed(calls):  # reversed для правильного порядка стека
@@ -125,26 +120,20 @@ class Flipchart:
 
     def create_session(self, session_id: str, symbols: list[str]) -> dict:
         """Создаёт сессию дебага с отслеживаемыми символами"""
-        self.sessions[session_id] = {
-            "symbols": symbols,
-            "notes": [],
-            "diagrams": [],
-            "traces": []
-        }
+        self.sessions[session_id] = {"symbols": symbols, "notes": [], "diagrams": [], "traces": []}
 
         # Автогенерация начальных диаграмм
         for symbol in symbols:
             diagram = self.generate_call_graph_mermaid(symbol)
-            self.sessions[session_id]["diagrams"].append({
-                "type": "call_graph",
-                "symbol": symbol,
-                "content": diagram
-            })
+            self.sessions[session_id]["diagrams"].append(
+                {"type": "call_graph", "symbol": symbol, "content": diagram}
+            )
 
         return {"success": f"Сессия {session_id} создана", "symbols": symbols}
 
-    def add_note(self, session_id: str, label: str, content: str,
-                 symbols: Optional[list[str]] = None) -> dict:
+    def add_note(
+        self, session_id: str, label: str, content: str, symbols: Optional[list[str]] = None
+    ) -> dict:
         """Добавляет заметку на флипчарт"""
         if session_id not in self.sessions:
             return {"error": f"Сессия не найдена: {session_id}"}
@@ -153,7 +142,7 @@ class Flipchart:
             "label": label,
             "content": content,
             "symbols": symbols or [],
-            "timestamp": str(Path.home())
+            "timestamp": str(Path.home()),
         }
         self.sessions[session_id]["notes"].append(note)
         return {
@@ -173,7 +162,7 @@ class Flipchart:
             "notes_count": len(session["notes"]),
             "diagrams_count": len(session["diagrams"]),
             "notes": session["notes"],
-            "diagrams": session["diagrams"]
+            "diagrams": session["diagrams"],
         }
 
     def quick_debug(self, symbol: str, max_depth: int = 3) -> dict:
@@ -204,7 +193,7 @@ class Flipchart:
             "call_graph_mermaid": call_graph,
             "semantic_context": semantic,
             "related_symbols": related[:10],
-            "files_searched": len(self.indexer.symbols)
+            "files_searched": len(self.indexer.symbols),
         }
 
 
@@ -230,8 +219,9 @@ def setup_flipchart_tools(mcp: Any, indexer: Any) -> "Flipchart":
         return flipchart.create_session(session_id, symbols)
 
     @mcp.tool()
-    def flipchart_add_note(session_id: str, label: str, content: str,
-                           symbols: Optional[list[str]] = None):
+    def flipchart_add_note(
+        session_id: str, label: str, content: str, symbols: Optional[list[str]] = None
+    ):
         """
         Добавляет заметку-инсайт на флипчарт сессии.
         Можно привязать к конкретным символам.

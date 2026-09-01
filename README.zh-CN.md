@@ -128,6 +128,57 @@ ready snapshot。
 大型 LEGION 模块不会被排除，但不会挤掉 frontend、control plane、entrypoints
 和 contracts 在 bounded architecture map 中的覆盖。
 
+## Booster Observatory 与 WebMCP
+
+Booster Observatory 是建立在同一个 repository world model 之上的只读浏览器
+界面。它直接复用现有的 `RepoIndexer`、graphs、git intelligence、diagnostics、
+snapshots 和 Code City，不创建第二个 index，也不通过 MCP proxy。
+
+本地运行：
+
+```bash
+booster web --project .
+```
+
+准备一个启动时无需 reindex 或下载 embedding model 的 demo bundle：
+
+```bash
+booster web prepare-demo --project .
+booster web --mode demo --project .
+```
+
+容器部署可使用 [`Dockerfile.observatory`](Dockerfile.observatory)。bundle 在 image
+build 阶段准备，runtime 只启动 read-only gateway。
+
+Native read-only tools 包括 architecture、search、focus、impact、history、
+diagnostics、related tests 和 snapshot comparison。人工点击与 agent 操作共享
+一个 Workspace Store；选择新文件时旧 contextual controller 会被 abort。
+没有 WebMCP 时，普通 UI 和 Code City 仍然可用。
+Share state 只把 allowlisted repository ID、relative file、mode 和 snapshot IDs
+写入 URL，不会序列化本地 root path。
+
+Gateway 使用 same-origin 和 read-only policy：`repo_id` 经过 allowlist，路径
+经过 containment 检查，repository 文本使用 `textContent` 渲染。没有 shell、
+mutation、cloning、arbitrary process、wildcard CORS 或客户端 validation command。
+公共限制为 4 个并发 analysis、10 秒 timeout 和 sliding-window rate limit。
+只读 search、impact、history 和 snapshot compare 只在当前 `generation_id` 内
+缓存；generation 变化时会清理过期 highlights 和 analysis。
+
+验证：
+
+```bash
+uv run pytest -q
+uv run pytest tests/webmcp/browser/test_browser.py -q
+node --experimental-default-type=module --test tests/webmcp/browser/webmcp_modules.test.mjs
+uv run ruff check .
+uv build --wheel
+uv sync --locked --extra security
+uv run bandit -r booster_web indexer.py vector_index.py repository_lifecycle.py watcher.py city_server.py -q
+```
+
+Fake `document.modelContext` 只用于自动化测试；最终仍应在 ChatGPT in-app
+browser 和启用 WebMCP 的 Chrome 中验证真实 tool flow。
+
 ## Booster Home 与 Nemotron
 
 Home 是 coding agent 与 inference backend 之间的本地 OpenAI-compatible
@@ -163,7 +214,7 @@ booster home --base-url http://127.0.0.1:1234/v1 \
 uv lock --check
 uv run python -m pytest tests -q
 uv run ruff check .
-uv run python -m compileall -q booster_home indexing_jobs.py server.py
+uv run python -m compileall -q booster_home booster_web indexing_jobs.py server.py vector_index.py
 uv build
 ```
 

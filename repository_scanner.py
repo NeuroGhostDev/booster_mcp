@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import fnmatch
+import hashlib
 import json
 import os
 from collections import Counter, deque
@@ -177,8 +178,7 @@ class ScanConfig:
         return replace(base_config, **overrides)
 
     def with_overrides(self, **overrides: Any) -> "ScanConfig":
-        values = {name: value for name, value in overrides.items()
-                  if value is not None}
+        values = {name: value for name, value in overrides.items() if value is not None}
         return replace(self, **values)
 
     def to_dict(self) -> dict[str, Any]:
@@ -287,7 +287,7 @@ class ScanResult:
     selected_bytes: int
     skipped: Counter[str]
     limits_reached: set[str]
-    file_manifest: dict[str, dict[str, int]] = field(default_factory=dict)
+    file_manifest: dict[str, dict[str, int | str | None]] = field(default_factory=dict)
     inventory_files: int = 0
 
     def to_dict(self) -> dict[str, Any]:
@@ -336,13 +336,12 @@ class RepositoryScanner:
         cancel: Callable[[], bool] | None = None,
     ) -> ScanResult:
         if not self.root.is_dir():
-            raise NotADirectoryError(
-                f"Repository directory does not exist: {self.root}")
+            raise NotADirectoryError(f"Repository directory does not exist: {self.root}")
 
         files: list[Path] = []
         skipped: Counter[str] = Counter()
         limits_reached: set[str] = set()
-        file_manifest: dict[str, dict[str, int]] = {}
+        file_manifest: dict[str, dict[str, int | str | None]] = {}
         scanned_directories = 0
         inspected_files = 0
         selected_bytes = 0
@@ -421,6 +420,7 @@ class RepositoryScanner:
                     file_manifest[self._relative_path(path)] = {
                         "size_bytes": int(size_bytes),
                         "mtime_ns": int(file_stat.st_mtime_ns),
+                        "sha256": self._content_hash(path),
                     }
                 except OSError:
                     skipped["unreadable_file"] += 1
@@ -460,7 +460,7 @@ class RepositoryScanner:
         selected_bytes: int,
         skipped: Counter[str],
         limits_reached: set[str],
-        file_manifest: dict[str, dict[str, int]] | None = None,
+        file_manifest: dict[str, dict[str, int | str | None]] | None = None,
         inventory_files: int = 0,
     ) -> ScanResult:
         return ScanResult(
@@ -482,6 +482,17 @@ class RepositoryScanner:
 
     def _relative_path(self, path: Path) -> str:
         return path.relative_to(self.root).as_posix()
+
+    @staticmethod
+    def _content_hash(path: Path) -> str | None:
+        digest = hashlib.sha256()
+        try:
+            with path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(chunk)
+        except OSError:
+            return None
+        return digest.hexdigest()
 
     @staticmethod
     def _is_supported_source_file(path: Path) -> bool:
