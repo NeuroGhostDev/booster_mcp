@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -19,15 +20,38 @@ def cross_process_file_lock(path: str | Path) -> Iterator[None]:
     except FileExistsError:
         pass
     else:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(b"0")
+        try:
+            os.write(descriptor, b"0")
+        finally:
+            os.close(descriptor)
 
-    with lock_path.open("r+b") as stream:
+    stream = None
+    for _ in range(200):
+        try:
+            stream = lock_path.open("r+b")
+            break
+        except PermissionError:
+            time.sleep(0.01)
+    if stream is None:
+        raise PermissionError(f"Unable to open lock file: {lock_path}")
+
+    with stream:
         stream.seek(0)
         if os.name == "nt":
             import msvcrt
 
-            msvcrt.locking(stream.fileno(), msvcrt.LK_LOCK, 1)
+            locked = False
+            for _ in range(600):
+                try:
+                    msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+                    locked = True
+                    break
+                except OSError as exc:
+                    if exc.errno not in (13, 36):
+                        raise
+                    time.sleep(0.01)
+            if not locked:
+                raise TimeoutError(f"Unable to acquire lock: {lock_path}")
             try:
                 yield
             finally:

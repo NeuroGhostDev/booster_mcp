@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.4 - 2026-09-02
+
+- Hardened concurrent Windows lock-file opening and acquisition with bounded
+  retries.
+
 ## 4.1.3 - 2026-09-02
 
 - Hardened legacy Code City path resolution through registered repositories.
