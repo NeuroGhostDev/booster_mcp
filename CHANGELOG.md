@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.1.3 - 2026-09-02
+
+- Hardened legacy Code City path resolution through registered repositories.
+- Replaced upstream exception details in API error responses with safe generic
+  messages.
+- Added least-privilege workflow permissions and upgraded `cryptography` to
+  `50.0.1` for the PKCS#7 security advisory.
+- Added regression coverage for path validation and exception disclosure.
+
 ## 4.1.2 - 2026-09-01
 
 - Fixed concurrent Windows lock-file initialization for cross-process stores.

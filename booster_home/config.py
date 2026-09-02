@@ -14,6 +14,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from .models import ContextPolicy
 from .telemetry.logging import redact_endpoint
 
+_HOME_SECTION = "home"
+_UPSTREAM_SECTION = "upstream"
+_CONTEXT_SECTION = "context"
+_WORKERS_SECTION = "workers"
+
 
 class _ConfigModel(BaseModel):
     """Конфигурационные модели допускают новые provider-specific поля."""
@@ -232,18 +237,18 @@ class HomeConfig(_ConfigModel):
             return value
         normalized = dict(value)
         sections = {
-            "listen": "home",
-            "port": "home",
-            "verbose": "home",
-            "json_logs": "home",
-            "auth_token": "home",
-            "base_url": "upstream",
-            "model": "upstream",
-            "api_key": "upstream",
-            "context_window": "context",
-            "reserve_output": "context",
-            "context_policy": "context",
-            "workers": "workers",
+            "listen": _HOME_SECTION,
+            "port": _HOME_SECTION,
+            "verbose": _HOME_SECTION,
+            "json_logs": _HOME_SECTION,
+            "auth_token": _HOME_SECTION,
+            "base_url": _UPSTREAM_SECTION,
+            "model": _UPSTREAM_SECTION,
+            "api_key": _UPSTREAM_SECTION,
+            "context_window": _CONTEXT_SECTION,
+            "reserve_output": _CONTEXT_SECTION,
+            "context_policy": _CONTEXT_SECTION,
+            "workers": _WORKERS_SECTION,
         }
         for key, section in sections.items():
             if key not in normalized:
@@ -352,18 +357,18 @@ def _cli_mapping(overrides: dict[str, Any] | None) -> dict[str, Any]:
         return {}
     result: dict[str, Any] = {}
     sections = {
-        "listen": "home",
-        "port": "home",
-        "verbose": "home",
-        "json_logs": "home",
-        "auth_token": "home",
-        "base_url": "upstream",
-        "model": "upstream",
-        "api_key": "upstream",
-        "context_window": "context",
-        "reserve_output": "context",
-        "context_policy": "context",
-        "workers": "workers",
+        "listen": _HOME_SECTION,
+        "port": _HOME_SECTION,
+        "verbose": _HOME_SECTION,
+        "json_logs": _HOME_SECTION,
+        "auth_token": _HOME_SECTION,
+        "base_url": _UPSTREAM_SECTION,
+        "model": _UPSTREAM_SECTION,
+        "api_key": _UPSTREAM_SECTION,
+        "context_window": _CONTEXT_SECTION,
+        "reserve_output": _CONTEXT_SECTION,
+        "context_policy": _CONTEXT_SECTION,
+        "workers": _WORKERS_SECTION,
         "no_persist": None,
         "probe_generation": None,
         "project": None,

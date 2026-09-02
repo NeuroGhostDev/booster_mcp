@@ -152,3 +152,25 @@ def test_chat_profile_discovery_has_bounded_fallback(tmp_path, fake_provider) ->
         )
 
     assert response.status_code == 200
+
+
+def test_gateway_does_not_expose_upstream_exception_details(tmp_path, fake_provider) -> None:
+    async def failing_chat(_payload):
+        raise UpstreamError("private upstream detail: C:/secrets/provider-token", status_code=502)
+
+    fake_provider.chat_completions = failing_chat
+    with TestClient(
+        create_app(_config(tmp_path), HomeDependencies(provider=fake_provider))
+    ) as client:
+        response = client.post(
+            "/v1/chat/completions",
+            json={
+                "model": "fake-model",
+                "messages": [{"role": "user", "content": "hello"}],
+            },
+        )
+
+    assert response.status_code == 502
+    assert response.json()["error"]["message"] == "Upstream request failed"
+    assert "private upstream detail" not in response.text
+    assert "provider-token" not in response.text

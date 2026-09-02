@@ -38,6 +38,22 @@ def _code_city_path(repo: str | Path) -> Path:
     return Path(repo).expanduser().resolve() / ".agents" / "booster" / "code_city.html"
 
 
+def _registered_repo_path(repos: list[str], requested: str | None) -> Path | None:
+    """Resolve a request only through an already registered repository value."""
+    selected: str | None
+    if requested is None:
+        selected = repos[0] if repos else None
+    else:
+        selected = None
+        for registered in repos:
+            if requested == registered:
+                selected = registered
+                break
+    if selected is None:
+        return None
+    return Path(selected).expanduser().resolve()
+
+
 def set_indexer(idx: RepoIndexer) -> None:
     """Устанавливает внешний indexer (при запуске из server.py для общего состояния)."""
     global indexer, watch_started, watch_handle
@@ -225,21 +241,18 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
             self.send_json_response({"error": "Нет репозиториев"}, 400)
             return
 
-        if repo_path is None:
-            repo_path = idx.repos[0]
-        else:
-            repo_path = str(Path(repo_path).expanduser().resolve())
-            if repo_path not in idx.repos:
-                self.send_json_response({"error": "Репозиторий не зарегистрирован"}, 404)
-                return
-
-        city_file = _code_city_path(repo_path)
+        registered_repo = _registered_repo_path(idx.repos, repo_path)
+        if registered_repo is None:
+            self.send_json_response({"error": "Репозиторий не зарегистрирован"}, 404)
+            return
+        repo_key = str(registered_repo)
+        city_file = _code_city_path(registered_repo)
         if city_file.exists():
             self.send_json_response(
                 {
                     "exists": True,
                     "path": str(city_file),
-                    "url": f'/city?repo={quote(str(Path(repo_path).resolve()), safe="")}',
+                    "url": f'/city?repo={quote(repo_key, safe="")}',
                 }
             )
         else:
@@ -251,11 +264,11 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
         if not repo_path:
             self.send_json_response({"error": "Репозиторий не указан"}, 400)
             return
-        normalized = str(Path(repo_path).expanduser().resolve())
-        if normalized not in idx.repos:
+        registered_repo = _registered_repo_path(idx.repos, repo_path)
+        if registered_repo is None:
             self.send_json_response({"error": "Репозиторий не зарегистрирован"}, 404)
             return
-        city_file = _code_city_path(normalized)
+        city_file = _code_city_path(registered_repo)
         if not city_file.is_file():
             self.send_json_response({"error": "Code City ещё не сгенерирован"}, 404)
             return
@@ -271,21 +284,19 @@ class CodeCityHandler(SimpleHTTPRequestHandler):
             self.send_json_response({"error": "Нет репозиториев"}, 400)
             return
 
-        if repo_path is None:
-            repo_path = idx.repos[0]
-        else:
-            repo_path = str(Path(repo_path).expanduser().resolve())
-            if repo_path not in idx.repos:
-                self.send_json_response({"error": "Репозиторий не зарегистрирован"}, 404)
-                return
+        registered_repo = _registered_repo_path(idx.repos, repo_path)
+        if registered_repo is None:
+            self.send_json_response({"error": "Репозиторий не зарегистрирован"}, 404)
+            return
+        repo_key = str(registered_repo)
 
-        if repo_path not in repo_maps:
-            repo_maps[repo_path] = RepoMap(root=repo_path)
+        if repo_key not in repo_maps:
+            repo_maps[repo_key] = RepoMap(root=registered_repo)
 
-        repo_map = repo_maps[repo_path]
+        repo_map = repo_maps[repo_key]
         map_content = str(cast(Any, repo_map).get_repo_map())
 
-        self.send_json_response({"repo": repo_path, "map": map_content})
+        self.send_json_response({"repo": repo_key, "map": map_content})
 
     def handle_add_repo(self, repo_path: str) -> None:
         """Добавить репозиторий."""

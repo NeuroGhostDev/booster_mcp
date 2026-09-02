@@ -83,7 +83,7 @@ tags:
   - openai-compatible
   - ai-engineering
   - developer-productivity
-version: 4.1.2
+version: 4.1.3
 license: MIT
 repository: https://github.com/NeuroGhostDev/Booster-mcp
 runtime:

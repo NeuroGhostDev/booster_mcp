@@ -7,7 +7,7 @@ from threading import Thread
 from urllib.parse import quote, urlsplit
 
 import city_server
-from city_server import _code_city_path
+from city_server import _code_city_path, _registered_repo_path
 from indexer import RepoIndexer
 
 
@@ -47,3 +47,10 @@ def test_code_city_api_serves_registered_artifact(tmp_path: Path) -> None:
         httpd.shutdown()
         httpd.server_close()
         thread.join(timeout=5)
+
+
+def test_registered_repo_path_never_resolves_unregistered_input(tmp_path: Path) -> None:
+    registered = str(tmp_path.resolve())
+
+    assert _registered_repo_path([registered], registered) == tmp_path.resolve()
+    assert _registered_repo_path([registered], str(tmp_path.parent.resolve())) is None

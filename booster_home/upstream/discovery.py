@@ -52,7 +52,8 @@ class ModelDiscovery:
             try:
                 await asyncio.wait_for(self.refresh(), timeout=self.refresh_timeout_seconds)
             except Exception:
-                pass
+                # Keep discovery retryable after a transient upstream failure.
+                self._loaded = False
         profile = self._profiles.get(selected)
         explicit = self.configured_window
         if isinstance(explicit, int):

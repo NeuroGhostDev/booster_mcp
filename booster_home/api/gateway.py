@@ -173,13 +173,17 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
             raise HTTPException(status_code=503, detail="Home runtime не запущен")
         try:
             session, payload, request_id = await _prepare(request, x_booster_session)
-        except ContextIntegrityError as exc:
+        except ContextIntegrityError:
             return JSONResponse(
-                status_code=413, content=_error_payload(str(exc), code="context_integrity")
+                status_code=413,
+                content=_error_payload(
+                    "Request context exceeds configured limits", code="context_integrity"
+                ),
             )
-        except RuntimeError as exc:
+        except RuntimeError:
             return JSONResponse(
-                status_code=503, content=_error_payload(str(exc), code="runtime_unavailable")
+                status_code=503,
+                content=_error_payload("Home runtime is unavailable", code="runtime_unavailable"),
             )
         if request.stream:
             try:
@@ -194,7 +198,9 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
                 return JSONResponse(
                     status_code=status_code,
                     content=_error_payload(
-                        str(exc), code=exc.code or "upstream_error", request_id=request_id
+                        "Upstream request failed",
+                        code=exc.code or "upstream_error",
+                        request_id=request_id,
                     ),
                 )
 
@@ -223,7 +229,9 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
             return JSONResponse(
                 status_code=status_code,
                 content=_error_payload(
-                    str(exc), code=exc.code or "upstream_error", request_id=request_id
+                    "Upstream request failed",
+                    code=exc.code or "upstream_error",
+                    request_id=request_id,
                 ),
             )
         await runtime.event(
@@ -244,10 +252,12 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
             raise HTTPException(status_code=503, detail="Home runtime не запущен")
         try:
             messages = responses_input_to_messages(request.input)
-        except ValueError as exc:
+        except ValueError:
             return JSONResponse(
                 status_code=501,
-                content=_error_payload(str(exc), code="unsupported_responses_input"),
+                content=_error_payload(
+                    "Responses input format is unsupported", code="unsupported_responses_input"
+                ),
             )
         chat_request = ChatCompletionRequest(
             model=request.model,
@@ -257,13 +267,17 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
         )
         try:
             session, compiled_payload, request_id = await _prepare(chat_request, x_booster_session)
-        except ContextIntegrityError as exc:
+        except ContextIntegrityError:
             return JSONResponse(
-                status_code=413, content=_error_payload(str(exc), code="context_integrity")
+                status_code=413,
+                content=_error_payload(
+                    "Request context exceeds configured limits", code="context_integrity"
+                ),
             )
-        except RuntimeError as exc:
+        except RuntimeError:
             return JSONResponse(
-                status_code=503, content=_error_payload(str(exc), code="runtime_unavailable")
+                status_code=503,
+                content=_error_payload("Home runtime is unavailable", code="runtime_unavailable"),
             )
         response_input = compiled_payload.get("messages", messages_to_responses_input(messages))
         payload = request.upstream_payload(response_input)
@@ -290,12 +304,12 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
                         stream = await _await_if_needed(
                             runtime.provider.chat_completions_stream(chat_payload)
                         )
-                    except UpstreamError as fallback_exc:
+                    except UpstreamError:
                         await runtime.session_store.set_active(session.session_id, False)
                         return JSONResponse(
                             status_code=502,
                             content=_error_payload(
-                                str(fallback_exc),
+                                "Upstream request failed",
                                 code="upstream_error",
                                 request_id=request_id,
                             ),
@@ -308,7 +322,9 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
                     return JSONResponse(
                         status_code=status_code,
                         content=_error_payload(
-                            str(exc), code=exc.code or "upstream_error", request_id=request_id
+                            "Upstream request failed",
+                            code=exc.code or "upstream_error",
+                            request_id=request_id,
                         ),
                     )
 
@@ -341,12 +357,12 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
                     response = chat_response_to_responses(
                         await runtime.provider.chat_completions(chat_payload)
                     )
-                except UpstreamError as fallback_exc:
+                except UpstreamError:
                     await runtime.session_store.set_active(session.session_id, False)
                     return JSONResponse(
                         status_code=502,
                         content=_error_payload(
-                            str(fallback_exc), code="upstream_error", request_id=request_id
+                            "Upstream request failed", code="upstream_error", request_id=request_id
                         ),
                     )
             else:
@@ -357,7 +373,9 @@ def create_gateway_router(runtime: HomeRuntime) -> APIRouter:
                 return JSONResponse(
                     status_code=status_code,
                     content=_error_payload(
-                        str(exc), code=exc.code or "upstream_error", request_id=request_id
+                        "Upstream request failed",
+                        code=exc.code or "upstream_error",
+                        request_id=request_id,
                     ),
                 )
         await runtime.event(
